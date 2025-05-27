@@ -1,11 +1,20 @@
 import config from "@/config";
 import ButtonCheckout from "./ButtonCheckout";
+import { useState } from "react";
 
 // <Pricing/> displays the pricing plans for your app
 // It's your Stripe config in config.js.stripe.plans[] that will be used to display the plans
 // <ButtonCheckout /> renders a button that will redirect the user to Stripe checkout called the /api/stripe/create-checkout API endpoint with the correct priceId
 
 const Pricing = () => {
+  // Estado para el plan seleccionado
+  const [selectedInterval, setSelectedInterval] = useState("month");
+
+  // Filtrar los planes según el intervalo seleccionado
+  const filteredPlans = config.stripe.plans.filter(
+    (plan) => plan.interval === selectedInterval
+  );
+
   return (
     <section className="bg-base-200 overflow-hidden" id="pricing">
       <div className="py-24 px-8 max-w-5xl mx-auto">
@@ -16,8 +25,20 @@ const Pricing = () => {
           </h2>
         </div>
 
+        {/* Select para elegir mensual o anual */}
+        <div className="flex justify-center mb-8">
+          <select
+            className="select select-bordered text-lg"
+            value={selectedInterval}
+            onChange={(e) => setSelectedInterval(e.target.value)}
+          >
+            <option value="month">Mensual</option>
+            <option value="year">Anual</option>
+          </select>
+        </div>
+
         <div className="relative flex justify-center flex-col lg:flex-row items-center lg:items-stretch gap-8">
-          {config.stripe.plans.map((plan) => (
+          {filteredPlans.map((plan) => (
             <div key={plan.priceId} className="relative w-full max-w-lg">
               {plan.isFeatured && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
@@ -92,7 +113,9 @@ const Pricing = () => {
                   <ButtonCheckout priceId={plan.priceId} />
 
                   <p className="flex items-center justify-center gap-2 text-sm text-center text-base-content/80 font-medium relative">
-                    Pay once. Access forever.
+                    {selectedInterval === "year"
+                      ? "Ahorra 2 meses al pagar por adelantado."
+                      : "Pay once. Access forever."}
                   </p>
                 </div>
               </div>

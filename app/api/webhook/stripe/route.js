@@ -102,7 +102,7 @@ export async function POST(req) {
         const { firstName, lastName, secondLastName } =
           processCardName(cardName);
 
-        // Lógica para el primer pago (onboarding)
+        // Lógica para el pago (onboarding o nueva instancia)
         const subdomain = session.custom_fields.find(
           (field) => field.key === "subdominio"
         )?.text.value;
@@ -118,12 +118,6 @@ export async function POST(req) {
           throw new Error(
             "El subdominio solo puede contener letras minúsculas y números"
           );
-        }
-
-        // Verificar si el subdominio ya existe
-        const existingInstance = await Instance.findOne({ subdomain });
-        if (existingInstance) {
-          throw new Error("Este subdominio ya está en uso");
         }
 
         // Buscar o crear el usuario usando el email correcto
@@ -154,16 +148,21 @@ export async function POST(req) {
           await user.save();
         }
 
-        // Crear la instancia
-        const instance = await Instance.create({
-          userId: user._id,
-          subdomain,
-          status: "pending",
-          wordpressInstanceId: null, // Se puede actualizar después
-        });
+        // Permitir múltiples instancias: solo crear si el subdominio no existe
+        let instance = await Instance.findOne({ subdomain });
+        let isNewInstance = false;
+        if (!instance) {
+          instance = await Instance.create({
+            userId: user._id,
+            subdomain,
+            status: "pending",
+            wordpressInstanceId: null, // Se puede actualizar después
+          });
+          isNewInstance = true;
+        }
 
-        // Llamar al webhook de onboarding
-        if (process.env.WEBHOOK_ONBOARDING) {
+        // Llamar al webhook de onboarding solo si es nueva instancia
+        if (isNewInstance && process.env.WEBHOOK_ONBOARDING) {
           try {
             const response = await fetch(process.env.WEBHOOK_ONBOARDING, {
               method: "POST",
