@@ -19,12 +19,18 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id) {
-      console.log("[DASHBOARD] Sesión completa:", JSON.stringify(session, null, 2));
+      console.log(
+        "[DASHBOARD] Sesión completa:",
+        JSON.stringify(session, null, 2)
+      );
       console.log("[DASHBOARD] User ID:", session.user.id);
       // Buscar instancias por userId directamente
       fetchUserInstancesByUserId(session.user.id);
     } else if (status === "authenticated") {
-      console.log("[DASHBOARD] Sesión sin ID:", JSON.stringify(session, null, 2));
+      console.log(
+        "[DASHBOARD] Sesión sin ID:",
+        JSON.stringify(session, null, 2)
+      );
       setInstances([]);
       setLoading(false);
     }
@@ -41,7 +47,10 @@ export default function Dashboard() {
       console.log("[DASHBOARD] Buscando instancias para userId:", userId);
       const response = await fetch(`/api/instances?userId=${userId}`);
       const data = await response.json();
-      console.log("[DASHBOARD] Respuesta de instancias:", JSON.stringify(data, null, 2));
+      console.log(
+        "[DASHBOARD] Respuesta de instancias:",
+        JSON.stringify(data, null, 2)
+      );
       setInstances(data);
     } catch (error) {
       console.error("[DASHBOARD] Error fetching user instances:", error);
