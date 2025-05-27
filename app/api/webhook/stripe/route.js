@@ -148,10 +148,17 @@ export async function POST(req) {
           await user.save();
         }
 
-        // Permitir múltiples instancias: solo crear si el subdominio no existe
-        let instance = await Instance.findOne({ subdomain });
+        // Validar que no exista ya una instancia con el mismo subdominio, paymentIntentId o subscriptionId
+        const existingInstance = await Instance.findOne({
+          $or: [
+            { subdomain },
+            { paymentIntentId: session.payment_intent },
+            { subscriptionId: subscriptionId },
+          ],
+        });
+        let instance = existingInstance;
         let isNewInstance = false;
-        if (!instance) {
+        if (!existingInstance) {
           instance = await Instance.create({
             userId: user._id,
             subdomain,
@@ -327,45 +334,94 @@ export async function POST(req) {
           const subscriptionId = data.subscription || data.id;
           // Buscar usuario e instancia
           const user = await User.findOne({ stripeCustomerId: customerId });
-          const instances = user
-            ? await Instance.find({ userId: user._id })
-            : [];
-          for (const instance of instances) {
-            const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                type: event.type,
-                customerId,
-                subscriptionId,
-                email: user?.email || null,
-                instanceId: instance._id,
-                wordpressInstanceId: instance.wordpressInstanceId || null,
-                subdomain: instance.subdomain,
-                firstName: user?.firstName || null,
-                lastName: user?.lastName || null,
-                secondLastName: user?.secondLastName || null,
-                status: instance.status,
-                motivo:
-                  event.type === "invoice.paid"
-                    ? "Pago recurrente exitoso"
-                    : event.type === "invoice.payment_failed"
-                    ? "Fallo de pago"
-                    : event.type === "customer.subscription.updated"
-                    ? "Actualización de suscripción"
-                    : "Evento de Stripe",
-              }),
-            });
+          let instances = user ? await Instance.find({ subscriptionId }) : [];
 
-            if (!response.ok) {
-              console.error(
-                "Error al llamar al webhook de operaciones:",
-                await response.text()
-              );
+          // Si no existe la instancia y es un pago exitoso, crearla y mandar onboarding
+          if (event.type === "invoice.paid" && instances.length === 0) {
+            // Crear nueva instancia
+            const newInstance = await Instance.create({
+              userId: user?._id,
+              subdomain:
+                data?.custom_fields?.find((f) => f.key === "subdominio")?.text
+                  ?.value || "sin-subdominio",
+              status: "active",
+              wordpressInstanceId: null,
+              priceId: data?.lines?.data?.[0]?.price?.id || null,
+              subscriptionId: subscriptionId || null,
+              customerId: customerId || null,
+              paymentIntentId: data.payment_intent || null,
+              invoiceId: data.id || null,
+            });
+            // Webhook de onboarding
+            if (process.env.WEBHOOK_ONBOARDING) {
+              await fetch(process.env.WEBHOOK_ONBOARDING, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  instanceId: newInstance._id,
+                  subdomain: newInstance.subdomain,
+                  userId: user?._id,
+                  email: user?.email,
+                  customerId,
+                  subscriptionId,
+                  firstName: user?.firstName,
+                  lastName: user?.lastName,
+                  secondLastName: user?.secondLastName,
+                  wordpressInstanceId: newInstance.wordpressInstanceId,
+                  priceId: newInstance.priceId,
+                  paymentIntentId: newInstance.paymentIntentId,
+                  invoiceId: newInstance.invoiceId,
+                }),
+              });
+            }
+            instances = [newInstance];
+          }
+
+          // Si existe la instancia y es un pago exitoso, solo actualizar la fecha
+          if (event.type === "invoice.paid" && instances.length > 0) {
+            for (const instance of instances) {
+              await Instance.findByIdAndUpdate(instance._id, {
+                updatedAt: new Date(),
+              });
             }
           }
+
+          // Si es un fallo de pago, actualizar status a 'pending' y mandar webhook de operaciones
+          if (event.type === "invoice.payment_failed" && instances.length > 0) {
+            for (const instance of instances) {
+              await Instance.findByIdAndUpdate(instance._id, {
+                status: "pending",
+                updatedAt: new Date(),
+              });
+              // Webhook de operaciones
+              const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  type: event.type,
+                  customerId,
+                  subscriptionId,
+                  email: user?.email || null,
+                  instanceId: instance._id,
+                  wordpressInstanceId: instance.wordpressInstanceId || null,
+                  subdomain: instance.subdomain,
+                  firstName: user?.firstName || null,
+                  lastName: user?.lastName || null,
+                  secondLastName: user?.secondLastName || null,
+                  status: "pending",
+                  motivo: "Fallo de pago",
+                }),
+              });
+              if (!response.ok) {
+                console.error(
+                  "Error al llamar al webhook de operaciones:",
+                  await response.text()
+                );
+              }
+            }
+          }
+
+          // Si es una actualización de suscripción, puedes agregar lógica adicional aquí si lo deseas
         } catch (error) {
           console.error("Error al llamar al webhook de operaciones:", error);
         }
