@@ -331,14 +331,16 @@ export default function Dashboard() {
       </div>
 
       {/* Botón para comprar nueva instancia */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-        <button
-          onClick={() => setShowPricing(true)}
-          className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-semibold rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          Comprar nueva instancia
-        </button>
-      </div>
+      {userInstances.length === 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <button
+            onClick={() => setShowPricing(true)}
+            className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-semibold rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Adquiere tu Muegano
+          </button>
+        </div>
+      )}
     </div>
   );
 }
