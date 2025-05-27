@@ -1,6 +1,6 @@
-# ShipFast — Javascript
+# Muegano — Javascript
 
-Hey maker 👋 it's Marc from [ShipFast](https://shipfa.st/docs). Let's get your startup off the ground, FAST ⚡️
+Hey maker 👋 es Marc de [Muegano](https://muegano.net). ¡Lanza tu comunidad rápido! ⚡️
 
 <sub>**Watch/Star the repo to be notified when updates are pushed**</sub>
 
@@ -14,10 +14,10 @@ Hey maker 👋 it's Marc from [ShipFast](https://shipfa.st/docs). Let's get your
 
 ## Links
 
--   [📚 Documentation](https://shipfa.st/docs)
--   [📣 Updates](https://shipfast.beehiiv.com/)
--   [🧑‍💻 Discord](https://shipfa.st/dashboard)
--   [🥇 Leaderboard](https://shipfa.st/leaderboard)
+- [📚 Documentation](https://shipfa.st/docs)
+- [📣 Updates](https://shipfast.beehiiv.com/)
+- [🧑‍💻 Discord](https://shipfa.st/dashboard)
+- [🥇 Leaderboard](https://shipfa.st/leaderboard)
 
 ## Support
 
@@ -27,12 +27,12 @@ Let's ship it, FAST ⚡️
 
 \_
 
-**📈 Grow your startup with [DataFast](https://datafa.st?ref=shipfast_readme)**
+**📈 Haz crecer tu comunidad con [DataFast](https://datafa.st?ref=muegano_readme)**
 
--   Analyze your traffic
--   Get insights on your customers
--   Make data-driven decisions
+- Analyze your traffic
+- Get insights on your customers
+- Make data-driven decisions
 
-ShipFast members get 30% OFF on all plans! 🎁
+¡Los miembros de Muegano obtienen 30% de descuento en todos los planes! 🎁
 
 ![datafast](https://github.com/user-attachments/assets/085453a6-8a66-45be-b7ea-a7a08e856ed8)

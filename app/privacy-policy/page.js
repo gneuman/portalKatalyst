@@ -13,7 +13,7 @@ import config from "@/config";
 
 // I need your help to write a simple privacy policy for my website. Here is some context:
 // - Website: https://shipfa.st
-// - Name: ShipFast
+// - Name: Muegano
 // - Description: A JavaScript code boilerplate to help entrepreneurs launch their startups faster
 // - User data collected: name, email and payment information
 // - Non-personal data collection: web cookies
@@ -59,49 +59,49 @@ const PrivacyPolicy = () => {
         >
           {`Last Updated: 2023-08-25
 
-Thank you for visiting ShipFast ("we," "us," or "our"). This Privacy Policy outlines how we collect, use, and protect your personal and non-personal information when you use our website located at https://shipfa.st (the "Website").
+Gracias por visitar Muegano ("nosotros"). Esta Política de Privacidad describe cómo recopilamos, usamos y protegemos tu información personal y no personal cuando usas nuestro sitio web ubicado en https://muegano.net (el "Sitio Web").
 
-By accessing or using the Website, you agree to the terms of this Privacy Policy. If you do not agree with the practices described in this policy, please do not use the Website.
+Al acceder o usar el Sitio Web, aceptas los términos de esta Política de Privacidad. Si no estás de acuerdo con las prácticas descritas en esta política, por favor no uses el Sitio Web.
 
-1. Information We Collect
+1. Información que recopilamos
 
-1.1 Personal Data
+1.1 Datos personales
 
-We collect the following personal information from you:
+Recopilamos la siguiente información personal de ti:
 
-Name: We collect your name to personalize your experience and communicate with you effectively.
-Email: We collect your email address to send you important information regarding your orders, updates, and communication.
-Payment Information: We collect payment details to process your orders securely. However, we do not store your payment information on our servers. Payments are processed by trusted third-party payment processors.
+Nombre: Recopilamos tu nombre para personalizar tu experiencia y comunicarte efectivamente.
+Correo electrónico: Recopilamos tu dirección de correo electrónico para enviarte información importante relacionada con tus pedidos, actualizaciones y comunicación.
+Información de pago: Recopilamos detalles de pago para procesar pedidos de manera segura. Sin embargo, no almacenamos la información de pago en nuestros servidores. Los pagos se procesan mediante procesadores de pago de terceros de confianza.
 
-1.2 Non-Personal Data
+1.2 Datos no personales
 
-We may use web cookies and similar technologies to collect non-personal information such as your IP address, browser type, device information, and browsing patterns. This information helps us to enhance your browsing experience, analyze trends, and improve our services.
+Podemos usar cookies web y tecnologías similares para recopilar información no personal como tu dirección IP, tipo de navegador, información del dispositivo y patrones de navegación. Esta información nos ayuda a mejorar tu experiencia de navegación, analizar tendencias y mejorar nuestros servicios.
 
-2. Purpose of Data Collection
+2. Propósito de la recopilación de datos
 
-We collect and use your personal data for the sole purpose of order processing. This includes processing your orders, sending order confirmations, providing customer support, and keeping you updated about the status of your orders.
+Recopilamos y utilizamos tus datos personales solo con el propósito de procesar pedidos. Esto incluye procesar tus pedidos, enviar confirmaciones de pedidos, proporcionar soporte al cliente y mantenerte actualizado sobre el estado de tus pedidos.
 
-3. Data Sharing
+3. Compartir datos
 
-We do not share your personal data with any third parties except as required for order processing (e.g., sharing your information with payment processors). We do not sell, trade, or rent your personal information to others.
+No compartimos tus datos personales con ninguna otra parte excepto cuando sea necesario para el procesamiento de pedidos (por ejemplo, compartiendo tu información con procesadores de pago). No vendemos, intercambiamos ni alquilamos tu información personal a otras partes.
 
-4. Children's Privacy
+4. Privacidad de los niños
 
-ShipFast is not intended for children under the age of 13. We do not knowingly collect personal information from children. If you are a parent or guardian and believe that your child has provided us with personal information, please contact us at the email address provided below.
+Muegano no está destinado a menores de 13 años. No recopilamos intencionadamente información personal de menores. Si eres padre/madre/tutor y crees que tu hijo nos ha proporcionado información personal, por favor contáctanos en la dirección de correo electrónico proporcionada a continuación.
 
-5. Updates to the Privacy Policy
+5. Actualizaciones a la Política de Privacidad
 
-We may update this Privacy Policy from time to time to reflect changes in our practices or for other operational, legal, or regulatory reasons. Any updates will be posted on this page, and we may notify you via email about significant changes.
+Podemos actualizar esta Política de Privacidad de vez en cuando para reflejar cambios en nuestras prácticas o por razones operativas, legales o reguladoras. Cualquier actualización se publicará en esta página, y es posible que te notifiquemos por correo electrónico sobre cambios significativos.
 
-6. Contact Information
+6. Información de contacto
 
-If you have any questions, concerns, or requests related to this Privacy Policy, you can contact us at:
+Si tienes alguna pregunta, inquietud o solicitud relacionada con esta Política de Privacidad, puedes contactarnos en:
 
-Email: marc@shipfa.st
+Correo electrónico: marc@shipfa.st
 
-For all other inquiries, please visit our Contact Us page on the Website.
+Para todas las demás consultas, por favor visita nuestra página de Contacto en el Sitio Web.
 
-By using ShipFast, you consent to the terms of this Privacy Policy.`}
+Al usar Muegano, aceptas los términos de esta Política de Privacidad.`}
         </pre>
       </div>
     </main>

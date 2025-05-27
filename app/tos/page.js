@@ -13,7 +13,7 @@ import config from "@/config";
 
 // I need your help to write a simple Terms & Services for my website. Here is some context:
 // - Website: https://shipfa.st
-// - Name: ShipFast
+// - Name: Muegano
 // - Contact information: marc@shipfa.st
 // - Description: A JavaScript code boilerplate to help entrepreneurs launch their startups faster
 // - Ownership: when buying a package, users can download code to create apps. They own the code but they do not have the right to resell it. They can ask for a full refund within 7 day after the purchase.
@@ -59,17 +59,17 @@ const TOS = () => {
         >
           {`Last Updated: September 26, 2023
 
-Welcome to ShipFast!
+¡Bienvenido a Muegano!
 
-These Terms of Service ("Terms") govern your use of the ShipFast website at https://shipfa.st ("Website") and the services provided by ShipFast. By using our Website and services, you agree to these Terms.
+Estos Términos de Servicio ("Términos") rigen el uso del sitio web de Muegano en https://muegano.net ("Sitio Web") y los servicios proporcionados por Muegano. Al usar nuestro Sitio Web y servicios, aceptas estos Términos.
 
-1. Description of ShipFast
+1. Descripción de Muegano
 
-ShipFast is a platform that offers a JavaScript code boilerplate to assist entrepreneurs in launching their startups more efficiently.
+Muegano es una plataforma que ofrece un boilerplate de código JavaScript para ayudar a emprendedores a lanzar sus comunidades de manera eficiente.
 
 2. Ownership and Usage Rights
 
-When you purchase a package from ShipFast, you gain the right to download and use the code provided for creating applications. You own the code you create but do not have the right to resell it. We offer a full refund within 7 days of purchase, as specified in our refund policy.
+Cuando compras un paquete de Muegano, obtienes el derecho a descargar y usar el código proporcionado para crear aplicaciones. Eres dueño del código que creas pero no tienes derecho a revenderlo. Ofrecemos reembolso completo dentro de los 7 días o...
 
 3. User Data and Privacy
 
@@ -89,7 +89,7 @@ We may update these Terms from time to time. Users will be notified of any chang
 
 For any questions or concerns regarding these Terms of Service, please contact us at marc@shipfa.st.
 
-Thank you for using ShipFast!`}
+¡Gracias por usar Muegano!`}
         </pre>
       </div>
     </main>

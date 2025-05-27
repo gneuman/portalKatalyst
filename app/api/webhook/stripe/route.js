@@ -338,43 +338,50 @@ export async function POST(req) {
 
           // Si no existe la instancia y es un pago exitoso, crearla y mandar onboarding
           if (event.type === "invoice.paid" && instances.length === 0) {
-            // Crear nueva instancia
-            const newInstance = await Instance.create({
-              userId: user?._id,
-              subdomain:
+            try {
+              const subdomain =
                 data?.custom_fields?.find((f) => f.key === "subdominio")?.text
-                  ?.value || "sin-subdominio",
-              status: "active",
-              wordpressInstanceId: null,
-              priceId: data?.lines?.data?.[0]?.price?.id || null,
-              subscriptionId: subscriptionId || null,
-              customerId: customerId || null,
-              paymentIntentId: data.payment_intent || null,
-              invoiceId: data.id || null,
-            });
-            // Webhook de onboarding
-            if (process.env.WEBHOOK_ONBOARDING) {
-              await fetch(process.env.WEBHOOK_ONBOARDING, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  instanceId: newInstance._id,
-                  subdomain: newInstance.subdomain,
-                  userId: user?._id,
-                  email: user?.email,
-                  customerId,
-                  subscriptionId,
-                  firstName: user?.firstName,
-                  lastName: user?.lastName,
-                  secondLastName: user?.secondLastName,
-                  wordpressInstanceId: newInstance.wordpressInstanceId,
-                  priceId: newInstance.priceId,
-                  paymentIntentId: newInstance.paymentIntentId,
-                  invoiceId: newInstance.invoiceId,
-                }),
+                  ?.value || "sin-subdominio";
+              const newInstance = await Instance.create({
+                userId: user?._id,
+                subdomain,
+                status: "active",
+                wordpressInstanceId: null,
+                priceId: data?.lines?.data?.[0]?.price?.id || null,
+                subscriptionId: subscriptionId || null,
+                customerId: customerId || null,
+                paymentIntentId: data.payment_intent || null,
+                invoiceId: data.id || null,
               });
+              // Webhook de onboarding
+              if (process.env.WEBHOOK_ONBOARDING) {
+                await fetch(process.env.WEBHOOK_ONBOARDING, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    instanceId: newInstance._id,
+                    subdomain: newInstance.subdomain,
+                    userId: user?._id,
+                    email: user?.email,
+                    customerId,
+                    subscriptionId,
+                    firstName: user?.firstName,
+                    lastName: user?.lastName,
+                    secondLastName: user?.secondLastName,
+                    wordpressInstanceId: newInstance.wordpressInstanceId,
+                    priceId: newInstance.priceId,
+                    paymentIntentId: newInstance.paymentIntentId,
+                    invoiceId: newInstance.invoiceId,
+                  }),
+                });
+              }
+              instances = [newInstance];
+            } catch (err) {
+              console.error(
+                "Error creando instancia desde Stripe webhook:",
+                err
+              );
             }
-            instances = [newInstance];
           }
 
           // Si existe la instancia y es un pago exitoso, solo actualizar la fecha
