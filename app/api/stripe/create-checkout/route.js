@@ -41,17 +41,17 @@ export async function POST(req) {
       user,
       customFields: [
         {
-          key: "subdominio",
+          key: "nombre_instancia",
           label: {
             type: "custom",
-            custom: "Subdominio (ejemplo: nocode.muegano.net)",
+            custom: "Nombre de la instancia (ejemplo: comunidad1)",
           },
           type: "text",
           optional: false,
         },
       ],
       metadata: {
-        subdominio: body.subdominio,
+        nombre_instancia: body.nombre_instancia,
       },
     });
 

@@ -108,46 +108,46 @@ export async function POST(req) {
         const { firstName, lastName, secondLastName } =
           processCardName(cardName);
 
-        // Obtención robusta del subdominio
-        let subdominio = null;
+        // Obtención robusta del nombre de la instancia
+        let nombre_instancia = null;
         // 1. custom_fields del checkout session
         if (session.custom_fields) {
-          const subdominioField = session.custom_fields.find(
-            (field) => field.key === "subdominio"
+          const nombreField = session.custom_fields.find(
+            (field) => field.key === "nombre_instancia"
           );
-          if (subdominioField?.text?.value) {
-            subdominio = subdominioField.text.value
+          if (nombreField?.text?.value) {
+            nombre_instancia = nombreField.text.value
               .toLowerCase()
               .replace(/[^a-z0-9]/g, "");
             console.log(
-              "[STRIPE WEBHOOK] Subdominio de custom_fields:",
-              subdominio
+              "[STRIPE WEBHOOK] nombre_instancia de custom_fields:",
+              nombre_instancia
             );
           }
         }
         // 2. metadata del checkout session
-        if (!subdominio && session.metadata?.subdominio) {
-          subdominio = session.metadata.subdominio
+        if (!nombre_instancia && session.metadata?.nombre_instancia) {
+          nombre_instancia = session.metadata.nombre_instancia
             .toLowerCase()
             .replace(/[^a-z0-9]/g, "");
           console.log(
-            "[STRIPE WEBHOOK] Subdominio de session.metadata:",
-            subdominio
+            "[STRIPE WEBHOOK] nombre_instancia de session.metadata:",
+            nombre_instancia
           );
         }
         // 3. metadata del PaymentIntent
-        if (!subdominio && session.payment_intent) {
+        if (!nombre_instancia && session.payment_intent) {
           try {
             const paymentIntent = await stripe.paymentIntents.retrieve(
               session.payment_intent
             );
-            if (paymentIntent.metadata?.subdominio) {
-              subdominio = paymentIntent.metadata.subdominio
+            if (paymentIntent.metadata?.nombre_instancia) {
+              nombre_instancia = paymentIntent.metadata.nombre_instancia
                 .toLowerCase()
                 .replace(/[^a-z0-9]/g, "");
               console.log(
-                "[STRIPE WEBHOOK] Subdominio de paymentIntent.metadata:",
-                subdominio
+                "[STRIPE WEBHOOK] nombre_instancia de paymentIntent.metadata:",
+                nombre_instancia
               );
             }
           } catch (err) {
@@ -158,16 +158,16 @@ export async function POST(req) {
           }
         }
         // 4. metadata del Invoice
-        if (!subdominio && session.invoice) {
+        if (!nombre_instancia && session.invoice) {
           try {
             const invoice = await stripe.invoices.retrieve(session.invoice);
-            if (invoice.metadata?.subdominio) {
-              subdominio = invoice.metadata.subdominio
+            if (invoice.metadata?.nombre_instancia) {
+              nombre_instancia = invoice.metadata.nombre_instancia
                 .toLowerCase()
                 .replace(/[^a-z0-9]/g, "");
               console.log(
-                "[STRIPE WEBHOOK] Subdominio de invoice.metadata:",
-                subdominio
+                "[STRIPE WEBHOOK] nombre_instancia de invoice.metadata:",
+                nombre_instancia
               );
             }
           } catch (err) {
@@ -175,16 +175,16 @@ export async function POST(req) {
           }
         }
         // 5. Si no existe, lanzar error y NO crear la instancia
-        if (!subdominio) {
+        if (!nombre_instancia) {
           throw new Error(
-            "No se encontró el subdominio en los campos personalizados ni en el metadata de Stripe. No se puede crear la instancia."
+            "No se encontró el nombre de la instancia en los campos personalizados ni en el metadata de Stripe. No se puede crear la instancia."
           );
         }
 
-        // Validar el formato del subdominio
-        if (!/^[a-z0-9]+$/.test(subdominio)) {
+        // Validar el formato del nombre de la instancia
+        if (!/^[a-z0-9]+$/.test(nombre_instancia)) {
           throw new Error(
-            "El subdominio solo puede contener letras minúsculas y números"
+            "El nombre de la instancia solo puede contener letras minúsculas y números"
           );
         }
 
@@ -204,6 +204,7 @@ export async function POST(req) {
             stripeCustomerId: customerId,
             customerId: customerId,
             subscriptionId: subscriptionId,
+            nombre_instancia: nombre_instancia,
           });
           user = await User.create({
             email: customerEmail,
@@ -214,6 +215,7 @@ export async function POST(req) {
             stripeCustomerId: customerId,
             customerId: customerId,
             subscriptionId: subscriptionId,
+            nombre_instancia: nombre_instancia,
           });
         } else {
           // Actualizar usuario con toda la info relevante
@@ -224,13 +226,14 @@ export async function POST(req) {
           user.stripeCustomerId = customerId;
           user.customerId = customerId;
           user.subscriptionId = subscriptionId;
+          user.nombre_instancia = nombre_instancia;
           await user.save();
         }
 
-        // Validar que no exista ya una instancia con el mismo subdominio, paymentIntentId o subscriptionId
+        // Validar que no exista ya una instancia con el mismo nombre_instancia, paymentIntentId o subscriptionId
         const existingInstance = await Instance.findOne({
           $or: [
-            { subdomain: subdominio },
+            { nombre_instancia: nombre_instancia },
             { paymentIntentId: session.payment_intent },
             { subscriptionId: subscriptionId },
           ],
@@ -240,7 +243,7 @@ export async function POST(req) {
         if (!existingInstance) {
           instance = await Instance.create({
             userId: user._id,
-            subdomain: null,
+            nombre_instancia: null,
             status: "pending",
             wordpressInstanceId: null,
             priceId:
@@ -263,7 +266,7 @@ export async function POST(req) {
               },
               body: JSON.stringify({
                 instanceId: instance._id,
-                subdomain: subdominio,
+                nombre_instancia: nombre_instancia,
                 userId: user._id,
                 email: user.email,
                 customerId,
@@ -303,7 +306,7 @@ export async function POST(req) {
           if (user) {
             instance = await Instance.findOne({
               userId: user._id,
-              subdomain: subdominio,
+              nombre_instancia: nombre_instancia,
             }).sort({ createdAt: -1 });
           }
           const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
@@ -320,7 +323,7 @@ export async function POST(req) {
               email: user?.email || customerEmail,
               instanceId: instance?._id || null,
               wordpressInstanceId: instance?.wordpressInstanceId || null,
-              subdomain: instance?.subdomain || subdominio,
+              nombre_instancia: instance?.nombre_instancia || nombre_instancia,
               firstName: user?.firstName || firstName,
               lastName: user?.lastName || lastName,
               secondLastName: user?.secondLastName || secondLastName,
@@ -381,7 +384,7 @@ export async function POST(req) {
                 email: user?.email || null,
                 instanceId: instance._id,
                 wordpressInstanceId: instance.wordpressInstanceId || null,
-                subdomain: instance.subdomain,
+                nombre_instancia: instance.nombre_instancia || null,
                 firstName: user?.firstName || null,
                 lastName: user?.lastName || null,
                 secondLastName: user?.secondLastName || null,
@@ -445,12 +448,12 @@ export async function POST(req) {
           if (instances.length === 0) {
             try {
               console.log("[STRIPE WEBHOOK] Creando nueva instancia...");
-              const subdominio =
-                data?.custom_fields?.find((f) => f.key === "subdominio")?.text
-                  ?.value || "sin-subdominio";
+              const nombre_instancia =
+                data?.custom_fields?.find((f) => f.key === "nombre_instancia")
+                  ?.text?.value || "sin-nombre_instancia";
               const newInstance = await Instance.create({
                 userId: user?._id,
-                subdomain: null,
+                nombre_instancia: null,
                 status: "pending",
                 wordpressInstanceId: null,
                 priceId: data?.lines?.data?.[0]?.price?.id || null,
@@ -471,7 +474,7 @@ export async function POST(req) {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       instanceId: newInstance._id,
-                      subdomain: newInstance.subdomain,
+                      nombre_instancia: newInstance.nombre_instancia,
                       userId: user?._id,
                       email: user?.email,
                       customerId,
@@ -573,7 +576,7 @@ export async function POST(req) {
                 email: user?.email || null,
                 instanceId: instance._id,
                 wordpressInstanceId: instance.wordpressInstanceId || null,
-                subdomain: instance.subdomain,
+                nombre_instancia: instance.nombre_instancia || null,
                 firstName: user?.firstName || null,
                 lastName: user?.lastName || null,
                 secondLastName: user?.secondLastName || null,
@@ -677,30 +680,30 @@ export async function POST(req) {
       if (!existingInstance) {
         console.log("[STRIPE WEBHOOK] Creando nueva instancia...");
 
-        // Obtener el subdominio del invoice o metadata
-        let subdominio = null;
+        // Obtener el nombre de la instancia del invoice o metadata
+        let nombre_instancia = null;
 
-        // Intentar obtener el subdominio de los campos personalizados del invoice
+        // Intentar obtener el nombre de la instancia de los campos personalizados del invoice
         if (invoice.custom_fields) {
-          const subdominioField = invoice.custom_fields.find(
-            (f) => f.key === "subdominio"
+          const nombreField = invoice.custom_fields.find(
+            (f) => f.key === "nombre_instancia"
           );
-          if (subdominioField?.text?.value) {
-            subdominio = subdominioField.text.value
+          if (nombreField?.text?.value) {
+            nombre_instancia = nombreField.text.value
               .toLowerCase()
               .replace(/[^a-z0-9]/g, "");
           }
         }
 
         // Si no se encontró en los campos personalizados, intentar en metadata
-        if (!subdominio && invoice.metadata?.subdominio) {
-          subdominio = invoice.metadata.subdominio
+        if (!nombre_instancia && invoice.metadata?.nombre_instancia) {
+          nombre_instancia = invoice.metadata.nombre_instancia
             .toLowerCase()
             .replace(/[^a-z0-9]/g, "");
         }
 
-        // Si aún no hay subdominio, intentar obtenerlo del checkout session
-        if (!subdominio && paymentIntent.metadata?.checkout_session_id) {
+        // Si aún no hay nombre de instancia, intentar obtenerlo del checkout session
+        if (!nombre_instancia && paymentIntent.metadata?.checkout_session_id) {
           try {
             console.log(
               "[STRIPE WEBHOOK] Intentando obtener checkout session:",
@@ -710,11 +713,11 @@ export async function POST(req) {
               paymentIntent.metadata.checkout_session_id
             );
             if (session?.custom_fields) {
-              const subdominioField = session.custom_fields.find(
-                (f) => f.key === "subdominio"
+              const nombreField = session.custom_fields.find(
+                (f) => f.key === "nombre_instancia"
               );
-              if (subdominioField?.text?.value) {
-                subdominio = subdominioField.text.value
+              if (nombreField?.text?.value) {
+                nombre_instancia = nombreField.text.value
                   .toLowerCase()
                   .replace(/[^a-z0-9]/g, "");
               }
@@ -727,27 +730,30 @@ export async function POST(req) {
           }
         }
 
-        // Si aún no hay subdominio, generar uno basado en el email
-        if (!subdominio) {
-          subdominio = customerEmail
+        // Si aún no hay nombre de instancia, generar uno basado en el email
+        if (!nombre_instancia) {
+          nombre_instancia = customerEmail
             .split("@")[0]
             .toLowerCase()
             .replace(/[^a-z0-9]/g, "");
         }
 
-        console.log("[STRIPE WEBHOOK] Subdominio generado:", subdominio);
+        console.log(
+          "[STRIPE WEBHOOK] nombre_instancia generado:",
+          nombre_instancia
+        );
 
-        // Validar el formato del subdominio
-        if (!/^[a-z0-9]+$/.test(subdominio)) {
+        // Validar el formato del nombre de la instancia
+        if (!/^[a-z0-9]+$/.test(nombre_instancia)) {
           throw new Error(
-            "El subdominio solo puede contener letras minúsculas y números"
+            "El nombre de la instancia solo puede contener letras minúsculas y números"
           );
         }
 
         // Crear la nueva instancia
         const newInstance = await Instance.create({
           userId: user._id,
-          subdomain: null,
+          nombre_instancia: null,
           status: "pending",
           wordpressInstanceId: null,
           priceId: priceId || null,
@@ -768,7 +774,7 @@ export async function POST(req) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 instanceId: newInstance._id,
-                subdomain: newInstance.subdomain,
+                nombre_instancia: newInstance.nombre_instancia,
                 userId: user._id,
                 email: user.email,
                 customerId,

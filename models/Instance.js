@@ -7,7 +7,7 @@ const instanceSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    subdomain: {
+    nombre_instancia: {
       type: String,
       required: true,
       unique: true,
@@ -15,7 +15,7 @@ const instanceSchema = new mongoose.Schema(
       lowercase: true,
       match: [
         /^[a-z0-9]+$/,
-        "El subdominio solo puede contener letras minúsculas y números",
+        "El nombre de la instancia solo puede contener letras minúsculas y números",
       ],
     },
     status: {
@@ -98,7 +98,7 @@ const instanceSchema = new mongoose.Schema(
 );
 
 // Índice compuesto para búsquedas eficientes
-instanceSchema.index({ userId: 1, subdomain: 1 });
+instanceSchema.index({ userId: 1, nombre_instancia: 1 });
 instanceSchema.index({ subscriptionId: 1 });
 instanceSchema.index({ paymentIntentId: 1 });
 instanceSchema.index({ customerId: 1 });
