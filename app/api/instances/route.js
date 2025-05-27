@@ -20,13 +20,25 @@ export async function GET(req) {
         .map((id) => new mongoose.Types.ObjectId(id));
       instances = await Instance.find({ _id: { $in: ids } })
         .sort({ createdAt: -1 })
-        .populate("userId")
+        .populate({
+          path: "userId",
+          populate: {
+            path: "instances",
+            model: "Instance",
+          },
+        })
         .lean();
     } else if (userIdParam) {
       // Buscar por userId recibido por query
       instances = await Instance.find({ userId: userIdParam })
         .sort({ createdAt: -1 })
-        .populate("userId")
+        .populate({
+          path: "userId",
+          populate: {
+            path: "instances",
+            model: "Instance",
+          },
+        })
         .lean();
     } else {
       // Si no se pasa nada, devolver vacío

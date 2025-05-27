@@ -131,10 +131,11 @@ export default function Dashboard() {
               <h1 className="text-2xl font-bold text-gray-900">
                 ¡Hola, {session.user?.name || session.user?.email || "Muegano"}!
               </h1>
-              {/* DEBUG: Mostrar toda la info del usuario */}
+              {/* DEBUG: Mostrar toda la info del usuario 
               <pre className="bg-gray-100 text-xs p-2 rounded mt-2 text-left overflow-x-auto">
                 {JSON.stringify(session.user, null, 2)}
               </pre>
+              */}
               <p className="mt-1 text-sm text-gray-500">
                 Gestiona tus comunidades desde aquí
               </p>
