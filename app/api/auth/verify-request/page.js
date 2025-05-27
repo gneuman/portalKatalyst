@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { FaEnvelope } from "react-icons/fa";
 
-export default function VerifyRequest() {
+function VerifyRequestContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
 
@@ -67,5 +68,13 @@ export default function VerifyRequest() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyRequest() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <VerifyRequestContent />
+    </Suspense>
   );
 }
