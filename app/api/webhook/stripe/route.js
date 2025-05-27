@@ -139,7 +139,19 @@ export async function POST(req) {
             lastName,
             secondLastName,
             stripeCustomerId: customerId,
+            customerId: customerId,
+            subscriptionId: subscriptionId,
           });
+        } else {
+          // Actualizar usuario con toda la info relevante
+          user.name = `${firstName} ${lastName}`.trim();
+          user.firstName = firstName;
+          user.lastName = lastName;
+          user.secondLastName = secondLastName;
+          user.stripeCustomerId = customerId;
+          user.customerId = customerId;
+          user.subscriptionId = subscriptionId;
+          await user.save();
         }
 
         // Crear la instancia
@@ -147,6 +159,7 @@ export async function POST(req) {
           userId: user._id,
           subdomain,
           status: "pending",
+          wordpressInstanceId: null, // Se puede actualizar después
         });
 
         // Llamar al webhook de onboarding
@@ -167,6 +180,7 @@ export async function POST(req) {
                 firstName,
                 lastName,
                 secondLastName,
+                wordpressInstanceId: instance.wordpressInstanceId,
               }),
             });
 
@@ -187,20 +201,37 @@ export async function POST(req) {
         });
       }
 
-      // Notificar operaciones de suscripción
+      // Notificar operaciones de suscripción (incluye correo e id de instancia de WP)
       if (process.env.WEBHOOK_OPERATIONS) {
         try {
+          // Buscar la instancia más reciente del usuario
+          let instance = null;
+          if (user) {
+            instance = await Instance.findOne({
+              userId: user._id,
+              subdomain,
+            }).sort({ createdAt: -1 });
+          }
           const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              type: "subscription.created",
+              type: isFirstPayment
+                ? "subscription.created"
+                : "subscription.renewed",
               customerId,
               subscriptionId,
-              email: session.customer_email,
-              isFirstPayment,
+              email: user?.email || customerEmail,
+              instanceId: instance?._id || null,
+              wordpressInstanceId: instance?.wordpressInstanceId || null,
+              subdomain: instance?.subdomain || subdomain,
+              firstName: user?.firstName || firstName,
+              lastName: user?.lastName || lastName,
+              secondLastName: user?.secondLastName || secondLastName,
+              status: isFirstPayment ? "pending" : "active",
+              motivo: isFirstPayment ? "Primer pago" : "Pago recurrente",
             }),
           });
 
@@ -226,6 +257,7 @@ export async function POST(req) {
 
       if (user) {
         // Actualizar el estado de la instancia a suspendido
+        const instances = await Instance.find({ userId: user._id });
         await Instance.updateMany(
           { userId: user._id },
           { status: "suspended" }
@@ -234,24 +266,34 @@ export async function POST(req) {
         // Notificar operaciones de suscripción
         if (process.env.WEBHOOK_OPERATIONS) {
           try {
-            const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                type: "subscription.deleted",
-                customerId,
-                subscriptionId: subscription.id,
-                email: user.email,
-              }),
-            });
+            for (const instance of instances) {
+              const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  type: "subscription.deleted",
+                  customerId,
+                  subscriptionId: subscription.id,
+                  email: user.email,
+                  instanceId: instance._id,
+                  wordpressInstanceId: instance.wordpressInstanceId || null,
+                  subdomain: instance.subdomain,
+                  firstName: user.firstName,
+                  lastName: user.lastName,
+                  secondLastName: user.secondLastName,
+                  status: "suspended",
+                  motivo: "Cancelación de suscripción",
+                }),
+              });
 
-            if (!response.ok) {
-              console.error(
-                "Error al llamar al webhook de operaciones:",
-                await response.text()
-              );
+              if (!response.ok) {
+                console.error(
+                  "Error al llamar al webhook de operaciones:",
+                  await response.text()
+                );
+              }
             }
           } catch (error) {
             console.error("Error al llamar al webhook de operaciones:", error);
@@ -272,22 +314,49 @@ export async function POST(req) {
     ) {
       if (process.env.WEBHOOK_OPERATIONS) {
         try {
-          const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              type: event.type,
-              data: event.data.object,
-            }),
-          });
+          const data = event.data.object;
+          const customerId = data.customer;
+          const subscriptionId = data.subscription || data.id;
+          // Buscar usuario e instancia
+          const user = await User.findOne({ stripeCustomerId: customerId });
+          const instances = user
+            ? await Instance.find({ userId: user._id })
+            : [];
+          for (const instance of instances) {
+            const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                type: event.type,
+                customerId,
+                subscriptionId,
+                email: user?.email || null,
+                instanceId: instance._id,
+                wordpressInstanceId: instance.wordpressInstanceId || null,
+                subdomain: instance.subdomain,
+                firstName: user?.firstName || null,
+                lastName: user?.lastName || null,
+                secondLastName: user?.secondLastName || null,
+                status: instance.status,
+                motivo:
+                  event.type === "invoice.paid"
+                    ? "Pago recurrente exitoso"
+                    : event.type === "invoice.payment_failed"
+                    ? "Fallo de pago"
+                    : event.type === "customer.subscription.updated"
+                    ? "Actualización de suscripción"
+                    : "Evento de Stripe",
+              }),
+            });
 
-          if (!response.ok) {
-            console.error(
-              "Error al llamar al webhook de operaciones:",
-              await response.text()
-            );
+            if (!response.ok) {
+              console.error(
+                "Error al llamar al webhook de operaciones:",
+                await response.text()
+              );
+            }
           }
         } catch (error) {
           console.error("Error al llamar al webhook de operaciones:", error);

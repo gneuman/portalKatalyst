@@ -23,6 +23,11 @@ const instanceSchema = new mongoose.Schema(
       enum: ["pending", "active", "suspended"],
       default: "pending",
     },
+    wordpressInstanceId: {
+      type: String,
+      default: null,
+      description: "ID de la instancia de WordPress asociada (si existe)",
+    },
     createdAt: {
       type: Date,
       default: Date.now,
