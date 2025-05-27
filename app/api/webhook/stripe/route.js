@@ -108,9 +108,9 @@ export async function POST(req) {
         const { firstName, lastName, secondLastName } =
           processCardName(cardName);
 
-        // Mejorar la obtención del subdominio
+        // Obtención robusta del subdominio
         let subdominio = null;
-        // 1. Intentar obtener de custom_fields del checkout session
+        // 1. custom_fields del checkout session
         if (session.custom_fields) {
           const subdominioField = session.custom_fields.find(
             (field) => field.key === "subdominio"
@@ -120,12 +120,22 @@ export async function POST(req) {
               .toLowerCase()
               .replace(/[^a-z0-9]/g, "");
             console.log(
-              "[STRIPE WEBHOOK] Subdominio obtenido de custom_fields del checkout session:",
+              "[STRIPE WEBHOOK] Subdominio de custom_fields:",
               subdominio
             );
           }
         }
-        // 2. Si no está, buscar en metadata del PaymentIntent
+        // 2. metadata del checkout session
+        if (!subdominio && session.metadata?.subdominio) {
+          subdominio = session.metadata.subdominio
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "");
+          console.log(
+            "[STRIPE WEBHOOK] Subdominio de session.metadata:",
+            subdominio
+          );
+        }
+        // 3. metadata del PaymentIntent
         if (!subdominio && session.payment_intent) {
           try {
             const paymentIntent = await stripe.paymentIntents.retrieve(
@@ -136,7 +146,7 @@ export async function POST(req) {
                 .toLowerCase()
                 .replace(/[^a-z0-9]/g, "");
               console.log(
-                "[STRIPE WEBHOOK] Subdominio obtenido de metadata del PaymentIntent:",
+                "[STRIPE WEBHOOK] Subdominio de paymentIntent.metadata:",
                 subdominio
               );
             }
@@ -147,7 +157,7 @@ export async function POST(req) {
             );
           }
         }
-        // 3. Si no está, buscar en metadata del Invoice
+        // 4. metadata del Invoice
         if (!subdominio && session.invoice) {
           try {
             const invoice = await stripe.invoices.retrieve(session.invoice);
@@ -156,7 +166,7 @@ export async function POST(req) {
                 .toLowerCase()
                 .replace(/[^a-z0-9]/g, "");
               console.log(
-                "[STRIPE WEBHOOK] Subdominio obtenido de metadata del Invoice:",
+                "[STRIPE WEBHOOK] Subdominio de invoice.metadata:",
                 subdominio
               );
             }
@@ -164,15 +174,10 @@ export async function POST(req) {
             console.error("[STRIPE WEBHOOK] Error obteniendo Invoice:", err);
           }
         }
-        // 4. Si aún no hay subdominio, generar uno basado en el email (último recurso)
+        // 5. Si no existe, lanzar error y NO crear la instancia
         if (!subdominio) {
-          subdominio = customerEmail
-            .split("@")[0]
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "");
-          console.warn(
-            "[STRIPE WEBHOOK] Subdominio generado por defecto desde el email:",
-            subdominio
+          throw new Error(
+            "No se encontró el subdominio en los campos personalizados ni en el metadata de Stripe. No se puede crear la instancia."
           );
         }
 
