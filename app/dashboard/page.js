@@ -72,7 +72,7 @@ export default function Dashboard() {
   // Mostrar el botón solo si el usuario no tiene instancias en su array o si el array es undefined
   console.log("instances:", session?.user?.instances);
   const showBuyButton =
-    !session?.user?.instances || session?.user?.instances?.length === 0;
+    stats.total !== 0;
 
   if (status === "loading" || loading) {
     return (
