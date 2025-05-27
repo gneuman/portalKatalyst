@@ -109,20 +109,20 @@ export async function POST(req) {
           processCardName(cardName);
 
         // Lógica para el pago (onboarding o nueva instancia)
-        const dominio = session.custom_fields.find(
-          (field) => field.key === "dominio"
+        const subdominio = session.custom_fields.find(
+          (field) => field.key === "subdominio"
         )?.text.value;
 
-        if (!dominio) {
+        if (!subdominio) {
           throw new Error(
-            "No se encontró el dominio en los campos personalizados"
+            "No se encontró el subdominio en los campos personalizados"
           );
         }
 
-        // Validar el formato del dominio
-        if (!/^[a-z0-9]+$/.test(dominio)) {
+        // Validar el formato del subdominio
+        if (!/^[a-z0-9]+$/.test(subdominio)) {
           throw new Error(
-            "El dominio solo puede contener letras minúsculas y números"
+            "El subdominio solo puede contener letras minúsculas y números"
           );
         }
 
@@ -165,10 +165,10 @@ export async function POST(req) {
           await user.save();
         }
 
-        // Validar que no exista ya una instancia con el mismo dominio, paymentIntentId o subscriptionId
+        // Validar que no exista ya una instancia con el mismo subdominio, paymentIntentId o subscriptionId
         const existingInstance = await Instance.findOne({
           $or: [
-            { subdomain: dominio },
+            { subdomain: subdominio },
             { paymentIntentId: session.payment_intent },
             { subscriptionId: subscriptionId },
           ],
@@ -178,7 +178,7 @@ export async function POST(req) {
         if (!existingInstance) {
           instance = await Instance.create({
             userId: user._id,
-            subdomain: dominio,
+            subdomain: subdominio,
             status: "pending",
             wordpressInstanceId: null, // Se puede actualizar después
             priceId:
@@ -201,7 +201,7 @@ export async function POST(req) {
               },
               body: JSON.stringify({
                 instanceId: instance._id,
-                subdomain: dominio,
+                subdomain: subdominio,
                 userId: user._id,
                 email: user.email,
                 customerId,
@@ -241,7 +241,7 @@ export async function POST(req) {
           if (user) {
             instance = await Instance.findOne({
               userId: user._id,
-              subdomain: dominio,
+              subdomain: subdominio,
             }).sort({ createdAt: -1 });
           }
           const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
@@ -258,7 +258,7 @@ export async function POST(req) {
               email: user?.email || customerEmail,
               instanceId: instance?._id || null,
               wordpressInstanceId: instance?.wordpressInstanceId || null,
-              subdomain: instance?.subdomain || dominio,
+              subdomain: instance?.subdomain || subdominio,
               firstName: user?.firstName || firstName,
               lastName: user?.lastName || lastName,
               secondLastName: user?.secondLastName || secondLastName,
@@ -383,12 +383,12 @@ export async function POST(req) {
           if (instances.length === 0) {
             try {
               console.log("[STRIPE WEBHOOK] Creando nueva instancia...");
-              const dominio =
-                data?.custom_fields?.find((f) => f.key === "dominio")?.text
-                  ?.value || "sin-dominio";
+              const subdominio =
+                data?.custom_fields?.find((f) => f.key === "subdominio")?.text
+                  ?.value || "sin-subdominio";
               const newInstance = await Instance.create({
                 userId: user?._id,
-                subdomain: dominio,
+                subdomain: subdominio,
                 status: "pending",
                 wordpressInstanceId: null,
                 priceId: data?.lines?.data?.[0]?.price?.id || null,
@@ -615,30 +615,30 @@ export async function POST(req) {
       if (!existingInstance) {
         console.log("[STRIPE WEBHOOK] Creando nueva instancia...");
 
-        // Obtener el dominio del invoice o metadata
-        let dominio = null;
+        // Obtener el subdominio del invoice o metadata
+        let subdominio = null;
 
-        // Intentar obtener el dominio de los campos personalizados del invoice
+        // Intentar obtener el subdominio de los campos personalizados del invoice
         if (invoice.custom_fields) {
-          const dominioField = invoice.custom_fields.find(
-            (f) => f.key === "dominio"
+          const subdominioField = invoice.custom_fields.find(
+            (f) => f.key === "subdominio"
           );
-          if (dominioField?.text?.value) {
-            dominio = dominioField.text.value
+          if (subdominioField?.text?.value) {
+            subdominio = subdominioField.text.value
               .toLowerCase()
               .replace(/[^a-z0-9]/g, "");
           }
         }
 
         // Si no se encontró en los campos personalizados, intentar en metadata
-        if (!dominio && invoice.metadata?.dominio) {
-          dominio = invoice.metadata.dominio
+        if (!subdominio && invoice.metadata?.subdominio) {
+          subdominio = invoice.metadata.subdominio
             .toLowerCase()
             .replace(/[^a-z0-9]/g, "");
         }
 
-        // Si aún no hay dominio, intentar obtenerlo del checkout session
-        if (!dominio && paymentIntent.metadata?.checkout_session_id) {
+        // Si aún no hay subdominio, intentar obtenerlo del checkout session
+        if (!subdominio && paymentIntent.metadata?.checkout_session_id) {
           try {
             console.log(
               "[STRIPE WEBHOOK] Intentando obtener checkout session:",
@@ -648,11 +648,11 @@ export async function POST(req) {
               paymentIntent.metadata.checkout_session_id
             );
             if (session?.custom_fields) {
-              const dominioField = session.custom_fields.find(
-                (f) => f.key === "dominio"
+              const subdominioField = session.custom_fields.find(
+                (f) => f.key === "subdominio"
               );
-              if (dominioField?.text?.value) {
-                dominio = dominioField.text.value
+              if (subdominioField?.text?.value) {
+                subdominio = subdominioField.text.value
                   .toLowerCase()
                   .replace(/[^a-z0-9]/g, "");
               }
@@ -665,27 +665,27 @@ export async function POST(req) {
           }
         }
 
-        // Si aún no hay dominio, generar uno basado en el email
-        if (!dominio) {
-          dominio = customerEmail
+        // Si aún no hay subdominio, generar uno basado en el email
+        if (!subdominio) {
+          subdominio = customerEmail
             .split("@")[0]
             .toLowerCase()
             .replace(/[^a-z0-9]/g, "");
         }
 
-        console.log("[STRIPE WEBHOOK] Dominio generado:", dominio);
+        console.log("[STRIPE WEBHOOK] Subdominio generado:", subdominio);
 
-        // Validar el formato del dominio
-        if (!/^[a-z0-9]+$/.test(dominio)) {
+        // Validar el formato del subdominio
+        if (!/^[a-z0-9]+$/.test(subdominio)) {
           throw new Error(
-            "El dominio solo puede contener letras minúsculas y números"
+            "El subdominio solo puede contener letras minúsculas y números"
           );
         }
 
         // Crear la nueva instancia
         const newInstance = await Instance.create({
           userId: user._id,
-          subdomain: dominio,
+          subdomain: subdominio,
           status: "pending",
           wordpressInstanceId: null,
           priceId: priceId || null,

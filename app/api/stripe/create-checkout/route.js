@@ -41,17 +41,17 @@ export async function POST(req) {
       user,
       customFields: [
         {
-          key: "dominio",
+          key: "subdominio",
           label: {
             type: "custom",
-            custom: "Dominio (ejemplo: nocode.muegano.net)",
+            custom: "Subdominio (ejemplo: nocode.muegano.net)",
           },
           type: "text",
           optional: false,
         },
       ],
       metadata: {
-        dominio: body.dominio,
+        subdominio: body.subdominio,
       },
     });
 
