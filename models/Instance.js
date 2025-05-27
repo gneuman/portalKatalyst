@@ -9,7 +9,6 @@ const instanceSchema = new mongoose.Schema(
     },
     nombre_instancia: {
       type: String,
-      required: true,
       unique: true,
       trim: true,
       lowercase: true,
@@ -30,10 +29,9 @@ const instanceSchema = new mongoose.Schema(
     },
     priceId: {
       type: String,
-      required: true,
       validate: {
         validator: function (v) {
-          return v && v.startsWith("price_");
+          return !v || v.startsWith("price_");
         },
         message: 'El priceId debe comenzar con "price_"',
       },
@@ -63,10 +61,9 @@ const instanceSchema = new mongoose.Schema(
     },
     paymentIntentId: {
       type: String,
-      required: true,
       validate: {
         validator: function (v) {
-          return v && v.startsWith("pi_");
+          return !v || v.startsWith("pi_");
         },
         message: 'El paymentIntentId debe comenzar con "pi_"',
       },

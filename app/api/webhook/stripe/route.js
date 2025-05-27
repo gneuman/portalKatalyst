@@ -60,6 +60,13 @@ function processCardName(cardName) {
   };
 }
 
+// Función robusta para obtener custom_fields por key
+function getCustomField(session, key) {
+  if (!session.custom_fields) return null;
+  const field = session.custom_fields.find((f) => f.key === key);
+  return field?.text?.value || null;
+}
+
 // This is where we receive Stripe webhook events
 // It used to update the user data, send emails, etc...
 // By default, it'll store the user in the database
@@ -112,84 +119,16 @@ export async function POST(req) {
         const { firstName, lastName, secondLastName } =
           processCardName(cardName);
 
-        // Obtención robusta del nombre de la instancia
-        let nombre_instancia = null;
-        // 1. custom_fields del checkout session
-        if (session.custom_fields) {
-          const nombreField = session.custom_fields.find(
-            (field) => field.key === "nombre_instancia"
-          );
-          if (nombreField?.text?.value) {
-            nombre_instancia = nombreField.text.value
-              .toLowerCase()
-              .replace(/[^a-z0-9]/g, "");
-            console.log(
-              "[STRIPE WEBHOOK] nombre_instancia de custom_fields:",
-              nombre_instancia
-            );
-          }
-        }
-        // 2. metadata del checkout session
-        if (!nombre_instancia && session.metadata?.nombre_instancia) {
-          nombre_instancia = session.metadata.nombre_instancia
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "");
-          console.log(
-            "[STRIPE WEBHOOK] nombre_instancia de session.metadata:",
-            nombre_instancia
-          );
-        }
-        // 3. metadata del PaymentIntent
-        if (!nombre_instancia && session.payment_intent) {
-          try {
-            const paymentIntent = await stripe.paymentIntents.retrieve(
-              session.payment_intent
-            );
-            if (paymentIntent.metadata?.nombre_instancia) {
-              nombre_instancia = paymentIntent.metadata.nombre_instancia
-                .toLowerCase()
-                .replace(/[^a-z0-9]/g, "");
-              console.log(
-                "[STRIPE WEBHOOK] nombre_instancia de paymentIntent.metadata:",
-                nombre_instancia
-              );
-            }
-          } catch (err) {
-            console.error(
-              "[STRIPE WEBHOOK] Error obteniendo PaymentIntent:",
-              err
-            );
-          }
-        }
-        // 4. metadata del Invoice
-        if (!nombre_instancia && session.invoice) {
-          try {
-            const invoice = await stripe.invoices.retrieve(session.invoice);
-            if (invoice.metadata?.nombre_instancia) {
-              nombre_instancia = invoice.metadata.nombre_instancia
-                .toLowerCase()
-                .replace(/[^a-z0-9]/g, "");
-              console.log(
-                "[STRIPE WEBHOOK] nombre_instancia de invoice.metadata:",
-                nombre_instancia
-              );
-            }
-          } catch (err) {
-            console.error("[STRIPE WEBHOOK] Error obteniendo Invoice:", err);
-          }
-        }
-        // 5. Si no existe, lanzar error y NO crear la instancia
-        if (!nombre_instancia) {
-          throw new Error(
-            "No se encontró el nombre de la instancia en los campos personalizados ni en el metadata de Stripe. No se puede crear la instancia."
-          );
-        }
+        // Obtener los campos necesarios
+        const nombre_instancia = getCustomField(session, "nombre_instancia");
+        // Puedes agregar más campos si los necesitas:
+        // const otro_campo = getCustomField(session, "otro_campo");
 
-        // Validar el formato del nombre de la instancia
-        if (!/^[a-z0-9]+$/.test(nombre_instancia)) {
-          throw new Error(
-            "El nombre de la instancia solo puede contener letras minúsculas y números"
-          );
+        // Validar existencia antes de crear la instancia
+        if (!nombre_instancia) {
+          console.warn("No se recibió nombre_instancia en custom_fields");
+          // Puedes lanzar error, asignar null, o manejarlo como prefieras
+          // throw new Error("El campo nombre_instancia es obligatorio");
         }
 
         // Buscar o crear el usuario usando el email correcto
@@ -260,14 +199,12 @@ export async function POST(req) {
           isNewInstance = true;
         }
 
-        // Llamar al webhook de onboarding solo si es nueva instancia
+        // Enviar webhook de onboarding SOLO si es nueva instancia
         if (isNewInstance && process.env.WEBHOOK_ONBOARDING) {
           try {
             const response = await fetch(process.env.WEBHOOK_ONBOARDING, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 instanceId: instance._id,
                 nombre_instancia: nombre_instancia,
@@ -284,7 +221,6 @@ export async function POST(req) {
                 invoiceId: instance.invoiceId,
               }),
             });
-
             if (!response.ok) {
               console.error(
                 "Error al llamar al webhook de onboarding:",
@@ -296,60 +232,92 @@ export async function POST(req) {
           }
         }
 
+        // Webhook de operaciones para creación
+        if (process.env.WEBHOOK_OPERATIONS) {
+          try {
+            const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "subscription.created",
+                customerId,
+                subscriptionId,
+                email: user?.email || customerEmail,
+                instanceId: instance?._id || null,
+                wordpressInstanceId: instance?.wordpressInstanceId || null,
+                nombre_instancia:
+                  instance?.nombre_instancia || nombre_instancia,
+                firstName: user?.firstName || firstName,
+                lastName: user?.lastName || lastName,
+                secondLastName: user?.secondLastName || secondLastName,
+                status: "pending",
+                motivo: "Primer pago",
+              }),
+            });
+            if (!response.ok) {
+              console.error(
+                "Error al llamar al webhook de operaciones:",
+                await response.text()
+              );
+            }
+          } catch (error) {
+            console.error("Error al llamar al webhook de operaciones:", error);
+          }
+        }
+
         // Actualizar el arreglo 'instances' del usuario
         await User.findByIdAndUpdate(user._id, {
           $addToSet: { instances: instance._id },
         });
       }
 
-      // Notificar operaciones de suscripción (incluye correo e id de instancia de WP)
-      if (process.env.WEBHOOK_OPERATIONS) {
-        try {
-          // Buscar la instancia más reciente del usuario
-          let instance = null;
-          if (user) {
-            instance = await Instance.findOne({
-              userId: user._id,
-              nombre_instancia: nombre_instancia,
-            }).sort({ createdAt: -1 });
-          }
-          const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              type: isFirstPayment
-                ? "subscription.created"
-                : "subscription.renewed",
-              customerId,
-              subscriptionId,
-              email: user?.email || customerEmail,
-              instanceId: instance?._id || null,
-              wordpressInstanceId: instance?.wordpressInstanceId || null,
-              nombre_instancia: instance?.nombre_instancia || nombre_instancia,
-              firstName: user?.firstName || firstName,
-              lastName: user?.lastName || lastName,
-              secondLastName: user?.secondLastName || secondLastName,
-              status: isFirstPayment ? "pending" : "active",
-              motivo: isFirstPayment ? "Primer pago" : "Pago recurrente",
-            }),
-          });
-
-          if (!response.ok) {
-            console.error(
-              "Error al llamar al webhook de operaciones:",
-              await response.text()
-            );
-          }
-        } catch (error) {
-          console.error("Error al llamar al webhook de operaciones:", error);
-        }
-      }
-
       return NextResponse.json({ message: "Webhook procesado correctamente" });
     }
 
+    // Actualización de suscripción
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object;
+      const customerId = subscription.customer;
+      const subscriptionId = subscription.id;
+      const user = await User.findOne({ stripeCustomerId: customerId });
+      const instance = user ? await Instance.findOne({ subscriptionId }) : null;
+      if (instance && process.env.WEBHOOK_OPERATIONS) {
+        try {
+          const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: event.type,
+              customerId,
+              subscriptionId,
+              email: user?.email || null,
+              instanceId: instance._id,
+              wordpressInstanceId: instance.wordpressInstanceId || null,
+              nombre_instancia: instance.nombre_instancia,
+              firstName: user?.firstName || null,
+              lastName: user?.lastName || null,
+              secondLastName: user?.secondLastName || null,
+              status: subscription.status === "active" ? "active" : "pending",
+              motivo: "Actualización de suscripción",
+            }),
+          });
+          if (!response.ok) {
+            console.error(
+              "[STRIPE WEBHOOK] Error enviando webhook de operaciones (updated):",
+              await response.text()
+            );
+          }
+        } catch (err) {
+          console.error(
+            "[STRIPE WEBHOOK] Error enviando webhook de operaciones (updated):",
+            err
+          );
+        }
+      }
+      return NextResponse.json({ message: "Actualización procesada" });
+    }
+
+    // Cancelación de suscripción
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object;
       const customerId = subscription.customer;
@@ -362,22 +330,7 @@ export async function POST(req) {
             status: "suspended",
             updatedAt: new Date(),
           });
-          console.log(
-            "[STRIPE WEBHOOK] Instancia actualizada (suspended):",
-            instance._id
-          );
-        } catch (err) {
-          console.error(
-            "[STRIPE WEBHOOK] Error actualizando instancia (suspended):",
-            err
-          );
-        }
-        // Webhook de operaciones
-        if (process.env.WEBHOOK_OPERATIONS) {
-          try {
-            console.log(
-              "[STRIPE WEBHOOK] Enviando webhook de operaciones (suspended)..."
-            );
+          if (process.env.WEBHOOK_OPERATIONS) {
             const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -388,7 +341,7 @@ export async function POST(req) {
                 email: user?.email || null,
                 instanceId: instance._id,
                 wordpressInstanceId: instance.wordpressInstanceId || null,
-                nombre_instancia: instance.nombre_instancia || null,
+                nombre_instancia: instance.nombre_instancia,
                 firstName: user?.firstName || null,
                 lastName: user?.lastName || null,
                 secondLastName: user?.secondLastName || null,
@@ -401,147 +354,19 @@ export async function POST(req) {
                 "[STRIPE WEBHOOK] Error enviando webhook de operaciones (suspended):",
                 await response.text()
               );
-            } else {
-              console.log(
-                "[STRIPE WEBHOOK] Webhook de operaciones enviado (suspended)"
-              );
             }
-          } catch (err) {
-            console.error(
-              "[STRIPE WEBHOOK] Error enviando webhook de operaciones (suspended):",
-              err
-            );
           }
+        } catch (err) {
+          console.error(
+            "[STRIPE WEBHOOK] Error actualizando instancia (suspended):",
+            err
+          );
         }
       }
       return NextResponse.json({ message: "Cancelación procesada" });
     }
 
-    // Otros eventos de suscripción que podrían ser relevantes
-    if (
-      [
-        "invoice.paid",
-        "invoice.payment_failed",
-        "customer.subscription.updated",
-      ].includes(event.type)
-    ) {
-      if (process.env.WEBHOOK_OPERATIONS) {
-        try {
-          const data = event.data.object;
-          const customerId = data.customer;
-          const subscriptionId = data.subscription || data.id;
-          let user = null;
-          try {
-            user = await User.findOne({ stripeCustomerId: customerId });
-            if (!user) {
-              console.log(
-                "[STRIPE WEBHOOK] Usuario no encontrado, creando usuario..."
-              );
-              // Aquí podrías crear el usuario si lo deseas
-            } else {
-              console.log("[STRIPE WEBHOOK] Usuario encontrado:", user.email);
-            }
-          } catch (err) {
-            console.error(
-              "[STRIPE WEBHOOK] Error buscando/creando usuario:",
-              err
-            );
-          }
-          let instances = user ? await Instance.find({ subscriptionId }) : [];
-          // Si no existe la instancia, crearla y mandar onboarding
-          if (instances.length === 0) {
-            try {
-              console.log("[STRIPE WEBHOOK] Creando nueva instancia...");
-              const nombre_instancia =
-                data?.custom_fields?.find((f) => f.key === "nombre_instancia")
-                  ?.text?.value || "sin-nombre_instancia";
-              const newInstance = await Instance.create({
-                userId: user?._id,
-                nombre_instancia: null,
-                status: "pending",
-                wordpressInstanceId: null,
-                priceId: data?.lines?.data?.[0]?.price?.id || null,
-                subscriptionId: subscriptionId || null,
-                customerId: customerId || null,
-                paymentIntentId: data.payment_intent || null,
-                invoiceId: data.id || null,
-              });
-              console.log("[STRIPE WEBHOOK] Instancia creada:", newInstance);
-              // Webhook de onboarding
-              if (process.env.WEBHOOK_ONBOARDING) {
-                try {
-                  console.log(
-                    "[STRIPE WEBHOOK] Enviando webhook de onboarding..."
-                  );
-                  const resp = await fetch(process.env.WEBHOOK_ONBOARDING, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      instanceId: newInstance._id,
-                      nombre_instancia: newInstance.nombre_instancia,
-                      userId: user?._id,
-                      email: user?.email,
-                      customerId,
-                      subscriptionId,
-                      firstName: user?.firstName,
-                      lastName: user?.lastName,
-                      secondLastName: user?.secondLastName,
-                      wordpressInstanceId: newInstance.wordpressInstanceId,
-                      priceId: newInstance.priceId,
-                      paymentIntentId: newInstance.paymentIntentId,
-                      invoiceId: newInstance.invoiceId,
-                    }),
-                  });
-                  if (!resp.ok) {
-                    console.error(
-                      "[STRIPE WEBHOOK] Error enviando webhook de onboarding:",
-                      await resp.text()
-                    );
-                  } else {
-                    console.log(
-                      "[STRIPE WEBHOOK] Webhook de onboarding enviado"
-                    );
-                  }
-                } catch (err) {
-                  console.error(
-                    "[STRIPE WEBHOOK] Error enviando webhook de onboarding:",
-                    err
-                  );
-                }
-              }
-              instances = [newInstance];
-            } catch (err) {
-              console.error(
-                "[STRIPE WEBHOOK] Error creando instancia desde Stripe webhook:",
-                err
-              );
-            }
-          } else {
-            // Si existe, solo actualizar la fecha
-            for (const instance of instances) {
-              try {
-                await Instance.findByIdAndUpdate(instance._id, {
-                  updatedAt: new Date(),
-                });
-                console.log(
-                  "[STRIPE WEBHOOK] Instancia actualizada (fecha):",
-                  instance._id
-                );
-              } catch (err) {
-                console.error(
-                  "[STRIPE WEBHOOK] Error actualizando instancia:",
-                  err
-                );
-              }
-            }
-          }
-          return NextResponse.json({ message: "Pago procesado" });
-        } catch (error) {
-          console.error("Error al llamar al webhook de operaciones:", error);
-        }
-      }
-    }
-
+    // Fallo de pago
     if (event.type === "invoice.payment_failed") {
       const data = event.data.object;
       const customerId = data.customer;
@@ -554,22 +379,7 @@ export async function POST(req) {
             status: "pending",
             updatedAt: new Date(),
           });
-          console.log(
-            "[STRIPE WEBHOOK] Instancia actualizada (pending):",
-            instance._id
-          );
-        } catch (err) {
-          console.error(
-            "[STRIPE WEBHOOK] Error actualizando instancia (pending):",
-            err
-          );
-        }
-        // Webhook de operaciones
-        if (process.env.WEBHOOK_OPERATIONS) {
-          try {
-            console.log(
-              "[STRIPE WEBHOOK] Enviando webhook de operaciones (pending)..."
-            );
+          if (process.env.WEBHOOK_OPERATIONS) {
             const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -580,7 +390,7 @@ export async function POST(req) {
                 email: user?.email || null,
                 instanceId: instance._id,
                 wordpressInstanceId: instance.wordpressInstanceId || null,
-                nombre_instancia: instance.nombre_instancia || null,
+                nombre_instancia: instance.nombre_instancia,
                 firstName: user?.firstName || null,
                 lastName: user?.lastName || null,
                 secondLastName: user?.secondLastName || null,
@@ -593,235 +403,16 @@ export async function POST(req) {
                 "[STRIPE WEBHOOK] Error enviando webhook de operaciones (pending):",
                 await response.text()
               );
-            } else {
-              console.log(
-                "[STRIPE WEBHOOK] Webhook de operaciones enviado (pending)"
-              );
             }
-          } catch (err) {
-            console.error(
-              "[STRIPE WEBHOOK] Error enviando webhook de operaciones (pending):",
-              err
-            );
           }
+        } catch (err) {
+          console.error(
+            "[STRIPE WEBHOOK] Error actualizando instancia (pending):",
+            err
+          );
         }
       }
       return NextResponse.json({ message: "Fallo de pago procesado" });
-    }
-
-    if (event.type === "payment_intent.succeeded") {
-      const paymentIntent = event.data.object;
-      const customerId = paymentIntent.customer;
-      const invoiceId = paymentIntent.invoice;
-      const paymentIntentId = paymentIntent.id;
-
-      console.log("[STRIPE WEBHOOK] Procesando payment_intent.succeeded");
-
-      // Obtener el invoice para obtener más información
-      const invoice = await stripe.invoices.retrieve(invoiceId);
-      const subscriptionId = invoice.subscription;
-      const priceId = invoice.lines?.data?.[0]?.price?.id;
-
-      console.log("[STRIPE WEBHOOK] PriceId del invoice:", priceId);
-      console.log(
-        "[STRIPE WEBHOOK] Invoice completo:",
-        JSON.stringify(invoice, null, 2)
-      );
-
-      // Obtener el customer para obtener el email y nombre
-      const customer = await stripe.customers.retrieve(customerId);
-      const customerEmail = customer.email;
-      const cardName = customer.name;
-
-      // Procesar el nombre de la tarjeta
-      const { firstName, lastName, secondLastName } = processCardName(cardName);
-
-      // Buscar o crear el usuario
-      let user = await User.findOne({ email: customerEmail });
-      if (!user) {
-        console.log("[STRIPE WEBHOOK] Creando nuevo usuario...");
-        console.log("[STRIPE WEBHOOK] Datos del usuario a crear:", {
-          email: customerEmail,
-          name: `${firstName} ${lastName}`.trim(),
-          firstName,
-          lastName,
-          secondLastName,
-          stripeCustomerId: customerId,
-          customerId: customerId,
-          subscriptionId: subscriptionId,
-          priceId: priceId,
-        });
-        user = await User.create({
-          email: customerEmail,
-          name: `${firstName} ${lastName}`.trim(),
-          firstName,
-          lastName,
-          secondLastName,
-          stripeCustomerId: customerId,
-          customerId: customerId,
-          subscriptionId: subscriptionId,
-          priceId: priceId,
-        });
-      } else {
-        console.log("[STRIPE WEBHOOK] Usuario encontrado:", user.email);
-        // Actualizar información del usuario
-        user.name = `${firstName} ${lastName}`.trim();
-        user.firstName = firstName;
-        user.lastName = lastName;
-        user.secondLastName = secondLastName;
-        user.stripeCustomerId = customerId;
-        user.customerId = customerId;
-        user.subscriptionId = subscriptionId;
-        user.priceId = priceId;
-        await user.save();
-      }
-
-      // Verificar si ya existe una instancia con este paymentIntentId o subscriptionId
-      const existingInstance = await Instance.findOne({
-        $or: [{ paymentIntentId }, { subscriptionId }],
-      });
-
-      if (!existingInstance) {
-        console.log("[STRIPE WEBHOOK] Creando nueva instancia...");
-
-        // Obtener el nombre de la instancia del invoice o metadata
-        let nombre_instancia = null;
-
-        // Intentar obtener el nombre de la instancia de los campos personalizados del invoice
-        if (invoice.custom_fields) {
-          const nombreField = invoice.custom_fields.find(
-            (f) => f.key === "nombre_instancia"
-          );
-          if (nombreField?.text?.value) {
-            nombre_instancia = nombreField.text.value
-              .toLowerCase()
-              .replace(/[^a-z0-9]/g, "");
-          }
-        }
-
-        // Si no se encontró en los campos personalizados, intentar en metadata
-        if (!nombre_instancia && invoice.metadata?.nombre_instancia) {
-          nombre_instancia = invoice.metadata.nombre_instancia
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "");
-        }
-
-        // Si aún no hay nombre de instancia, intentar obtenerlo del checkout session
-        if (!nombre_instancia && paymentIntent.metadata?.checkout_session_id) {
-          try {
-            console.log(
-              "[STRIPE WEBHOOK] Intentando obtener checkout session:",
-              paymentIntent.metadata.checkout_session_id
-            );
-            const session = await stripe.checkout.sessions.retrieve(
-              paymentIntent.metadata.checkout_session_id
-            );
-            if (session?.custom_fields) {
-              const nombreField = session.custom_fields.find(
-                (f) => f.key === "nombre_instancia"
-              );
-              if (nombreField?.text?.value) {
-                nombre_instancia = nombreField.text.value
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]/g, "");
-              }
-            }
-          } catch (err) {
-            console.error(
-              "[STRIPE WEBHOOK] Error obteniendo checkout session:",
-              err
-            );
-          }
-        }
-
-        // Si aún no hay nombre de instancia, generar uno basado en el email
-        if (!nombre_instancia) {
-          nombre_instancia = customerEmail
-            .split("@")[0]
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "");
-        }
-
-        console.log(
-          "[STRIPE WEBHOOK] nombre_instancia generado:",
-          nombre_instancia
-        );
-
-        // Validar el formato del nombre de la instancia
-        if (!/^[a-z0-9]+$/.test(nombre_instancia)) {
-          throw new Error(
-            "El nombre de la instancia solo puede contener letras minúsculas y números"
-          );
-        }
-
-        // Crear la nueva instancia
-        const newInstance = await Instance.create({
-          userId: user._id,
-          nombre_instancia: null,
-          status: "pending",
-          wordpressInstanceId: null,
-          priceId: priceId || null,
-          subscriptionId: subscriptionId || null,
-          customerId: customerId || null,
-          paymentIntentId: paymentIntentId || null,
-          invoiceId: invoiceId || null,
-        });
-
-        console.log("[STRIPE WEBHOOK] Instancia creada:", newInstance);
-
-        // Webhook de onboarding
-        if (process.env.WEBHOOK_ONBOARDING) {
-          try {
-            console.log("[STRIPE WEBHOOK] Enviando webhook de onboarding...");
-            const resp = await fetch(process.env.WEBHOOK_ONBOARDING, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                instanceId: newInstance._id,
-                nombre_instancia: newInstance.nombre_instancia,
-                userId: user._id,
-                email: user.email,
-                customerId,
-                subscriptionId,
-                firstName,
-                lastName,
-                secondLastName,
-                wordpressInstanceId: newInstance.wordpressInstanceId,
-                priceId: newInstance.priceId,
-                paymentIntentId: newInstance.paymentIntentId,
-                invoiceId: newInstance.invoiceId,
-              }),
-            });
-            if (!resp.ok) {
-              console.error(
-                "[STRIPE WEBHOOK] Error enviando webhook de onboarding:",
-                await resp.text()
-              );
-            } else {
-              console.log("[STRIPE WEBHOOK] Webhook de onboarding enviado");
-            }
-          } catch (err) {
-            console.error(
-              "[STRIPE WEBHOOK] Error enviando webhook de onboarding:",
-              err
-            );
-          }
-        }
-
-        // Actualizar el arreglo 'instances' del usuario
-        await User.findByIdAndUpdate(user._id, {
-          $addToSet: { instances: newInstance._id },
-        });
-      } else {
-        console.log(
-          "[STRIPE WEBHOOK] Instancia ya existe:",
-          existingInstance._id
-        );
-      }
-
-      return NextResponse.json({
-        message: "Payment intent procesado correctamente",
-      });
     }
 
     return NextResponse.json({ message: "Webhook recibido" });
