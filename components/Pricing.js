@@ -26,16 +26,26 @@ const Pricing = () => {
           </h2>
         </div>
 
-        {/* Select para elegir mensual o anual */}
+        {/* Switch para elegir mensual o anual */}
         <div className="flex justify-center mb-8">
-          <select
-            className="select select-bordered text-lg"
-            value={selectedInterval}
-            onChange={(e) => setSelectedInterval(e.target.value)}
-          >
-            <option value="month">Mensual</option>
-            <option value="year">Anual</option>
-          </select>
+          <label className="flex items-center gap-4 cursor-pointer select-none">
+            <span className={selectedInterval === "month" ? "font-bold" : ""}>
+              Mensual
+            </span>
+            <input
+              type="checkbox"
+              className="toggle toggle-primary"
+              checked={selectedInterval === "year"}
+              onChange={() =>
+                setSelectedInterval(
+                  selectedInterval === "month" ? "year" : "month"
+                )
+              }
+            />
+            <span className={selectedInterval === "year" ? "font-bold" : ""}>
+              Anual
+            </span>
+          </label>
         </div>
 
         <div className="relative flex justify-center flex-col lg:flex-row items-center lg:items-stretch gap-8">
