@@ -50,9 +50,7 @@ export async function POST(req) {
           optional: false,
         },
       ],
-      metadata: {
-        nombre_instancia: body.nombre_instancia,
-      },
+      metadata: {},
     });
 
     return NextResponse.json({ url: stripeSessionURL });
