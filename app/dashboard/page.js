@@ -241,7 +241,7 @@ export default function Dashboard() {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-900">
-                      {instance.subdomain}
+                      {instance.nombre_instancia || "-"}
                     </h3>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -278,19 +278,35 @@ export default function Dashboard() {
                   </div>
                   <div className="flex justify-end space-x-3">
                     <a
-                      href={`https://${instance.subdomain}.${config.domainName}`}
+                      href={`https://${instance.nombre_instancia || "-"}.${
+                        config.domainName
+                      }`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      disabled={instance.status === "pending"}
+                      style={
+                        instance.status === "pending"
+                          ? { pointerEvents: "none", opacity: 0.5 }
+                          : {}
+                      }
                     >
                       Visitar
                       <BsArrowRight className="ml-2 h-4 w-4" />
                     </a>
                     <a
-                      href={`https://${instance.subdomain}.${config.domainName}/admin`}
+                      href={`https://${instance.nombre_instancia || "-"}.${
+                        config.domainName
+                      }/admin`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      disabled={instance.status === "pending"}
+                      style={
+                        instance.status === "pending"
+                          ? { pointerEvents: "none", opacity: 0.5 }
+                          : {}
+                      }
                     >
                       Administrar
                     </a>
@@ -330,7 +346,7 @@ export default function Dashboard() {
                 {userInstances.map((instance) => (
                   <tr key={instance._id}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {instance.subdomain}
+                      {instance.nombre_instancia || "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {instance.status}
