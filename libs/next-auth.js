@@ -86,6 +86,8 @@ export const authOptions = {
               name: user.name || user.email.split("@")[0],
               image: user.image,
             });
+            // Redirigir a la página de nuevo usuario
+            return "/api/auth/new-user";
           }
 
           // Actualizar información del usuario si es necesario
@@ -104,6 +106,13 @@ export const authOptions = {
         console.error("Error en signIn callback:", error);
         return true;
       }
+    },
+    async redirect({ url, baseUrl }) {
+      // Permitir URLs relativas
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Permitir URLs de nuestro dominio
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
     },
     async session({ session, token, user }) {
       if (session?.user) {
@@ -164,6 +173,7 @@ export const authOptions = {
     signIn: "/api/auth/signin",
     verifyRequest: "/api/auth/verify-request",
     error: "/api/auth/error",
+    newUser: "/api/auth/new-user", // Página para nuevos usuarios
   },
   session: {
     strategy: "jwt",
