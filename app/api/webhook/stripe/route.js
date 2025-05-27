@@ -91,6 +91,10 @@ export async function POST(req) {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
+      console.log(
+        "[DEBUG] session recibida en webhook:",
+        JSON.stringify(session, null, 2)
+      );
       const customerId = session.customer;
       const subscriptionId = session.subscription;
 
