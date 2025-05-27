@@ -186,7 +186,7 @@ export async function POST(req) {
         if (!existingInstance) {
           instance = await Instance.create({
             userId: user._id,
-            nombre_instancia: null,
+            nombre_instancia: nombre_instancia || null,
             status: "pending",
             wordpressInstanceId: null,
             priceId:

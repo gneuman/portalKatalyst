@@ -214,12 +214,11 @@ export default function Dashboard() {
 
       {/* Instances Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* DEBUG: Mostrar toda la info de las instancias */}
+        <pre className="bg-gray-100 text-xs p-2 rounded mt-2 text-left overflow-x-auto">
+          {JSON.stringify(userInstances, null, 2)}
+        </pre>
 
-        {/* DEBUG: Mostrar toda la info del usuario */}
-              <pre className="bg-gray-100 text-xs p-2 rounded mt-2 text-left overflow-x-auto">
-                {JSON.stringify(userInstances, null, 2)}
-              </pre>
-              
         {userInstances.length === 0 ? (
           <div className="text-center py-12">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
