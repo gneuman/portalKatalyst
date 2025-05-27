@@ -554,6 +554,10 @@ export async function POST(req) {
       const priceId = invoice.lines?.data?.[0]?.price?.id;
 
       console.log("[STRIPE WEBHOOK] PriceId del invoice:", priceId);
+      console.log(
+        "[STRIPE WEBHOOK] Invoice completo:",
+        JSON.stringify(invoice, null, 2)
+      );
 
       // Obtener el customer para obtener el email y nombre
       const customer = await stripe.customers.retrieve(customerId);
@@ -610,10 +614,69 @@ export async function POST(req) {
 
       if (!existingInstance) {
         console.log("[STRIPE WEBHOOK] Creando nueva instancia...");
-        // Obtener el subdominio del invoice
-        const subdomain =
-          invoice.custom_fields?.find((f) => f.key === "subdominio")?.text
-            ?.value || "sin-subdominio";
+
+        // Obtener el subdominio del invoice o metadata
+        let subdomain = null;
+
+        // Intentar obtener el subdominio de los campos personalizados del invoice
+        if (invoice.custom_fields) {
+          const subdomainField = invoice.custom_fields.find(
+            (f) => f.key === "subdominio"
+          );
+          if (subdomainField?.text?.value) {
+            subdomain = subdomainField.text.value
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, "");
+          }
+        }
+
+        // Si no se encontró en los campos personalizados, intentar en metadata
+        if (!subdomain && invoice.metadata?.subdominio) {
+          subdomain = invoice.metadata.subdominio
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "");
+        }
+
+        // Si aún no hay subdominio, intentar obtenerlo del checkout session
+        if (!subdomain) {
+          try {
+            const session = await stripe.checkout.sessions.retrieve(
+              paymentIntent.metadata?.checkout_session_id
+            );
+            if (session?.custom_fields) {
+              const subdomainField = session.custom_fields.find(
+                (f) => f.key === "subdominio"
+              );
+              if (subdomainField?.text?.value) {
+                subdomain = subdomainField.text.value
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, "");
+              }
+            }
+          } catch (err) {
+            console.error(
+              "[STRIPE WEBHOOK] Error obteniendo checkout session:",
+              err
+            );
+          }
+        }
+
+        // Si aún no hay subdominio, generar uno basado en el email
+        if (!subdomain) {
+          subdomain = customerEmail
+            .split("@")[0]
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "");
+        }
+
+        console.log("[STRIPE WEBHOOK] Subdominio generado:", subdomain);
+
+        // Validar el formato del subdominio
+        if (!/^[a-z0-9]+$/.test(subdomain)) {
+          throw new Error(
+            "El subdominio solo puede contener letras minúsculas y números"
+          );
+        }
 
         // Crear la nueva instancia
         const newInstance = await Instance.create({
@@ -621,7 +684,7 @@ export async function POST(req) {
           subdomain,
           status: "active",
           wordpressInstanceId: null,
-          priceId: invoice.lines?.data?.[0]?.price?.id || null,
+          priceId: priceId || null,
           subscriptionId: subscriptionId || null,
           customerId: customerId || null,
           paymentIntentId: paymentIntentId || null,
