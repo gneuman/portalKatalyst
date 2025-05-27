@@ -37,6 +37,7 @@ export default function Dashboard() {
         `/api/instances?ids=${instanceIds.join(",")}`
       );
       const data = await response.json();
+      console.log("Instancias obtenidas para el usuario:", data);
       setInstances(data);
     } catch (error) {
       console.error("Error fetching user instances:", error);

@@ -3,6 +3,7 @@ import { authOptions } from "@/libs/auth";
 import { NextResponse } from "next/server";
 import connectMongo from "@/libs/mongoose";
 import Instance from "@/models/Instance";
+import mongoose from "mongoose";
 
 export async function GET(req) {
   try {
@@ -14,9 +15,25 @@ export async function GET(req) {
 
     await connectMongo();
 
-    const instances = await Instance.find({ userId: session.user.id })
-      .sort({ createdAt: -1 })
-      .lean();
+    // Obtener los ids del query param
+    const { searchParams } = new URL(req.url);
+    const idsParam = searchParams.get("ids");
+
+    let instances = [];
+    if (idsParam) {
+      // Buscar solo las instancias con los IDs proporcionados
+      const ids = idsParam
+        .split(",")
+        .map((id) => new mongoose.Types.ObjectId(id));
+      instances = await Instance.find({ _id: { $in: ids } })
+        .sort({ createdAt: -1 })
+        .lean();
+    } else {
+      // Fallback: buscar por userId (legacy)
+      instances = await Instance.find({ userId: session.user.id })
+        .sort({ createdAt: -1 })
+        .lean();
+    }
 
     return NextResponse.json(instances);
   } catch (error) {

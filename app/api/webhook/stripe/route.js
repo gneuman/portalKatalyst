@@ -96,6 +96,7 @@ export async function POST(req) {
         // Obtener el nombre de la tarjeta del cliente
         const customer = await stripe.customers.retrieve(customerId);
         const cardName = customer.name;
+        const customerEmail = customer.email || session.customer_email;
 
         // Procesar el nombre de la tarjeta
         const { firstName, lastName, secondLastName } =
@@ -125,11 +126,14 @@ export async function POST(req) {
           throw new Error("Este subdominio ya está en uso");
         }
 
-        // Buscar o crear el usuario
-        let user = await User.findOne({ email: session.customer_email });
+        // Buscar o crear el usuario usando el email correcto
+        if (!customerEmail) {
+          throw new Error("No se pudo obtener el correo del cliente de Stripe");
+        }
+        let user = await User.findOne({ email: customerEmail });
         if (!user) {
           user = await User.create({
-            email: session.customer_email,
+            email: customerEmail,
             name: `${firstName} ${lastName}`.trim(),
             firstName,
             lastName,
