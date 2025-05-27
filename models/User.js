@@ -47,15 +47,21 @@ const userSchema = mongoose.Schema(
     // Used in the Stripe webhook to identify the user in Stripe and later create Customer Portal or prefill user credit card details
     customerId: {
       type: String,
-      validate(value) {
-        return value.includes("cus_");
+      validate: {
+        validator: function (v) {
+          return !v || v.startsWith("cus_");
+        },
+        message: 'El customerId debe comenzar con "cus_"',
       },
     },
     // Used in the Stripe webhook. should match a plan in config.js file.
     priceId: {
       type: String,
-      validate(value) {
-        return value.includes("price_");
+      validate: {
+        validator: function (v) {
+          return !v || v.startsWith("price_");
+        },
+        message: 'El priceId debe comenzar con "price_"',
       },
     },
     // Used to determine if the user has access to the product—it's turn on/off by the Stripe webhook
@@ -66,6 +72,21 @@ const userSchema = mongoose.Schema(
     instances: [{ type: mongoose.Schema.Types.ObjectId, ref: "Instance" }],
     stripeCustomerId: {
       type: String,
+      validate: {
+        validator: function (v) {
+          return !v || v.startsWith("cus_");
+        },
+        message: 'El stripeCustomerId debe comenzar con "cus_"',
+      },
+    },
+    subscriptionId: {
+      type: String,
+      validate: {
+        validator: function (v) {
+          return !v || v.startsWith("sub_");
+        },
+        message: 'El subscriptionId debe comenzar con "sub_"',
+      },
     },
     lastLogin: {
       type: Date,
@@ -80,5 +101,13 @@ const userSchema = mongoose.Schema(
 
 // add plugin that converts mongoose to json
 userSchema.plugin(toJSON);
+
+// Middleware para actualizar lastLogin antes de cada save
+userSchema.pre("save", function (next) {
+  if (this.isModified("lastLogin")) {
+    this.lastLogin = new Date();
+  }
+  next();
+});
 
 export default mongoose.models.User || mongoose.model("User", userSchema);

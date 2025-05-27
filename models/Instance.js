@@ -30,27 +30,57 @@ const instanceSchema = new mongoose.Schema(
     },
     priceId: {
       type: String,
-      default: null,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return v && v.startsWith("price_");
+        },
+        message: 'El priceId debe comenzar con "price_"',
+      },
       description: "ID del precio de Stripe usado para esta instancia",
     },
     subscriptionId: {
       type: String,
-      default: null,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return v && v.startsWith("sub_");
+        },
+        message: 'El subscriptionId debe comenzar con "sub_"',
+      },
       description: "ID de la suscripción de Stripe asociada",
     },
     customerId: {
       type: String,
-      default: null,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return v && v.startsWith("cus_");
+        },
+        message: 'El customerId debe comenzar con "cus_"',
+      },
       description: "ID del cliente de Stripe",
     },
     paymentIntentId: {
       type: String,
-      default: null,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return v && v.startsWith("pi_");
+        },
+        message: 'El paymentIntentId debe comenzar con "pi_"',
+      },
       description: "ID del PaymentIntent de Stripe",
     },
     invoiceId: {
       type: String,
-      default: null,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return v && v.startsWith("in_");
+        },
+        message: 'El invoiceId debe comenzar con "in_"',
+      },
       description: "ID de la factura de Stripe",
     },
     createdAt: {
@@ -69,6 +99,15 @@ const instanceSchema = new mongoose.Schema(
 
 // Índice compuesto para búsquedas eficientes
 instanceSchema.index({ userId: 1, subdomain: 1 });
+instanceSchema.index({ subscriptionId: 1 });
+instanceSchema.index({ paymentIntentId: 1 });
+instanceSchema.index({ customerId: 1 });
+
+// Middleware para actualizar updatedAt antes de cada save
+instanceSchema.pre("save", function (next) {
+  this.updatedAt = new Date();
+  next();
+});
 
 const Instance =
   mongoose.models.Instance || mongoose.model("Instance", instanceSchema);
