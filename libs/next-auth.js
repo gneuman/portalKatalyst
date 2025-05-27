@@ -5,6 +5,9 @@ import config from "@/config";
 import connectMongo from "./mongo";
 import nodemailer from "nodemailer";
 
+// Configuración del adaptador de MongoDB
+const adapter = connectMongo ? MongoDBAdapter(connectMongo) : null;
+
 export const authOptions = {
   // Set any random key in .env.local
   secret: process.env.NEXTAUTH_SECRET,
@@ -40,6 +43,27 @@ export const authOptions = {
             from: config.resend.fromNoReply,
             // Personalización del correo de acceso
             async sendVerificationRequest({ identifier, url, provider }) {
+              console.log("Enviando correo de verificación a:", identifier);
+              console.log("URL de verificación:", url);
+
+              // Asegurarnos de que el token se guarde en la base de datos
+              if (adapter) {
+                try {
+                  const token = url.split("token=")[1].split("&")[0];
+                  console.log("Token generado:", token);
+
+                  // Guardar el token en la base de datos
+                  await adapter.createVerificationToken({
+                    identifier,
+                    token,
+                    expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 horas
+                  });
+                  console.log("Token guardado en la base de datos");
+                } catch (error) {
+                  console.error("Error al guardar el token:", error);
+                }
+              }
+
               const { host } = new URL(url);
               const transport = nodemailer.createTransport(provider.server);
               await transport.sendMail({
@@ -62,6 +86,7 @@ export const authOptions = {
                   </div>
                 `,
               });
+              console.log("Correo enviado exitosamente");
             },
           }),
         ]
@@ -70,22 +95,31 @@ export const authOptions = {
   // New users will be saved in Database (MongoDB Atlas). Each user (model) has some fields like name, email, image, etc..
   // Requires a MongoDB database. Set MONOGODB_URI env variable.
   // Learn more about the model type: https://next-auth.js.org/v3/adapters/models
-  ...(connectMongo && { adapter: MongoDBAdapter(connectMongo) }),
+  adapter,
 
   callbacks: {
     async session({ session, token }) {
+      console.log("Session callback - Token:", token);
+      console.log("Session callback - Session:", session);
+
       if (session?.user) {
         session.user.id = token.sub;
         // Buscar el usuario en la base de datos para obtener el campo 'instances'
         const UserModel = require("@/models/User").default;
-        let dbUser = null;
-        if (session?.user?.email) {
-          dbUser = await UserModel.findOne({
-            email: session.user.email,
-          }).lean();
+        try {
+          let dbUser = null;
+          if (session?.user?.email) {
+            console.log("Buscando usuario en DB:", session.user.email);
+            dbUser = await UserModel.findOne({
+              email: session.user.email,
+            }).lean();
+            console.log("Usuario encontrado en DB:", dbUser);
+          }
+          session.user.instances = dbUser?.instances || [];
+          session.user.hasAccess = dbUser?.hasAccess || false;
+        } catch (error) {
+          console.error("Error al buscar usuario en DB:", error);
         }
-        session.user.instances = dbUser?.instances || [];
-        session.user.hasAccess = dbUser?.hasAccess || false;
       }
       return session;
     },
@@ -99,6 +133,7 @@ export const authOptions = {
     strategy: "jwt",
     maxAge: 90 * 24 * 60 * 60, // 90 días
   },
+  debug: true, // Habilitar logs de debug
   theme: {
     brandColor: config.colors.main,
     // Add you own logo below. Recommended size is rectangle (i.e. 200x50px) and show your logo + name.
