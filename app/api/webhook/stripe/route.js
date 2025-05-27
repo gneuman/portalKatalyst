@@ -132,6 +132,17 @@ export async function POST(req) {
         }
         let user = await User.findOne({ email: customerEmail });
         if (!user) {
+          console.log("[STRIPE WEBHOOK] Creando nuevo usuario...");
+          console.log("[STRIPE WEBHOOK] Datos del usuario a crear:", {
+            email: customerEmail,
+            name: `${firstName} ${lastName}`.trim(),
+            firstName,
+            lastName,
+            secondLastName,
+            stripeCustomerId: customerId,
+            customerId: customerId,
+            subscriptionId: subscriptionId,
+          });
           user = await User.create({
             email: customerEmail,
             name: `${firstName} ${lastName}`.trim(),
@@ -553,6 +564,16 @@ export async function POST(req) {
       let user = await User.findOne({ email: customerEmail });
       if (!user) {
         console.log("[STRIPE WEBHOOK] Creando nuevo usuario...");
+        console.log("[STRIPE WEBHOOK] Datos del usuario a crear:", {
+          email: customerEmail,
+          name: `${firstName} ${lastName}`.trim(),
+          firstName,
+          lastName,
+          secondLastName,
+          stripeCustomerId: customerId,
+          customerId: customerId,
+          subscriptionId: subscriptionId,
+        });
         user = await User.create({
           email: customerEmail,
           name: `${firstName} ${lastName}`.trim(),
