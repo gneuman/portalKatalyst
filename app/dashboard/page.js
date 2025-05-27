@@ -18,31 +18,23 @@ export default function Dashboard() {
   const [showPricing, setShowPricing] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated") {
-      console.log("Usuario autenticado:", session?.user);
-      console.log("IDs de instancias del usuario:", session?.user?.instances);
-    }
-    if (status === "authenticated" && session?.user?.instances) {
-      const ids = session.user.instances.map((id) =>
-        typeof id === "string" ? id : id.$oid || id.toString()
-      );
-      fetchUserInstances(ids);
+    if (status === "authenticated" && session?.user?.id) {
+      // Buscar instancias por userId directamente
+      fetchUserInstancesByUserId(session.user.id);
     } else if (status === "authenticated") {
       setInstances([]);
       setLoading(false);
     }
   }, [status, session]);
 
-  const fetchUserInstances = async (instanceIds) => {
+  const fetchUserInstancesByUserId = async (userId) => {
     try {
-      if (!instanceIds || instanceIds.length === 0) {
+      if (!userId) {
         setInstances([]);
         setLoading(false);
         return;
       }
-      const response = await fetch(
-        `/api/instances?ids=${instanceIds.join(",")}`
-      );
+      const response = await fetch(`/api/instances?userId=${userId}`);
       const data = await response.json();
       console.log("Instancias obtenidas para el usuario:", data);
       setInstances(data);
@@ -56,7 +48,6 @@ export default function Dashboard() {
 
   // Aseguramos que instances sea un array
   const userInstances = Array.isArray(instances) ? instances : [];
-
 
   const stats = {
     total: userInstances.length,
