@@ -18,32 +18,36 @@ export default function Dashboard() {
   const [showPricing, setShowPricing] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated") {
-      fetchInstances();
+    if (status === "authenticated" && session?.user?.instances) {
+      fetchUserInstances(session.user.instances);
+    } else if (status === "authenticated") {
+      setInstances([]);
+      setLoading(false);
     }
-  }, [status]);
+  }, [status, session]);
 
-  const fetchInstances = async () => {
+  const fetchUserInstances = async (instanceIds) => {
     try {
-      const response = await fetch("/api/instances");
+      if (!instanceIds || instanceIds.length === 0) {
+        setInstances([]);
+        setLoading(false);
+        return;
+      }
+      const response = await fetch(
+        `/api/instances?ids=${instanceIds.join(",")}`
+      );
       const data = await response.json();
       setInstances(data);
     } catch (error) {
-      console.error("Error fetching instances:", error);
+      console.error("Error fetching user instances:", error);
+      setInstances([]);
     } finally {
       setLoading(false);
     }
   };
 
   // Aseguramos que instances sea un array
-  const safeInstances = Array.isArray(instances) ? instances : [];
-
-  // Filtrar instancias por usuario conectado (por email)
-  const userInstances = session
-    ? safeInstances.filter(
-        (i) => i.userId === session.user.id || i.email === session.user.email
-      )
-    : [];
+  const userInstances = Array.isArray(instances) ? instances : [];
 
   const stats = {
     total: userInstances.length,

@@ -176,6 +176,11 @@ export async function POST(req) {
             console.error("Error al llamar al webhook de onboarding:", error);
           }
         }
+
+        // Actualizar el arreglo 'instances' del usuario
+        await User.findByIdAndUpdate(user._id, {
+          $addToSet: { instances: instance._id },
+        });
       }
 
       // Notificar operaciones de suscripción
