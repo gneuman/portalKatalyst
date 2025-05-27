@@ -72,9 +72,16 @@ export const authOptions = {
   ...(connectMongo && { adapter: MongoDBAdapter(connectMongo) }),
 
   callbacks: {
-    session: async ({ session, token }) => {
+    session: async ({ session, token, user }) => {
+      // Buscar el usuario en la base de datos para obtener el campo 'instances'
+      const UserModel = require("@/models/User").default;
+      let dbUser = null;
+      if (session?.user?.email) {
+        dbUser = await UserModel.findOne({ email: session.user.email }).lean();
+      }
       if (session?.user) {
         session.user.id = token.sub;
+        session.user.instances = dbUser?.instances || [];
       }
       return session;
     },

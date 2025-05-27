@@ -18,8 +18,15 @@ export default function Dashboard() {
   const [showPricing, setShowPricing] = useState(false);
 
   useEffect(() => {
+    if (status === "authenticated") {
+      console.log("Usuario autenticado:", session?.user);
+      console.log("IDs de instancias del usuario:", session?.user?.instances);
+    }
     if (status === "authenticated" && session?.user?.instances) {
-      fetchUserInstances(session.user.instances);
+      const ids = session.user.instances.map((id) =>
+        typeof id === "string" ? id : id.$oid || id.toString()
+      );
+      fetchUserInstances(ids);
     } else if (status === "authenticated") {
       setInstances([]);
       setLoading(false);
@@ -49,6 +56,7 @@ export default function Dashboard() {
 
   // Aseguramos que instances sea un array
   const userInstances = Array.isArray(instances) ? instances : [];
+
 
   const stats = {
     total: userInstances.length,
