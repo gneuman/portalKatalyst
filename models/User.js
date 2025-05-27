@@ -8,11 +8,25 @@ const userSchema = mongoose.Schema(
       type: String,
       trim: true,
     },
+    firstName: {
+      type: String,
+      trim: true,
+    },
+    lastName: {
+      type: String,
+      trim: true,
+    },
+    secondLastName: {
+      type: String,
+      trim: true,
+    },
     email: {
       type: String,
       trim: true,
       lowercase: true,
       private: true,
+      required: true,
+      unique: true,
     },
     image: {
       type: String,
@@ -50,6 +64,13 @@ const userSchema = mongoose.Schema(
       default: false,
     },
     instances: [{ type: mongoose.Schema.Types.ObjectId, ref: "Instance" }],
+    stripeCustomerId: {
+      type: String,
+    },
+    lastLogin: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,

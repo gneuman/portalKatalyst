@@ -31,6 +31,7 @@ export const authOptions = {
             server: {
               host: "smtp.resend.com",
               port: 465,
+              secure: true,
               auth: {
                 user: "resend",
                 pass: process.env.RESEND_API_KEY,
@@ -73,7 +74,36 @@ export const authOptions = {
 
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
-      return true;
+      try {
+        if (user?.email) {
+          const UserModel = require("@/models/User").default;
+          let dbUser = await UserModel.findOne({ email: user.email });
+
+          if (!dbUser) {
+            // Crear nuevo usuario si no existe
+            dbUser = await UserModel.create({
+              email: user.email,
+              name: user.name || user.email.split("@")[0],
+              image: user.image,
+            });
+          }
+
+          // Actualizar información del usuario si es necesario
+          if (user.name && !dbUser.name) {
+            dbUser.name = user.name;
+            await dbUser.save();
+          }
+
+          if (user.image && !dbUser.image) {
+            dbUser.image = user.image;
+            await dbUser.save();
+          }
+        }
+        return true;
+      } catch (error) {
+        console.error("Error en signIn callback:", error);
+        return true;
+      }
     },
     async session({ session, token, user }) {
       if (session?.user) {
@@ -87,6 +117,7 @@ export const authOptions = {
           }).lean();
         }
         session.user.instances = dbUser?.instances || [];
+        session.user.hasAccess = dbUser?.hasAccess || false;
       }
       return session;
     },
@@ -97,6 +128,38 @@ export const authOptions = {
       return token;
     },
   },
+  events: {
+    async createUser({ user }) {
+      try {
+        const UserModel = require("@/models/User").default;
+        // Verificar si el usuario ya existe
+        const existingUser = await UserModel.findOne({ email: user.email });
+        if (!existingUser) {
+          // Crear el usuario en nuestra base de datos
+          await UserModel.create({
+            email: user.email,
+            name: user.name || user.email.split("@")[0],
+            image: user.image,
+          });
+        }
+      } catch (error) {
+        console.error("Error al crear usuario:", error);
+      }
+    },
+    async signIn({ user, account, profile, isNewUser }) {
+      try {
+        const UserModel = require("@/models/User").default;
+        // Actualizar la última vez que el usuario inició sesión
+        await UserModel.findOneAndUpdate(
+          { email: user.email },
+          { $set: { lastLogin: new Date() } },
+          { upsert: true }
+        );
+      } catch (error) {
+        console.error("Error al actualizar último login:", error);
+      }
+    },
+  },
   pages: {
     signIn: "/api/auth/signin",
     verifyRequest: "/api/auth/verify-request",
@@ -104,7 +167,8 @@ export const authOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 días
+    maxAge: 90 * 24 * 60 * 60, // 90 días
+    updateAge: 24 * 60 * 60, // 24 horas
   },
   theme: {
     brandColor: config.colors.main,

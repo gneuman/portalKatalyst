@@ -50,13 +50,7 @@ export default function SignIn() {
               Inicia sesión en tu cuenta
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              O{" "}
-              <a
-                href="#"
-                className="font-medium text-blue-600 hover:text-blue-500"
-              >
-                regístrate si aún no tienes una cuenta
-              </a>
+              Ingresa tu correo electrónico para recibir un enlace mágico
             </p>
           </div>
 
