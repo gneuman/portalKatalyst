@@ -71,8 +71,7 @@ export default function Dashboard() {
 
   // Mostrar el botón solo si el usuario no tiene instancias en su array o si el array es undefined
   console.log("instances:", session?.user?.instances);
-  const showBuyButton =
-    stats.total !== 0;
+  const showBuyButton = stats.total !== 0;
 
   if (status === "loading" || loading) {
     return (
@@ -130,7 +129,7 @@ export default function Dashboard() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                ¡Hola, {session.user.name || session.user.email}!
+                ¡Hola, {session.user.name || "Muegano"}!
               </h1>
               <p className="mt-1 text-sm text-gray-500">
                 Gestiona tus comunidades desde aquí
