@@ -12,6 +12,54 @@ import Instance from "@/models/Instance";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+// Función para procesar el nombre de la tarjeta
+function processCardName(cardName) {
+  if (!cardName) return { firstName: "", lastName: "", secondLastName: "" };
+
+  // Eliminar títulos y prefijos comunes
+  const cleanName = cardName
+    .replace(
+      /\b(MR\.|MRS\.|MS\.|DR\.|PROF\.|ING\.|LIC\.|MTRO\.|SR\.|SRA\.|SRTA\.)\b/gi,
+      ""
+    )
+    .trim();
+
+  // Dividir el nombre en partes
+  const parts = cleanName.split(/\s+/);
+
+  // Si solo hay una parte, asumimos que es el nombre
+  if (parts.length === 1) {
+    return {
+      firstName: parts[0],
+      lastName: "",
+      secondLastName: "",
+    };
+  }
+
+  // Si hay dos partes, asumimos nombre y apellido
+  if (parts.length === 2) {
+    return {
+      firstName: parts[0],
+      lastName: parts[1],
+      secondLastName: "",
+    };
+  }
+
+  // Para tres o más partes
+  // El último elemento es el segundo apellido
+  const secondLastName = parts.pop();
+  // El penúltimo elemento es el primer apellido
+  const lastName = parts.pop();
+  // Todo lo demás es el nombre (puede ser compuesto)
+  const firstName = parts.join(" ");
+
+  return {
+    firstName,
+    lastName,
+    secondLastName,
+  };
+}
+
 // This is where we receive Stripe webhook events
 // It used to update the user data, send emails, etc...
 // By default, it'll store the user in the database
@@ -45,6 +93,14 @@ export async function POST(req) {
         session.custom_fields && session.custom_fields.length > 0;
 
       if (isFirstPayment) {
+        // Obtener el nombre de la tarjeta del cliente
+        const customer = await stripe.customers.retrieve(customerId);
+        const cardName = customer.name;
+
+        // Procesar el nombre de la tarjeta
+        const { firstName, lastName, secondLastName } =
+          processCardName(cardName);
+
         // Lógica para el primer pago (onboarding)
         const subdomain = session.custom_fields.find(
           (field) => field.key === "subdominio"
@@ -72,12 +128,12 @@ export async function POST(req) {
         // Buscar o crear el usuario
         let user = await User.findOne({ email: session.customer_email });
         if (!user) {
-          const name =
-            session.customer_details.name ||
-            session.customer_email.split("@")[0];
           user = await User.create({
             email: session.customer_email,
-            name,
+            name: `${firstName} ${lastName}`.trim(),
+            firstName,
+            lastName,
+            secondLastName,
             stripeCustomerId: customerId,
           });
         }
@@ -104,6 +160,9 @@ export async function POST(req) {
                 email: user.email,
                 customerId,
                 subscriptionId,
+                firstName,
+                lastName,
+                secondLastName,
               }),
             });
 

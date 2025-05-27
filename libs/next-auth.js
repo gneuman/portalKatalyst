@@ -3,6 +3,7 @@ import EmailProvider from "next-auth/providers/email";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import config from "@/config";
 import connectMongo from "./mongo";
+import nodemailer from "nodemailer";
 
 export const authOptions = {
   // Set any random key in .env.local
@@ -36,6 +37,31 @@ export const authOptions = {
               },
             },
             from: config.resend.fromNoReply,
+            // Personalización del correo de acceso
+            async sendVerificationRequest({ identifier, url, provider }) {
+              const { host } = new URL(url);
+              const transport = nodemailer.createTransport(provider.server);
+              await transport.sendMail({
+                to: identifier,
+                from: provider.from,
+                subject: `Tu acceso a Muegano`,
+                text: `Accede a tu cuenta de Muegano\n\nHaz clic en el siguiente enlace para iniciar sesión:\n${url}\n\nSi no solicitaste este acceso, puedes ignorar este correo.`,
+                html: `
+                  <div style="background:#f9fafb;padding:40px 0;min-height:100vh;font-family:sans-serif;">
+                    <div style="max-width:480px;margin:40px auto;background:#fff;border-radius:12px;padding:32px 24px;box-shadow:0 2px 8px #0001;">
+                      <h2 style="text-align:center;color:#222;font-size:24px;margin-bottom:24px;">¡Bienvenido a <span style='color:#2563eb'>Muegano</span>!</h2>
+                      <p style="text-align:center;font-size:16px;color:#444;margin-bottom:32px;">Haz clic en el botón para acceder a tu cuenta:</p>
+                      <div style="text-align:center;margin-bottom:32px;">
+                        <a href="${url}" style="display:inline-block;padding:16px 32px;background:#2563eb;color:#fff;font-size:18px;font-weight:bold;border-radius:8px;text-decoration:none;">Acceder a Muegano</a>
+                      </div>
+                      <p style="text-align:center;font-size:14px;color:#888;">Si no solicitaste este acceso, puedes ignorar este correo.</p>
+                      <hr style="margin:32px 0;border:none;border-top:1px solid #eee;" />
+                      <p style="text-align:center;font-size:12px;color:#bbb;">&copy; ${new Date().getFullYear()} Muegano</p>
+                    </div>
+                  </div>
+                `,
+              });
+            },
           }),
         ]
       : []),
