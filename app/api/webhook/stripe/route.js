@@ -235,9 +235,9 @@ export async function POST(req) {
         if (!existingInstance) {
           instance = await Instance.create({
             userId: user._id,
-            subdomain: subdominio,
+            subdomain: null,
             status: "pending",
-            wordpressInstanceId: null, // Se puede actualizar después
+            wordpressInstanceId: null,
             priceId:
               session?.metadata?.priceId || session?.metadata?.price_id || null,
             subscriptionId: subscriptionId || null,
@@ -445,7 +445,7 @@ export async function POST(req) {
                   ?.value || "sin-subdominio";
               const newInstance = await Instance.create({
                 userId: user?._id,
-                subdomain: subdominio,
+                subdomain: null,
                 status: "pending",
                 wordpressInstanceId: null,
                 priceId: data?.lines?.data?.[0]?.price?.id || null,
@@ -742,7 +742,7 @@ export async function POST(req) {
         // Crear la nueva instancia
         const newInstance = await Instance.create({
           userId: user._id,
-          subdomain: subdominio,
+          subdomain: null,
           status: "pending",
           wordpressInstanceId: null,
           priceId: priceId || null,

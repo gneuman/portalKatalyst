@@ -52,6 +52,9 @@ export const createCheckout = async ({
     cancel_url: cancelUrl,
     custom_fields: customFields,
     metadata: metadata,
+    payment_intent_data: {
+      metadata: metadata,
+    },
     ...extraParams,
   });
 

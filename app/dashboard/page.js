@@ -129,7 +129,7 @@ export default function Dashboard() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                ¡Hola, {session.user.name || "Muegano"}!
+                ¡Hola, {session.user?.name || "Muegano"}!
               </h1>
               <p className="mt-1 text-sm text-gray-500">
                 Gestiona tus comunidades desde aquí
