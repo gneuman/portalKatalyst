@@ -7,22 +7,72 @@ import { useRef, useState } from "react";
 
 const faqList = [
   {
-    question: "What do I get exactly?",
-    answer: <div className="space-y-2 leading-relaxed">Loreum Ipseum</div>,
+    question: "¿Qué incluye cada plan?",
+    answer: (
+      <div className="space-y-2 leading-relaxed">
+        <p>Cada plan incluye:</p>
+        <ul className="list-disc list-inside">
+          <li>Miembros ilimitados</li>
+          <li>Foros ilimitados</li>
+          <li>Chat en vivo</li>
+          <li>Eventos virtuales</li>
+          <li>Analíticas avanzadas</li>
+          <li>Soporte prioritario</li>
+        </ul>
+        <p>El plan anual incluye soporte 24/7 y un 33% de descuento.</p>
+      </div>
+    ),
   },
   {
-    question: "Can I get a refund?",
+    question: "¿Puedo cambiar de plan en cualquier momento?",
     answer: (
       <p>
-        Yes! You can request a refund within 7 days of your purchase. Reach out
-        by email.
+        Sí, puedes cambiar entre el plan mensual y anual en cualquier momento.
+        Si cambias de mensual a anual, se te cobrará la diferencia prorrateada.
+        Si cambias de anual a mensual, el cambio se aplicará al finalizar tu
+        período anual.
       </p>
     ),
   },
   {
-    question: "I have another question",
+    question: "¿Cómo funciona el subdominio personalizado?",
     answer: (
-      <div className="space-y-2 leading-relaxed">Cool, contact us by email</div>
+      <div className="space-y-2 leading-relaxed">
+        <p>
+          Al crear tu comunidad, puedes elegir un subdominio personalizado
+          (ejemplo: tucomunidad.muegano.net). Este será el acceso principal a tu
+          comunidad.
+        </p>
+        <p>
+          El subdominio debe contener solo letras minúsculas y números, sin
+          espacios ni caracteres especiales.
+        </p>
+      </div>
+    ),
+  },
+  {
+    question: "¿Qué tipo de soporte ofrecen?",
+    answer: (
+      <div className="space-y-2 leading-relaxed">
+        <p>
+          Ofrecemos soporte por email y chat en vivo para todos los planes. El
+          plan anual incluye soporte prioritario 24/7.
+        </p>
+        <p>
+          También contamos con una extensa documentación y tutoriales para
+          ayudarte a configurar y gestionar tu comunidad.
+        </p>
+      </div>
+    ),
+  },
+  {
+    question: "¿Puedo exportar los datos de mi comunidad?",
+    answer: (
+      <p>
+        Sí, puedes exportar todos los datos de tu comunidad en cualquier
+        momento, incluyendo perfiles de miembros, contenido, y métricas. Los
+        datos se exportan en formatos estándar como CSV y JSON.
+      </p>
     ),
   },
 ];
@@ -94,7 +144,7 @@ const FAQ = () => {
         <div className="flex flex-col text-left basis-1/2">
           <p className="inline-block font-semibold text-primary mb-4">FAQ</p>
           <p className="sm:text-4xl text-3xl font-extrabold text-base-content">
-            Frequently Asked Questions
+            Preguntas Frecuentes
           </p>
         </div>
 

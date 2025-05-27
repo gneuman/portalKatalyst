@@ -9,6 +9,8 @@ export const createCheckout = async ({
   couponId,
   clientReferenceId,
   user,
+  customFields,
+  metadata,
 }) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -48,6 +50,8 @@ export const createCheckout = async ({
       : [],
     success_url: successUrl,
     cancel_url: cancelUrl,
+    custom_fields: customFields,
+    metadata: metadata,
     ...extraParams,
   });
 

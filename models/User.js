@@ -17,6 +17,19 @@ const userSchema = mongoose.Schema(
     image: {
       type: String,
     },
+    subdominio: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      validate: {
+        validator: function (v) {
+          return /^[a-z0-9]+$/.test(v);
+        },
+        message:
+          "El subdominio solo puede contener letras minúsculas y números",
+      },
+    },
     // Used in the Stripe webhook to identify the user in Stripe and later create Customer Portal or prefill user credit card details
     customerId: {
       type: String,

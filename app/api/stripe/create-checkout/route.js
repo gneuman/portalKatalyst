@@ -21,14 +21,6 @@ export async function POST(req) {
       { error: "Success and cancel URLs are required" },
       { status: 400 }
     );
-  } else if (!body.mode) {
-    return NextResponse.json(
-      {
-        error:
-          "Mode is required (either 'payment' for one-time payments or 'subscription' for recurring subscription)",
-      },
-      { status: 400 }
-    );
   }
 
   try {
@@ -38,19 +30,29 @@ export async function POST(req) {
 
     const user = await User.findById(session?.user?.id);
 
-    const { priceId, mode, successUrl, cancelUrl } = body;
+    const { priceId, successUrl, cancelUrl } = body;
 
     const stripeSessionURL = await createCheckout({
       priceId,
-      mode,
+      mode: "subscription",
       successUrl,
       cancelUrl,
-      // If user is logged in, it will pass the user ID to the Stripe Session so it can be retrieved in the webhook later
       clientReferenceId: user?._id?.toString(),
-      // If user is logged in, this will automatically prefill Checkout data like email and/or credit card for faster checkout
       user,
-      // If you send coupons from the frontend, you can pass it here
-      // couponId: body.couponId,
+      customFields: [
+        {
+          key: "subdominio",
+          label: {
+            type: "custom",
+            custom: "Subdominio (ejemplo: nocode.muegano.net)",
+          },
+          type: "text",
+          optional: false,
+        },
+      ],
+      metadata: {
+        subdominio: body.subdominio,
+      },
     });
 
     return NextResponse.json({ url: stripeSessionURL });

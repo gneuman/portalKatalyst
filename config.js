@@ -2,12 +2,12 @@ import themes from "daisyui/src/theming/themes";
 
 const config = {
   // REQUIRED
-  appName: "ShipFast",
+  appName: "Muegano",
   // REQUIRED: a short description of your app for SEO tags (can be overwritten)
   appDescription:
-    "The NextJS boilerplate with all you need to build your SaaS, AI tool, or any other web app.",
+    "La plataforma definitiva para crear y gestionar comunidades online. Conecta, colabora y crece con tu comunidad.",
   // REQUIRED (no https://, not trialing slash at the end, just the naked domain)
-  domainName: "shipfa.st",
+  domainName: "muegano.net",
   crisp: {
     // Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
     id: "",
@@ -21,23 +21,27 @@ const config = {
         // REQUIRED — we use this to find the plan in the webhook (for instance if you want to update the user's credits based on the plan)
         priceId:
           process.env.NODE_ENV === "development"
-            ? "price_1Niyy5AxyNprDp7iZIqEyD2h"
-            : "price_456",
+            ? "price_1RTNkUGK5CjHnrQWDM6IxlOX"
+            : "price_1RTNkUGK5CjHnrQWDM6IxlOX",
         //  REQUIRED - Name of the plan, displayed on the pricing page
-        name: "Starter",
+        name: "Plan Mensual",
         // A friendly description of the plan, displayed on the pricing page. Tip: explain why this plan and not others
-        description: "Perfect for small projects",
+        description: "Acceso completo a todas las funcionalidades",
         // The price you want to display, the one user will be charged on Stripe.
-        price: 79,
+        price: 3999,
         // If you have an anchor price (i.e. $29) that you want to display crossed out, put it here. Otherwise, leave it empty
-        priceAnchor: 99,
+        priceAnchor: 9999,
+        // Tipo de suscripción
+        interval: "month",
         features: [
           {
-            name: "NextJS boilerplate",
+            name: "Miembros ilimitados",
           },
-          { name: "User oauth" },
-          { name: "Database" },
-          { name: "Emails" },
+          { name: "Foros ilimitados" },
+          { name: "Chat en vivo" },
+          { name: "Eventos virtuales" },
+          { name: "Analíticas avanzadas" },
+          { name: "Soporte prioritario" },
         ],
       },
       {
@@ -45,38 +49,40 @@ const config = {
         isFeatured: true,
         priceId:
           process.env.NODE_ENV === "development"
-            ? "price_1O5KtcAxyNprDp7iftKnrrpw"
-            : "price_456",
-        name: "Advanced",
-        description: "You need more power",
-        price: 99,
-        priceAnchor: 149,
+            ? "price_1RTNkUGK5CjHnrQWDM6IxlOX"
+            : "price_1RTNkUGK5CjHnrQWDM6IxlOX",
+        name: "Plan Anual",
+        description: "Ahorra 2 meses al pagar por adelantado",
+        price: 9990,
+        priceAnchor: 14990,
+        // Tipo de suscripción
+        interval: "year",
         features: [
           {
-            name: "NextJS boilerplate",
+            name: "Miembros ilimitados",
           },
-          { name: "User oauth" },
-          { name: "Database" },
-          { name: "Emails" },
-          { name: "1 year of updates" },
-          { name: "24/7 support" },
+          { name: "Foros ilimitados" },
+          { name: "Chat en vivo" },
+          { name: "Eventos virtuales" },
+          { name: "Analíticas avanzadas" },
+          { name: "Soporte prioritario 24/7" },
         ],
       },
     ],
   },
   aws: {
     // If you use AWS S3/Cloudfront, put values in here
-    bucket: "bucket-name",
-    bucketUrl: `https://bucket-name.s3.amazonaws.com/`,
-    cdn: "https://cdn-id.cloudfront.net/",
+    bucket: "muegano-assets",
+    bucketUrl: `https://muegano-assets.s3.amazonaws.com/`,
+    cdn: "https://cdn.muegano.net/",
   },
   resend: {
     // REQUIRED — Email 'From' field to be used when sending magic login links
-    fromNoReply: `ShipFast <noreply@resend.shipfa.st>`,
+    fromNoReply: `Muegano <noreply@email.pildorasnocode.com>`,
     // REQUIRED — Email 'From' field to be used when sending other emails, like abandoned carts, updates etc..
-    fromAdmin: `Marc at ShipFast <marc@resend.shipfa.st>`,
+    fromAdmin: `Soporte Muegano <soporte@email.pildorasnocode.com>`,
     // Email shown to customer if need support. Leave empty if not needed => if empty, set up Crisp above, otherwise you won't be able to offer customer support."
-    supportEmail: "marc.louvion@gmail.com",
+    supportEmail: "soporte@muegano.net",
   },
   colors: {
     // REQUIRED — The DaisyUI theme to use (added to the main layout.js). Leave blank for default (light & dark mode). If you any other theme than light/dark, you need to add it in config.tailwind.js in daisyui.themes.
