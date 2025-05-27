@@ -72,6 +72,10 @@ export async function POST(req) {
     let event;
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      console.log(
+        "[STRIPE WEBHOOK] Evento recibido:",
+        JSON.stringify(event, null, 2)
+      );
     } catch (err) {
       console.error(`⚠️  Error de firma del webhook: ${err.message}`);
       return NextResponse.json(
@@ -353,6 +357,7 @@ export async function POST(req) {
                 paymentIntentId: data.payment_intent || null,
                 invoiceId: data.id || null,
               });
+              console.log("[STRIPE WEBHOOK] Instancia creada:", newInstance);
               // Webhook de onboarding
               if (process.env.WEBHOOK_ONBOARDING) {
                 await fetch(process.env.WEBHOOK_ONBOARDING, {
@@ -374,6 +379,7 @@ export async function POST(req) {
                     invoiceId: newInstance.invoiceId,
                   }),
                 });
+                console.log("[STRIPE WEBHOOK] Webhook de onboarding enviado");
               }
               instances = [newInstance];
             } catch (err) {
@@ -390,6 +396,7 @@ export async function POST(req) {
               await Instance.findByIdAndUpdate(instance._id, {
                 updatedAt: new Date(),
               });
+              console.log("[STRIPE WEBHOOK] Instancia actualizada (fecha):", instance._id);
             }
           }
 
@@ -400,6 +407,7 @@ export async function POST(req) {
                 status: "pending",
                 updatedAt: new Date(),
               });
+              console.log("[STRIPE WEBHOOK] Instancia actualizada (pending):", instance._id);
               // Webhook de operaciones
               const response = await fetch(process.env.WEBHOOK_OPERATIONS, {
                 method: "POST",
@@ -424,6 +432,8 @@ export async function POST(req) {
                   "Error al llamar al webhook de operaciones:",
                   await response.text()
                 );
+              } else {
+                console.log("[STRIPE WEBHOOK] Webhook de operaciones enviado (pending)");
               }
             }
           }
