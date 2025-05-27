@@ -131,7 +131,7 @@ export async function POST(req) {
           // throw new Error("El campo nombre_instancia es obligatorio");
         }
 
-        // Buscar o crear el usuario usando el email correcto
+        // Buscar el usuario usando el email correcto
         if (!customerEmail) {
           throw new Error("No se pudo obtener el correo del cliente de Stripe");
         }
@@ -146,8 +146,6 @@ export async function POST(req) {
             secondLastName,
             stripeCustomerId: customerId,
             customerId: customerId,
-            subscriptionId: subscriptionId,
-            nombre_instancia: nombre_instancia,
           });
           user = await User.create({
             email: customerEmail,
@@ -157,8 +155,6 @@ export async function POST(req) {
             secondLastName,
             stripeCustomerId: customerId,
             customerId: customerId,
-            subscriptionId: subscriptionId,
-            nombre_instancia: nombre_instancia,
           });
         } else {
           // Actualizar usuario con toda la info relevante
@@ -168,39 +164,35 @@ export async function POST(req) {
           user.secondLastName = secondLastName;
           user.stripeCustomerId = customerId;
           user.customerId = customerId;
-          user.subscriptionId = subscriptionId;
-          user.nombre_instancia = nombre_instancia;
           await user.save();
         }
 
-        // Validar que no exista ya una instancia con el mismo nombre_instancia, paymentIntentId o subscriptionId
-        const existingInstance = await Instance.findOne({
-          $or: [
-            { nombre_instancia: nombre_instancia },
-            { paymentIntentId: session.payment_intent },
-            { subscriptionId: subscriptionId },
-          ],
+        // Crear la instancia primero
+        const instance = await Instance.create({
+          userId: null, // Se actualizará después
+          nombre_instancia: nombre_instancia || null,
+          status: "pending",
+          wordpressInstanceId: null,
+          priceId:
+            session?.metadata?.priceId || session?.metadata?.price_id || null,
+          subscriptionId: subscriptionId || null,
+          customerId: customerId || null,
+          paymentIntentId: session.payment_intent || null,
+          invoiceId: session.invoice || null,
         });
-        let instance = existingInstance;
-        let isNewInstance = false;
-        if (!existingInstance) {
-          instance = await Instance.create({
-            userId: user._id,
-            nombre_instancia: nombre_instancia || null,
-            status: "pending",
-            wordpressInstanceId: null,
-            priceId:
-              session?.metadata?.priceId || session?.metadata?.price_id || null,
-            subscriptionId: subscriptionId || null,
-            customerId: customerId || null,
-            paymentIntentId: session.payment_intent || null,
-            invoiceId: session.invoice || null,
-          });
-          isNewInstance = true;
-        }
+
+        // Actualizar la instancia con el userId
+        await Instance.findByIdAndUpdate(instance._id, {
+          userId: user._id,
+        });
+
+        // Actualizar el arreglo 'instances' del usuario
+        await User.findByIdAndUpdate(user._id, {
+          $addToSet: { instances: instance._id },
+        });
 
         // Enviar webhook de onboarding SOLO si es nueva instancia
-        if (isNewInstance && process.env.WEBHOOK_ONBOARDING) {
+        if (process.env.WEBHOOK_ONBOARDING) {
           try {
             const response = await fetch(process.env.WEBHOOK_ONBOARDING, {
               method: "POST",
@@ -264,11 +256,6 @@ export async function POST(req) {
             console.error("Error al llamar al webhook de operaciones:", error);
           }
         }
-
-        // Actualizar el arreglo 'instances' del usuario
-        await User.findByIdAndUpdate(user._id, {
-          $addToSet: { instances: instance._id },
-        });
       }
 
       return NextResponse.json({ message: "Webhook procesado correctamente" });
