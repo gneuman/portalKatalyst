@@ -279,6 +279,66 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Tabla de instancias */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        {userInstances.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Subdominio
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha de creación
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ID WordPress
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ID Instancia
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {userInstances.map((instance) => (
+                  <tr key={instance._id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {instance.subdomain}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {instance.status}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {new Date(instance.createdAt).toLocaleString("es-ES")}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {instance.wordpressInstanceId || "-"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {instance._id}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Botón para comprar nueva instancia */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+        <button
+          onClick={() => setShowPricing(true)}
+          className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-semibold rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Comprar nueva instancia
+        </button>
+      </div>
     </div>
   );
 }

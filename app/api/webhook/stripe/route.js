@@ -157,6 +157,12 @@ export async function POST(req) {
             subdomain,
             status: "pending",
             wordpressInstanceId: null, // Se puede actualizar después
+            priceId:
+              session?.metadata?.priceId || session?.metadata?.price_id || null,
+            subscriptionId: subscriptionId || null,
+            customerId: customerId || null,
+            paymentIntentId: session.payment_intent || null,
+            invoiceId: session.invoice || null,
           });
           isNewInstance = true;
         }
@@ -180,6 +186,9 @@ export async function POST(req) {
                 lastName,
                 secondLastName,
                 wordpressInstanceId: instance.wordpressInstanceId,
+                priceId: instance.priceId,
+                paymentIntentId: instance.paymentIntentId,
+                invoiceId: instance.invoiceId,
               }),
             });
 
