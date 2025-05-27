@@ -551,6 +551,9 @@ export async function POST(req) {
       // Obtener el invoice para obtener más información
       const invoice = await stripe.invoices.retrieve(invoiceId);
       const subscriptionId = invoice.subscription;
+      const priceId = invoice.lines?.data?.[0]?.price?.id;
+
+      console.log("[STRIPE WEBHOOK] PriceId del invoice:", priceId);
 
       // Obtener el customer para obtener el email y nombre
       const customer = await stripe.customers.retrieve(customerId);
@@ -573,6 +576,7 @@ export async function POST(req) {
           stripeCustomerId: customerId,
           customerId: customerId,
           subscriptionId: subscriptionId,
+          priceId: priceId,
         });
         user = await User.create({
           email: customerEmail,
@@ -583,6 +587,7 @@ export async function POST(req) {
           stripeCustomerId: customerId,
           customerId: customerId,
           subscriptionId: subscriptionId,
+          priceId: priceId,
         });
       } else {
         console.log("[STRIPE WEBHOOK] Usuario encontrado:", user.email);
@@ -594,6 +599,7 @@ export async function POST(req) {
         user.stripeCustomerId = customerId;
         user.customerId = customerId;
         user.subscriptionId = subscriptionId;
+        user.priceId = priceId;
         await user.save();
       }
 
