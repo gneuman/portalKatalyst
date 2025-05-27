@@ -73,48 +73,7 @@ export const authOptions = {
   ...(connectMongo && { adapter: MongoDBAdapter(connectMongo) }),
 
   callbacks: {
-    async signIn({ user, account, profile, email, credentials }) {
-      try {
-        if (user?.email) {
-          const UserModel = require("@/models/User").default;
-          let dbUser = await UserModel.findOne({ email: user.email });
-
-          if (!dbUser) {
-            // Crear nuevo usuario si no existe
-            dbUser = await UserModel.create({
-              email: user.email,
-              name: user.name || user.email.split("@")[0],
-              image: user.image,
-            });
-            // Redirigir a la página de nuevo usuario
-            return "/api/auth/new-user";
-          }
-
-          // Actualizar información del usuario si es necesario
-          if (user.name && !dbUser.name) {
-            dbUser.name = user.name;
-            await dbUser.save();
-          }
-
-          if (user.image && !dbUser.image) {
-            dbUser.image = user.image;
-            await dbUser.save();
-          }
-        }
-        return true;
-      } catch (error) {
-        console.error("Error en signIn callback:", error);
-        return true;
-      }
-    },
-    async redirect({ url, baseUrl }) {
-      // Permitir URLs relativas
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Permitir URLs de nuestro dominio
-      else if (new URL(url).origin === baseUrl) return url;
-      return baseUrl;
-    },
-    async session({ session, token, user }) {
+    async session({ session, token }) {
       if (session?.user) {
         session.user.id = token.sub;
         // Buscar el usuario en la base de datos para obtener el campo 'instances'
@@ -130,55 +89,15 @@ export const authOptions = {
       }
       return session;
     },
-    async jwt({ token, user, account, profile }) {
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
-  },
-  events: {
-    async createUser({ user }) {
-      try {
-        const UserModel = require("@/models/User").default;
-        // Verificar si el usuario ya existe
-        const existingUser = await UserModel.findOne({ email: user.email });
-        if (!existingUser) {
-          // Crear el usuario en nuestra base de datos
-          await UserModel.create({
-            email: user.email,
-            name: user.name || user.email.split("@")[0],
-            image: user.image,
-          });
-        }
-      } catch (error) {
-        console.error("Error al crear usuario:", error);
-      }
-    },
-    async signIn({ user, account, profile, isNewUser }) {
-      try {
-        const UserModel = require("@/models/User").default;
-        // Actualizar la última vez que el usuario inició sesión
-        await UserModel.findOneAndUpdate(
-          { email: user.email },
-          { $set: { lastLogin: new Date() } },
-          { upsert: true }
-        );
-      } catch (error) {
-        console.error("Error al actualizar último login:", error);
-      }
-    },
   },
   pages: {
     signIn: "/api/auth/signin",
     verifyRequest: "/api/auth/verify-request",
     error: "/api/auth/error",
-    newUser: "/api/auth/new-user", // Página para nuevos usuarios
   },
   session: {
     strategy: "jwt",
     maxAge: 90 * 24 * 60 * 60, // 90 días
-    updateAge: 24 * 60 * 60, // 24 horas
   },
   theme: {
     brandColor: config.colors.main,

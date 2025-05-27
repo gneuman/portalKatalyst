@@ -17,23 +17,27 @@ export default function SignIn() {
     setError("");
 
     try {
+      console.log("Iniciando proceso de autenticación para:", email);
+
       const result = await signIn("email", {
         email,
         callbackUrl: "/dashboard",
         redirect: false,
       });
 
+      console.log("Resultado de signIn:", result);
+
       if (result?.error) {
+        console.error("Error en signIn:", result.error);
         setError(
           "Hubo un error al enviar el correo. Por favor, intenta de nuevo."
         );
       } else {
-        // Redirigir a la página de verificación
-        router.push(
-          `/api/auth/verify-request?email=${encodeURIComponent(email)}`
-        );
+        console.log("Redirigiendo a la página de verificación...");
+        router.push("/api/auth/verify-request");
       }
     } catch (error) {
+      console.error("Error inesperado:", error);
       setError("Ocurrió un error inesperado. Por favor, intenta de nuevo.");
     } finally {
       setLoading(false);
