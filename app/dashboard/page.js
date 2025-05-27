@@ -56,7 +56,9 @@ export default function Dashboard() {
   };
 
   // Mostrar el botón solo si el usuario no tiene instancias en su array
-  const showBuyButton = session?.user?.instances?.length === 0;
+  console.log("instances:", session?.user?.instances);
+  const showBuyButton =
+    !session?.user?.instances || session?.user?.instances?.length === 0;
 
   if (status === "loading" || loading) {
     return (

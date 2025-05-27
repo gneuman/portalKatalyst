@@ -529,6 +529,135 @@ export async function POST(req) {
       return NextResponse.json({ message: "Fallo de pago procesado" });
     }
 
+    if (event.type === "payment_intent.succeeded") {
+      const paymentIntent = event.data.object;
+      const customerId = paymentIntent.customer;
+      const invoiceId = paymentIntent.invoice;
+      const paymentIntentId = paymentIntent.id;
+
+      console.log("[STRIPE WEBHOOK] Procesando payment_intent.succeeded");
+
+      // Obtener el invoice para obtener más información
+      const invoice = await stripe.invoices.retrieve(invoiceId);
+      const subscriptionId = invoice.subscription;
+
+      // Obtener el customer para obtener el email y nombre
+      const customer = await stripe.customers.retrieve(customerId);
+      const customerEmail = customer.email;
+      const cardName = customer.name;
+
+      // Procesar el nombre de la tarjeta
+      const { firstName, lastName, secondLastName } = processCardName(cardName);
+
+      // Buscar o crear el usuario
+      let user = await User.findOne({ email: customerEmail });
+      if (!user) {
+        console.log("[STRIPE WEBHOOK] Creando nuevo usuario...");
+        user = await User.create({
+          email: customerEmail,
+          name: `${firstName} ${lastName}`.trim(),
+          firstName,
+          lastName,
+          secondLastName,
+          stripeCustomerId: customerId,
+          customerId: customerId,
+          subscriptionId: subscriptionId,
+        });
+      } else {
+        console.log("[STRIPE WEBHOOK] Usuario encontrado:", user.email);
+        // Actualizar información del usuario
+        user.name = `${firstName} ${lastName}`.trim();
+        user.firstName = firstName;
+        user.lastName = lastName;
+        user.secondLastName = secondLastName;
+        user.stripeCustomerId = customerId;
+        user.customerId = customerId;
+        user.subscriptionId = subscriptionId;
+        await user.save();
+      }
+
+      // Verificar si ya existe una instancia con este paymentIntentId o subscriptionId
+      const existingInstance = await Instance.findOne({
+        $or: [{ paymentIntentId }, { subscriptionId }],
+      });
+
+      if (!existingInstance) {
+        console.log("[STRIPE WEBHOOK] Creando nueva instancia...");
+        // Obtener el subdominio del invoice
+        const subdomain =
+          invoice.custom_fields?.find((f) => f.key === "subdominio")?.text
+            ?.value || "sin-subdominio";
+
+        // Crear la nueva instancia
+        const newInstance = await Instance.create({
+          userId: user._id,
+          subdomain,
+          status: "active",
+          wordpressInstanceId: null,
+          priceId: invoice.lines?.data?.[0]?.price?.id || null,
+          subscriptionId: subscriptionId || null,
+          customerId: customerId || null,
+          paymentIntentId: paymentIntentId || null,
+          invoiceId: invoiceId || null,
+        });
+
+        console.log("[STRIPE WEBHOOK] Instancia creada:", newInstance);
+
+        // Webhook de onboarding
+        if (process.env.WEBHOOK_ONBOARDING) {
+          try {
+            console.log("[STRIPE WEBHOOK] Enviando webhook de onboarding...");
+            const resp = await fetch(process.env.WEBHOOK_ONBOARDING, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                instanceId: newInstance._id,
+                subdomain: newInstance.subdomain,
+                userId: user._id,
+                email: user.email,
+                customerId,
+                subscriptionId,
+                firstName,
+                lastName,
+                secondLastName,
+                wordpressInstanceId: newInstance.wordpressInstanceId,
+                priceId: newInstance.priceId,
+                paymentIntentId: newInstance.paymentIntentId,
+                invoiceId: newInstance.invoiceId,
+              }),
+            });
+            if (!resp.ok) {
+              console.error(
+                "[STRIPE WEBHOOK] Error enviando webhook de onboarding:",
+                await resp.text()
+              );
+            } else {
+              console.log("[STRIPE WEBHOOK] Webhook de onboarding enviado");
+            }
+          } catch (err) {
+            console.error(
+              "[STRIPE WEBHOOK] Error enviando webhook de onboarding:",
+              err
+            );
+          }
+        }
+
+        // Actualizar el arreglo 'instances' del usuario
+        await User.findByIdAndUpdate(user._id, {
+          $addToSet: { instances: newInstance._id },
+        });
+      } else {
+        console.log(
+          "[STRIPE WEBHOOK] Instancia ya existe:",
+          existingInstance._id
+        );
+      }
+
+      return NextResponse.json({
+        message: "Payment intent procesado correctamente",
+      });
+    }
+
     return NextResponse.json({ message: "Webhook recibido" });
   } catch (error) {
     console.error("Error en el webhook:", error);
