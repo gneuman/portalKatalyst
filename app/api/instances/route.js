@@ -27,11 +27,13 @@ export async function GET(req) {
         .map((id) => new mongoose.Types.ObjectId(id));
       instances = await Instance.find({ _id: { $in: ids } })
         .sort({ createdAt: -1 })
+        .populate("userId")
         .lean();
     } else {
       // Fallback: buscar por userId (legacy)
       instances = await Instance.find({ userId: session.user.id })
         .sort({ createdAt: -1 })
+        .populate("userId")
         .lean();
     }
 

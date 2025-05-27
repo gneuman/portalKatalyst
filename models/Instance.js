@@ -28,6 +28,31 @@ const instanceSchema = new mongoose.Schema(
       default: null,
       description: "ID de la instancia de WordPress asociada (si existe)",
     },
+    priceId: {
+      type: String,
+      default: null,
+      description: "ID del precio de Stripe usado para esta instancia",
+    },
+    subscriptionId: {
+      type: String,
+      default: null,
+      description: "ID de la suscripción de Stripe asociada",
+    },
+    customerId: {
+      type: String,
+      default: null,
+      description: "ID del cliente de Stripe",
+    },
+    paymentIntentId: {
+      type: String,
+      default: null,
+      description: "ID del PaymentIntent de Stripe",
+    },
+    invoiceId: {
+      type: String,
+      default: null,
+      description: "ID de la factura de Stripe",
+    },
     createdAt: {
       type: Date,
       default: Date.now,
