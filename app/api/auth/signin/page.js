@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import Image from "next/image";
-import { FaEnvelope, FaUsers, FaComments, FaCalendarAlt } from "react-icons/fa";
+import { FaUsers, FaComments, FaCalendarAlt } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 
 export default function SignIn() {

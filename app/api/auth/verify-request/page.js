@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { FaEnvelope } from "react-icons/fa";
 
@@ -40,18 +39,27 @@ export default function VerifyRequest() {
               <div className="text-sm text-gray-600">
                 <p className="font-medium">Para Gmail:</p>
                 <ul className="list-disc list-inside mt-2">
-                  <li>Revisa la carpeta de "Promociones" o "Social"</li>
+                  <li>
+                    Revisa la carpeta de &quot;Promociones&quot; o
+                    &quot;Social&quot;
+                  </li>
                   <li>Busca en el spam</li>
-                  <li>Usa el filtro "from:resend.com" en la búsqueda</li>
+                  <li>
+                    Usa el filtro &quot;from:resend.com&quot; en la búsqueda
+                  </li>
                 </ul>
               </div>
 
               <div className="text-sm text-gray-600">
                 <p className="font-medium">Para Outlook:</p>
                 <ul className="list-disc list-inside mt-2">
-                  <li>Revisa la carpeta de "Otros" o "Foco"</li>
+                  <li>
+                    Revisa la carpeta de &quot;Otros&quot; o &quot;Foco&quot;
+                  </li>
                   <li>Busca en la carpeta de correo no deseado</li>
-                  <li>Usa el filtro "from:resend.com" en la búsqueda</li>
+                  <li>
+                    Usa el filtro &quot;from:resend.com&quot; en la búsqueda
+                  </li>
                 </ul>
               </div>
             </div>
