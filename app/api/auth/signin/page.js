@@ -4,11 +4,13 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Image from "next/image";
 import { FaEnvelope, FaUsers, FaComments, FaCalendarAlt } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,6 +28,11 @@ export default function SignIn() {
         setError(
           "Hubo un error al enviar el correo. Por favor, intenta de nuevo."
         );
+      } else {
+        // Redirigir a la página de verificación
+        router.push(
+          `/api/auth/verify-request?email=${encodeURIComponent(email)}`
+        );
       }
     } catch (error) {
       setError("Ocurrió un error inesperado. Por favor, intenta de nuevo.");
@@ -37,99 +44,60 @@ export default function SignIn() {
   return (
     <div className="min-h-screen flex">
       {/* Columna izquierda - Formulario */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-md w-full space-y-8">
+      <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:w-1/2 lg:px-20 xl:px-24">
+        <div className="mx-auto w-full max-w-sm lg:w-96">
           <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Bienvenido a Muegano
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+              Inicia sesión en tu cuenta
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Crea y gestiona tu comunidad en minutos
+            <p className="mt-2 text-sm text-gray-600">
+              O{" "}
+              <a
+                href="#"
+                className="font-medium text-blue-600 hover:text-blue-500"
+              >
+                regístrate si aún no tienes una cuenta
+              </a>
             </p>
           </div>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Correo electrónico
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaEnvelope className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none rounded-lg relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Tu correo electrónico"
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="flex">
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">
-                      {error}
-                    </h3>
+          <div className="mt-8">
+            <div className="mt-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Correo electrónico
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="tu@correo.com"
+                    />
                   </div>
                 </div>
-              </div>
-            )}
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <div className="flex items-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Enviando...
-                  </div>
-                ) : (
-                  "Iniciar sesión con correo"
-                )}
-              </button>
-            </div>
-          </form>
+                {error && <div className="text-red-600 text-sm">{error}</div>}
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  Te enviaremos un enlace mágico
-                </span>
-              </div>
+                <div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    {loading ? "Enviando..." : "Enviar enlace mágico"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -140,49 +108,44 @@ export default function SignIn() {
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800">
           <div className="absolute inset-0 bg-black opacity-20" />
           <div className="relative h-full flex flex-col justify-center px-12">
-            <div className="max-w-lg">
-              <h2 className="text-4xl font-bold text-white mb-8">
-                Crea tu comunidad hoy
-              </h2>
-              <div className="space-y-6">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <FaUsers className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-medium text-white">
-                      Gestiona miembros
-                    </h3>
-                    <p className="mt-1 text-blue-100">
-                      Administra fácilmente los miembros de tu comunidad
-                    </p>
-                  </div>
+            <div className="space-y-8">
+              <div className="flex items-center space-x-4">
+                <div className="flex-shrink-0">
+                  <FaUsers className="h-8 w-8 text-white" />
                 </div>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <FaComments className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-medium text-white">
-                      Foros y discusiones
-                    </h3>
-                    <p className="mt-1 text-blue-100">
-                      Crea espacios para que tu comunidad interactúe
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">
+                    Comunidad Activa
+                  </h3>
+                  <p className="mt-1 text-blue-100">
+                    Únete a nuestra comunidad de usuarios
+                  </p>
                 </div>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <FaCalendarAlt className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-medium text-white">
-                      Eventos virtuales
-                    </h3>
-                    <p className="mt-1 text-blue-100">
-                      Organiza eventos y mantén a tu comunidad activa
-                    </p>
-                  </div>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                <div className="flex-shrink-0">
+                  <FaComments className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Soporte 24/7</h3>
+                  <p className="mt-1 text-blue-100">
+                    Estamos aquí para ayudarte
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                <div className="flex-shrink-0">
+                  <FaCalendarAlt className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">
+                    Actualizaciones Regulares
+                  </h3>
+                  <p className="mt-1 text-blue-100">
+                    Nuevas características cada semana
+                  </p>
                 </div>
               </div>
             </div>

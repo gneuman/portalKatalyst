@@ -72,22 +72,39 @@ export const authOptions = {
   ...(connectMongo && { adapter: MongoDBAdapter(connectMongo) }),
 
   callbacks: {
-    session: async ({ session, token, user }) => {
-      // Buscar el usuario en la base de datos para obtener el campo 'instances'
-      const UserModel = require("@/models/User").default;
-      let dbUser = null;
-      if (session?.user?.email) {
-        dbUser = await UserModel.findOne({ email: session.user.email }).lean();
-      }
+    async signIn({ user, account, profile, email, credentials }) {
+      return true;
+    },
+    async session({ session, token, user }) {
       if (session?.user) {
         session.user.id = token.sub;
+        // Buscar el usuario en la base de datos para obtener el campo 'instances'
+        const UserModel = require("@/models/User").default;
+        let dbUser = null;
+        if (session?.user?.email) {
+          dbUser = await UserModel.findOne({
+            email: session.user.email,
+          }).lean();
+        }
         session.user.instances = dbUser?.instances || [];
       }
       return session;
     },
+    async jwt({ token, user, account, profile }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+  },
+  pages: {
+    signIn: "/api/auth/signin",
+    verifyRequest: "/api/auth/verify-request",
+    error: "/api/auth/error",
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 días
   },
   theme: {
     brandColor: config.colors.main,
