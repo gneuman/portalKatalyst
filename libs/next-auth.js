@@ -117,6 +117,12 @@ export const authOptions = {
           }
           session.user.instances = dbUser?.instances || [];
           session.user.hasAccess = dbUser?.hasAccess || false;
+          // Agregar campos extendidos
+          session.user.name = dbUser?.name || null;
+          session.user.firstName = dbUser?.firstName || null;
+          session.user.lastName = dbUser?.lastName || null;
+          session.user.secondLastName = dbUser?.secondLastName || null;
+          // Puedes agregar más campos si los necesitas
         } catch (error) {
           console.error("Error al buscar usuario en DB:", error);
         }
