@@ -55,6 +55,9 @@ export default function Dashboard() {
     pending: userInstances.filter((i) => i.status === "pending").length,
   };
 
+  // Mostrar el botón solo si el usuario no tiene instancias en su array
+  const showBuyButton = session?.user?.instances?.length === 0;
+
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -331,7 +334,7 @@ export default function Dashboard() {
       </div>
 
       {/* Botón para comprar nueva instancia */}
-      {userInstances.length === 0 && (
+      {showBuyButton && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <button
             onClick={() => setShowPricing(true)}
