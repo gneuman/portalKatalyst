@@ -2,9 +2,9 @@ import themes from "daisyui/src/theming/themes";
 
 const config = {
   // REQUIRED
-  appName: "Template Dashboard",
+  appName: "Muegano Dashboard",
   // REQUIRED: a short description of your app for SEO tags (can be overwritten)
-  appDescription: "Un template base para dashboards con Next.js",
+  appDescription: "Plataforma de gestión de comunidades",
   // REQUIRED (no https://, not trialing slash at the end, just the naked domain)
   domainName: "midominio.com",
   crisp: {

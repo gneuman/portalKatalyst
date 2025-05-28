@@ -1,4 +1,4 @@
-import { FaUsers, FaComments, FaCalendarAlt } from "react-icons/fa";
+import { FaUsers, FaComments } from "react-icons/fa";
 import { MdPendingActions } from "react-icons/md";
 import StatsGrid from "./StatsGrid";
 
@@ -21,11 +21,6 @@ export default function MueganoStats({ instances = [] }) {
       label: "Comunidades Pendientes",
       value: userInstances.filter((i) => i.status === "pending").length,
       icon: <MdPendingActions className="h-6 w-6 text-yellow-600" />,
-    },
-    {
-      label: "Eventos Programados",
-      value: userInstances.filter((i) => i.hasEvents).length,
-      icon: <FaCalendarAlt className="h-6 w-6 text-purple-600" />,
     },
   ];
 
