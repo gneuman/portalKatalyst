@@ -104,6 +104,7 @@ export async function POST(req) {
       );
       const customerId = session.customer;
       const subscriptionId = session.subscription;
+      const userId = session.metadata?.userId;
 
       // Verificar si es el primer pago (tiene campos personalizados)
       const isFirstPayment =
@@ -170,21 +171,7 @@ export async function POST(req) {
 
         // Crear la instancia primero
         const instance = await Instance.create({
-          userId: null, // Se actualizará después
-          nombre_instancia: nombre_instancia || null,
-          status: "pending",
-          wordpressInstanceId: null,
-          priceId:
-            session?.metadata?.priceId || session?.metadata?.price_id || null,
-          subscriptionId: subscriptionId || null,
-          customerId: customerId || null,
-          paymentIntentId: session.payment_intent || null,
-          invoiceId: session.invoice || null,
-        });
-
-        // Actualizar la instancia con el userId y toda la información necesaria
-        await Instance.findByIdAndUpdate(instance._id, {
-          userId: user._id,
+          userId: userId || user._id, // Usar userId de la metadata o el del usuario
           nombre_instancia: nombre_instancia || null,
           status: "pending",
           wordpressInstanceId: null,
