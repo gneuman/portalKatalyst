@@ -93,7 +93,7 @@ export async function POST(req) {
 
     // Conectar a MongoDB
     console.log("[STRIPE WEBHOOK] Conectando a MongoDB...");
-    await connectMongo();
+    await connectMongo({ serverSelectionTimeoutMS: 30000 });
     console.log("[STRIPE WEBHOOK] Conexión a MongoDB exitosa");
 
     if (event.type === "checkout.session.completed") {
