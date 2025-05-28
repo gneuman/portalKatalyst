@@ -110,15 +110,17 @@ export default function Dashboard() {
       {/* Modal de Pricing */}
       {showPricing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
+          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-4 relative max-h-[90vh] overflow-y-auto">
             <button
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl z-10"
               onClick={() => setShowPricing(false)}
               aria-label="Cerrar"
             >
               &times;
             </button>
-            <Pricing />
+            <div className="mt-4">
+              <Pricing />
+            </div>
           </div>
         </div>
       )}
