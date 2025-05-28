@@ -14,7 +14,7 @@ const features = [
         <ul className="space-y-1">
           {[
             "Send transactional emails",
-            "DNS setup to avoid spam folder (DKIM, DMARC, SPF in subdomain)",
+            "DNS setup to avoid spam folder (DKIM, DMARC, SPF in comunidad)",
             "Webhook to receive & forward emails",
           ].map((item) => (
             <li key={item} className="flex items-center gap-3">
