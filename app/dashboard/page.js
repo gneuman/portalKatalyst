@@ -94,9 +94,9 @@ export default function Dashboard() {
   return (
     <DashboardLayout
       title={`¡Hola, ${
-        session.user?.name || session.user?.email || "Muegano"
+        session.user?.name || session.user?.email || "Usuario"
       }!`}
-      subtitle="Gestiona tus comunidades desde aquí"
+      subtitle="Bienvenido a Muegano"
     >
       {/* Modal de Pricing */}
       {showPricing && (
