@@ -2,12 +2,11 @@ import themes from "daisyui/src/theming/themes";
 
 const config = {
   // REQUIRED
-  appName: "Muegano",
+  appName: "Template Dashboard",
   // REQUIRED: a short description of your app for SEO tags (can be overwritten)
-  appDescription:
-    "La plataforma definitiva para crear y gestionar comunidades online. Conecta, colabora y crece con tu comunidad.",
+  appDescription: "Un template base para dashboards con Next.js",
   // REQUIRED (no https://, not trialing slash at the end, just the naked domain)
-  domainName: "muegano.net",
+  domainName: "midominio.com",
   crisp: {
     // Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
     id: "",
@@ -96,6 +95,19 @@ const config = {
     loginUrl: "/api/auth/signin",
     // REQUIRED — the path you want to redirect users after successfull login (i.e. /dashboard, /private). This is normally a private page for users to manage their accounts. It's used in apiClient (/libs/api.js) upon 401 errors from our API & in ButtonSignin.js
     callbackUrl: "/dashboard",
+    providers: ["google", "github"],
+    defaultProvider: "google",
+  },
+  api: {
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
+  },
+  database: {
+    type: "mongodb", // o "postgresql", "mysql", etc.
+  },
+  features: {
+    enableAnalytics: true,
+    enableNotifications: true,
+    enableDarkMode: true,
   },
 };
 

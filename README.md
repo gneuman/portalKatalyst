@@ -1,38 +1,140 @@
-# Muegano — Javascript
+# Template de Dashboard Next.js
 
-Hey maker 👋 es Marc de [Muegano](https://muegano.net). ¡Lanza tu comunidad rápido! ⚡️
+Este es un template base para crear dashboards modernos con Next.js, NextAuth y Tailwind CSS.
 
-<sub>**Watch/Star the repo to be notified when updates are pushed**</sub>
+## Características
 
-## Get Started
+- 🎨 Diseño moderno y responsive
+- 🔐 Autenticación con NextAuth
+- 📊 Componentes reutilizables para dashboards
+- 🎯 Estructura modular y escalable
+- 🎮 Fácil de personalizar
 
-1. Follow the [Get Started Tutorial](https://shipfa.st/docs) to clone the repo and run your local server 💻
+## Componentes Incluidos
 
-<sub>**Looking for the /pages router version?** Use this [documentation](https://shipfa.st/docs-old) instead</sub>
+- `DashboardLayout`: Layout base con header y contenedor principal
+- `StatsGrid`: Cuadrícula de estadísticas con íconos
+- `CardGrid`: Cuadrícula de tarjetas personalizable
+- `DataTable`: Tabla de datos con soporte para renderizado personalizado
 
-2. Follow the [Ship In 5 Minutes Tutorial](https://shipfa.st/docs/tutorials/ship-in-5-minutes) to learn the foundation and ship your app quickly ⚡️
+## Cómo Usar
 
-## Links
+1. Clona este repositorio:
 
-- [📚 Documentation](https://shipfa.st/docs)
-- [📣 Updates](https://shipfast.beehiiv.com/)
-- [🧑‍💻 Discord](https://shipfa.st/dashboard)
-- [🥇 Leaderboard](https://shipfa.st/leaderboard)
+```bash
+git clone https://github.com/tu-usuario/template-dashboard-nextjs.git mi-proyecto
+cd mi-proyecto
+```
 
-## Support
+2. Instala las dependencias:
 
-Reach out at hello@shipfa.st
+```bash
+npm install
+# o
+yarn install
+```
 
-Let's ship it, FAST ⚡️
+3. Configura las variables de entorno:
 
-\_
+```bash
+cp .env.example .env.local
+```
 
-**📈 Haz crecer tu comunidad con [DataFast](https://datafa.st?ref=muegano_readme)**
+4. Inicia el servidor de desarrollo:
 
-- Analyze your traffic
-- Get insights on your customers
-- Make data-driven decisions
+```bash
+npm run dev
+# o
+yarn dev
+```
 
-¡Los miembros de Muegano obtienen 30% de descuento en todos los planes! 🎁
+## Estructura del Proyecto
 
-![datafast](https://github.com/user-attachments/assets/085453a6-8a66-45be-b7ea-a7a08e856ed8)
+```
+├── app/
+│   └── dashboard/
+│       ├── page.js
+│       └── example.js
+├── components/
+│   └── dashboard/
+│       ├── DashboardLayout.js
+│       ├── StatsGrid.js
+│       ├── CardGrid.js
+│       └── DataTable.js
+└── public/
+```
+
+## Personalización
+
+### 1. Modificar el Layout
+
+```jsx
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+
+export default function MiDashboard() {
+  return (
+    <DashboardLayout
+      title="Mi Dashboard"
+      subtitle="Personaliza tu contenido aquí"
+    >
+      {/* Tu contenido aquí */}
+    </DashboardLayout>
+  );
+}
+```
+
+### 2. Agregar Estadísticas
+
+```jsx
+import StatsGrid from "@/components/dashboard/StatsGrid";
+
+const stats = [
+  {
+    label: "Total",
+    value: 100,
+    icon: <FaUsers className="h-6 w-6 text-blue-600" />,
+  },
+];
+
+<StatsGrid stats={stats} />;
+```
+
+### 3. Crear una Cuadrícula de Tarjetas
+
+```jsx
+import CardGrid from "@/components/dashboard/CardGrid";
+
+<CardGrid
+  items={misDatos}
+  renderCard={(item) => (
+    <div className="bg-white p-6 rounded-lg shadow">
+      <h3>{item.titulo}</h3>
+    </div>
+  )}
+/>;
+```
+
+### 4. Mostrar una Tabla de Datos
+
+```jsx
+import DataTable from "@/components/dashboard/DataTable";
+
+const columns = [
+  { header: "Nombre", accessor: "name" },
+  {
+    header: "Estado",
+    accessor: "status",
+    render: (row) => <span>{row.status}</span>,
+  },
+];
+
+<DataTable columns={columns} data={misDatos} keyField="id" />;
+```
+
+## Contribuir
+
+Las contribuciones son bienvenidas. Por favor, abre un issue primero para discutir los cambios que te gustaría hacer.
+
+## Licencia
+
+MIT
