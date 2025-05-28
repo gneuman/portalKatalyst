@@ -158,6 +158,7 @@ export async function POST(req) {
           });
         } else {
           // Actualizar usuario con toda la info relevante
+          user.email = customerEmail;
           user.name = `${firstName} ${lastName}`.trim();
           user.firstName = firstName;
           user.lastName = lastName;
@@ -181,9 +182,18 @@ export async function POST(req) {
           invoiceId: session.invoice || null,
         });
 
-        // Actualizar la instancia con el userId
+        // Actualizar la instancia con el userId y toda la información necesaria
         await Instance.findByIdAndUpdate(instance._id, {
           userId: user._id,
+          nombre_instancia: nombre_instancia || null,
+          status: "pending",
+          wordpressInstanceId: null,
+          priceId:
+            session?.metadata?.priceId || session?.metadata?.price_id || null,
+          subscriptionId: subscriptionId || null,
+          customerId: customerId || null,
+          paymentIntentId: session.payment_intent || null,
+          invoiceId: session.invoice || null,
         });
 
         // Actualizar el arreglo 'instances' del usuario
