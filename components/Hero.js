@@ -1,5 +1,6 @@
 import Image from "next/image";
 import TestimonialsAvatars from "./TestimonialsAvatars";
+import ButtonAccount from "./ButtonAccount";
 import config from "@/config";
 
 const Hero = () => {
@@ -16,7 +17,7 @@ const Hero = () => {
           Conecta con tu audiencia, comparte contenido y haz crecer tu comunidad
           sin complicaciones técnicas.
         </p>
-        <button className="btn btn-primary btn-wide">Crear mi comunidad</button>
+        <ButtonAccount />
 
         <TestimonialsAvatars priority={true} />
       </div>
