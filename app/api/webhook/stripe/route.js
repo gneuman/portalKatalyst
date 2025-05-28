@@ -132,6 +132,16 @@ export async function POST(req) {
           // throw new Error("El campo nombre_instancia es obligatorio");
         }
 
+        // Verificar si ya existe un nombre_instancia igual y agregar sufijo numérico si es necesario
+        let finalNombreInstancia = nombre_instancia;
+        let counter = 1;
+        while (
+          await Instance.findOne({ nombre_instancia: finalNombreInstancia })
+        ) {
+          finalNombreInstancia = `${nombre_instancia}-${counter}`;
+          counter++;
+        }
+
         // Buscar el usuario usando el email correcto
         if (!customerEmail) {
           throw new Error("No se pudo obtener el correo del cliente de Stripe");
@@ -172,7 +182,7 @@ export async function POST(req) {
         // Crear la instancia primero
         const instance = await Instance.create({
           userId: userId || user._id, // Usar userId de la metadata o el del usuario
-          nombre_instancia: nombre_instancia || null,
+          nombre_instancia: finalNombreInstancia,
           status: "pending",
           wordpressInstanceId: null,
           priceId:

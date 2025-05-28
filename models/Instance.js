@@ -80,18 +80,6 @@ const instanceSchema = new mongoose.Schema(
       },
       description: "ID de la factura de Stripe",
     },
-    subdomain: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      validate: {
-        validator: function (v) {
-          return /^[a-z0-9]+$/.test(v);
-        },
-        message:
-          "El subdominio solo puede contener letras minúsculas y números",
-      },
-    },
     createdAt: {
       type: Date,
       default: Date.now,
