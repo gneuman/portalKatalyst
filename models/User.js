@@ -31,62 +31,21 @@ const userSchema = mongoose.Schema(
     image: {
       type: String,
     },
-    subdominio: {
+    personalMondayId: {
       type: String,
-      trim: true,
-      lowercase: true,
-      unique: true,
-      validate: {
-        validator: function (v) {
-          return /^[a-z0-9]+$/.test(v);
-        },
-        message:
-          "El subdominio solo puede contener letras minúsculas y números",
-      },
+      default: null,
+      description: "ID del ítem de perfil personal en Monday.com",
     },
-    // Used in the Stripe webhook to identify the user in Stripe and later create Customer Portal or prefill user credit card details
-    customerId: {
-      type: String,
-      validate: {
-        validator: function (v) {
-          return !v || v.startsWith("cus_");
-        },
-        message: 'El customerId debe comenzar con "cus_"',
-      },
+    businessMondayId: {
+      type: [String],
+      default: [],
+      description: "Arreglo de IDs de empresas en Monday.com",
     },
-    // Used in the Stripe webhook. should match a plan in config.js file.
-    priceId: {
-      type: String,
-      validate: {
-        validator: function (v) {
-          return !v || v.startsWith("price_");
-        },
-        message: 'El priceId debe comenzar con "price_"',
-      },
-    },
-    // Used to determine if the user has access to the product—it's turn on/off by the Stripe webhook
-    hasAccess: {
-      type: Boolean,
-      default: false,
-    },
-    instances: [{ type: mongoose.Schema.Types.ObjectId, ref: "Instance" }],
-    stripeCustomerId: {
-      type: String,
-      validate: {
-        validator: function (v) {
-          return !v || v.startsWith("cus_");
-        },
-        message: 'El stripeCustomerId debe comenzar con "cus_"',
-      },
-    },
-    subscriptionId: {
-      type: String,
-      validate: {
-        validator: function (v) {
-          return !v || v.startsWith("sub_");
-        },
-        message: 'El subscriptionId debe comenzar con "sub_"',
-      },
+    // Campo opcional para contactos, si se requiere
+    contactsMondayId: {
+      type: [String],
+      default: [],
+      description: "IDs de contactos en Monday.com (opcional)",
     },
     lastLogin: {
       type: Date,

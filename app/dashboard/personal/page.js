@@ -1,0 +1,295 @@
+"use client";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import {
+  FaUser,
+  FaPhone,
+  FaCalendarAlt,
+  FaEnvelope,
+  FaUsers,
+  FaVenusMars,
+  FaBuilding,
+} from "react-icons/fa";
+import Link from "next/link";
+
+const CAMPOS = [
+  { title: "Nombre", icon: <FaUser className="text-blue-600" /> },
+  { title: "Apellido Paterno", icon: <FaUser className="text-blue-600" /> },
+  { title: "Apellido Materno", icon: <FaUser className="text-blue-600" /> },
+  { title: "Teléfono", icon: <FaPhone className="text-green-600" /> },
+  {
+    title: "Fecha Nacimiento",
+    icon: <FaCalendarAlt className="text-purple-600" />,
+  },
+  { title: "Comunidad", icon: <FaUsers className="text-yellow-600" /> },
+  { title: "Género", icon: <FaVenusMars className="text-pink-600" /> },
+  { title: "Email", icon: <FaEnvelope className="text-gray-600" /> },
+];
+
+export default function PerfilPersonal() {
+  const { data: session } = useSession();
+  const [profile, setProfile] = useState(null);
+  const [columns, setColumns] = useState([]); // Para status y date
+  const [form, setForm] = useState({});
+  const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [empresas, setEmpresas] = useState([]);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!session?.user?.email) return;
+      setLoading(true);
+      setError(null);
+      try {
+        // 1. Buscar usuario en MongoDB
+        const res = await fetch(
+          `/api/user/profile?email=${session.user.email}`
+        );
+        const user = await res.json();
+        if (!user.personalMondayId)
+          throw new Error("No se encontró personalMondayId");
+        // 2. Traer datos de Monday
+        const query = `query { items (ids: [${user.personalMondayId}]) { id name board { id } column_values { id text value column { id title type settings_str } } } }`;
+        const mondayRes = await fetch("/api/monday/item", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query }),
+        });
+        const mondayData = await mondayRes.json();
+        const item = mondayData?.data?.items?.[0] || null;
+        setProfile(item);
+        // Guardar columnas para edición
+        setColumns(item?.column_values?.map((col) => col.column) || []);
+        // Inicializar form
+        const initial = {};
+        item?.column_values?.forEach((col) => {
+          initial[col.column?.title] = col.text || col.value || "";
+        });
+        initial["Email"] = session.user.email;
+        setForm(initial);
+        // Empresas asociadas
+        if (user.businessMondayId && user.businessMondayId.length > 0) {
+          const empresasQuery = `query { items (ids: [${user.businessMondayId.join(
+            ","
+          )}]) { id name } }`;
+          const empresasRes = await fetch("/api/monday/item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: empresasQuery }),
+          });
+          const empresasData = await empresasRes.json();
+          setEmpresas(empresasData?.data?.items || []);
+        } else {
+          setEmpresas([]);
+        }
+      } catch (e) {
+        setError(e.message);
+      }
+      setLoading(false);
+    };
+    fetchProfile();
+  }, [session?.user?.email]);
+
+  const handleChange = (title, value) => {
+    setForm((f) => ({ ...f, [title]: value }));
+  };
+
+  const handleSave = async () => {
+    if (!profile) return;
+    setSaving(true);
+    setError(null);
+    try {
+      // Mapear a column_values para Monday
+      const columnValues = {};
+      columns.forEach((col) => {
+        if (
+          CAMPOS.map((c) => c.title).includes(col.title) &&
+          col.title !== "Email"
+        ) {
+          if (col.type === "status" && col.settings_str) {
+            const labels = JSON.parse(col.settings_str).labels || {};
+            const index = Object.values(labels).findIndex(
+              (label) => label === form[col.title]
+            );
+            columnValues[col.id] = { index };
+          } else if (col.type === "date") {
+            columnValues[col.id] = { date: form[col.title] };
+          } else {
+            columnValues[col.id] = form[col.title];
+          }
+        }
+      });
+      const mutation = `mutation { change_multiple_column_values (item_id: ${
+        profile.id
+      }, board_id: ${profile.board.id}, column_values: ${JSON.stringify(
+        JSON.stringify(columnValues)
+      )}) { id } }`;
+      await fetch("/api/monday/item", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: mutation }),
+      });
+      setEditMode(false);
+      // Refrescar perfil y empresas
+      setLoading(true);
+      const query = `query { items (ids: [${profile.id}]) { id name board { id } column_values { id text value column { id title type settings_str } } } }`;
+      const mondayRes = await fetch("/api/monday/item", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      const mondayData = await mondayRes.json();
+      const item = mondayData?.data?.items?.[0] || null;
+      setProfile(item);
+      setColumns(item?.column_values?.map((col) => col.column) || []);
+      setLoading(false);
+    } catch (e) {
+      setError(e.message);
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-8 text-center">Perfil Personal</h1>
+      <div className="bg-white rounded shadow p-6 mb-6">
+        {loading && <p className="text-center">Cargando...</p>}
+        {error && <p className="text-red-600 text-center">{error}</p>}
+        {profile && (
+          <form className="space-y-4">
+            {CAMPOS.map(({ title, icon }) => {
+              if (title === "Email") {
+                return (
+                  <div
+                    key={title}
+                    className="flex items-center gap-3 border-b py-2"
+                  >
+                    {icon}
+                    <div className="flex-1">
+                      <div className="font-medium">{title}</div>
+                      <div className="text-gray-500">{form[title]}</div>
+                    </div>
+                  </div>
+                );
+              }
+              // Buscar columna para tipo
+              const col = columns.find((c) => c.title === title);
+              return (
+                <div
+                  key={title}
+                  className="flex items-center gap-3 border-b py-2"
+                >
+                  {icon}
+                  <div className="flex-1">
+                    <div className="font-medium mb-1">{title}</div>
+                    {!editMode ? (
+                      <div className="text-gray-700">
+                        {form[title] || (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </div>
+                    ) : col?.type === "date" ? (
+                      <input
+                        type="date"
+                        className="input input-bordered w-full"
+                        value={form[title] || ""}
+                        onChange={(e) => handleChange(title, e.target.value)}
+                      />
+                    ) : col?.type === "status" && col?.settings_str ? (
+                      <select
+                        className="input input-bordered w-full"
+                        value={form[title] || ""}
+                        onChange={(e) => handleChange(title, e.target.value)}
+                      >
+                        <option value="">Selecciona una opción</option>
+                        {Object.values(
+                          JSON.parse(col.settings_str).labels || {}
+                        ).map((label) => (
+                          <option key={label} value={label}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={title === "Teléfono" ? "tel" : "text"}
+                        className="input input-bordered w-full"
+                        value={form[title] || ""}
+                        onChange={(e) => handleChange(title, e.target.value)}
+                      />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            <div className="flex gap-2 mt-6 justify-end">
+              {!editMode ? (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setEditMode(true)}
+                >
+                  Editar
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-success"
+                    onClick={handleSave}
+                    disabled={saving}
+                  >
+                    {saving ? "Guardando..." : "Guardar"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => setEditMode(false)}
+                    disabled={saving}
+                  >
+                    Cancelar
+                  </button>
+                </>
+              )}
+            </div>
+          </form>
+        )}
+        {/* Resumen de empresas asociadas */}
+        {!loading && empresas && (
+          <div className="mt-8">
+            <div className="flex items-center gap-2 mb-2">
+              <FaBuilding className="text-yellow-600" />
+              <span className="font-bold">Empresas asociadas:</span>
+            </div>
+            {empresas.length > 0 ? (
+              <ul className="list-disc ml-6">
+                {empresas.map((e) => (
+                  <li key={e.id} className="mb-1">
+                    <span className="font-medium">{e.name}</span>{" "}
+                    <span className="text-xs text-gray-400">(ID: {e.id})</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-gray-500 mb-2">
+                No tienes empresas asociadas.
+              </div>
+            )}
+            <div className="mt-4">
+              <Link href="/dashboard/empresas">
+                <button className="btn btn-secondary">
+                  {empresas.length > 0 ? "Ir a Empresas" : "Agregar Empresa"}
+                </button>
+              </Link>
+            </div>
+          </div>
+        )}
+        {!loading && !profile && !error && (
+          <p className="text-center">No se encontró información de perfil.</p>
+        )}
+      </div>
+    </div>
+  );
+}
