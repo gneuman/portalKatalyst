@@ -115,8 +115,13 @@ export const authOptions = {
             }).lean();
             console.log("Usuario encontrado en DB:", dbUser);
           }
-          session.user.instances = dbUser?.instances || [];
-          session.user.hasAccess = dbUser?.hasAccess || false;
+          session.user = {
+            id: dbUser._id,
+            name: dbUser.name,
+            email: dbUser.email,
+            image: dbUser.image,
+            role: dbUser.role,
+          };
           // Agregar campos extendidos
           session.user.name = dbUser?.name || null;
           session.user.firstName = dbUser?.firstName || null;
