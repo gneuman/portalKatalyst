@@ -32,16 +32,18 @@ function HeaderContent() {
   return (
     <header className="bg-[#232F36] shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-6">
-          <div className="flex items-center">
+        <div className="flex justify-between items-center py-6 gap-4">
+          <div className="flex items-center gap-3 min-w-[160px]">
+            {/* Aquí puedes agregar el logo cuando lo tengas */}
+            {/* <Image src="/logo.png" alt="Katalyst Logo" width={40} height={40} /> */}
             <Link
               href="/"
-              className="text-2xl font-bold text-white tracking-widest"
+              className="text-2xl font-bold text-white tracking-widest flex items-center gap-2"
             >
               KATALYST
             </Link>
           </div>
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-8 flex-1 justify-center">
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -52,7 +54,7 @@ function HeaderContent() {
               </Link>
             ))}
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 min-w-[140px] justify-end">
             <ButtonAccount />
           </div>
         </div>

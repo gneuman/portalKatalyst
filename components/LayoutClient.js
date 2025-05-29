@@ -9,6 +9,8 @@ import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "react-hot-toast";
 import { Tooltip } from "react-tooltip";
 import config from "@/config";
+import useSWR from "swr";
+import { createContext, useContext } from "react";
 
 // Crisp customer chat support:
 // This component is separated from ClientLayout because it needs to be wrapped with <SessionProvider> to use useSession() hook
@@ -45,6 +47,31 @@ const CrispChat = () => {
   return null;
 };
 
+const fetcher = (url) => apiClient.get(url);
+
+// Contexto global para datos precargados
+const AppDataContext = createContext({});
+
+export function useAppData() {
+  return useContext(AppDataContext);
+}
+
+const AppDataProvider = ({ children }) => {
+  // Precarga datos principales tras login
+  const { data: session } = useSession();
+  const { data: userData, isLoading: loadingUser } = useSWR(
+    session?.user ? "/user/profile" : null,
+    fetcher
+  );
+  // Puedes agregar más SWRs aquí para dashboard, notificaciones, etc.
+
+  return (
+    <AppDataContext.Provider value={{ userData, loadingUser }}>
+      {children}
+    </AppDataContext.Provider>
+  );
+};
+
 // All the client wrappers are here (they can't be in server components)
 // 1. SessionProvider: Allow the useSession from next-auth (find out if user is auth or not)
 // 2. NextTopLoader: Show a progress bar at the top when navigating between pages
@@ -53,13 +80,15 @@ const CrispChat = () => {
 // 5. CrispChat: Set Crisp customer chat support (see above)
 const ClientLayout = ({ children }) => {
   return (
-    <>
-      <SessionProvider>
+    <SessionProvider>
+      <AppDataProvider>
         {/* Show a progress bar at the top when navigating between pages */}
         <NextTopLoader color={config.colors.main} showSpinner={false} />
 
         {/* Content inside app/page.js files  */}
-        {children}
+        <main className="flex flex-col flex-grow min-h-screen bg-base-100">
+          {children}
+        </main>
 
         {/* Show Success/Error messages anywhere from the app with toast() */}
         <Toaster
@@ -76,8 +105,8 @@ const ClientLayout = ({ children }) => {
 
         {/* Set Crisp customer chat support */}
         <CrispChat />
-      </SessionProvider>
-    </>
+      </AppDataProvider>
+    </SessionProvider>
   );
 };
 
