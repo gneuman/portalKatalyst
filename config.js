@@ -6,7 +6,9 @@ const config = {
   // REQUIRED: a short description of your app for SEO tags (can be overwritten)
   appDescription: "Plataforma de gestión de comunidades",
   // REQUIRED (no https://, not trialing slash at the end, just the naked domain)
-  domainName: "midominio.com",
+  domainName: process.env.NEXTAUTH_URL
+    ? process.env.NEXTAUTH_URL.replace(/^https?:\/\//, "")
+    : "katalyst.org.mx",
   crisp: {
     // Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
     id: "",
@@ -71,17 +73,17 @@ const config = {
   },
   aws: {
     // If you use AWS S3/Cloudfront, put values in here
-    bucket: "muegano-assets",
-    bucketUrl: `https://muegano-assets.s3.amazonaws.com/`,
-    cdn: "https://cdn.muegano.net/",
+    bucket: "katalyst-assets",
+    bucketUrl: `https://katalyst-assets.s3.amazonaws.com/`,
+    cdn: "https://cdn.katalyst.org.mx/",
   },
   resend: {
     // REQUIRED — Email 'From' field to be used when sending magic login links
-    fromNoReply: `Muegano <noreply@email.pildorasnocode.com>`,
+    fromNoReply: `Katalyst <noreply@email.pildorasnocode.com>`,
     // REQUIRED — Email 'From' field to be used when sending other emails, like abandoned carts, updates etc..
-    fromAdmin: `Soporte Muegano <soporte@email.pildorasnocode.com>`,
+    fromAdmin: `Soporte Katalyst <soporte@email.pildorasnocode.com>`,
     // Email shown to customer if need support. Leave empty if not needed => if empty, set up Crisp above, otherwise you won't be able to offer customer support."
-    supportEmail: "soporte@muegano.net",
+    supportEmail: "soporte@email.pildorasnocode.com",
   },
   colors: {
     // REQUIRED — The DaisyUI theme to use (added to the main layout.js). Leave blank for default (light & dark mode). If you any other theme than light/dark, you need to add it in config.tailwind.js in daisyui.themes.

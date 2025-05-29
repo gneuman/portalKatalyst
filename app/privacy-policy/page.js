@@ -59,7 +59,7 @@ const PrivacyPolicy = () => {
         >
           {`Last Updated: 2023-08-25
 
-Gracias por visitar Muegano ("nosotros"). Esta Política de Privacidad describe cómo recopilamos, usamos y protegemos tu información personal y no personal cuando usas nuestro sitio web ubicado en https://muegano.net (el "Sitio Web").
+Gracias por visitar Katalyst ("nosotros"). Esta Política de Privacidad describe cómo recopilamos, usamos y protegemos tu información personal y no personal cuando usas nuestro sitio web ubicado en https://katalyst.org.mx (el "Sitio Web").
 
 Al acceder o usar el Sitio Web, aceptas los términos de esta Política de Privacidad. Si no estás de acuerdo con las prácticas descritas en esta política, por favor no uses el Sitio Web.
 
@@ -87,7 +87,7 @@ No compartimos tus datos personales con ninguna otra parte excepto cuando sea ne
 
 4. Privacidad de los niños
 
-Muegano no está destinado a menores de 13 años. No recopilamos intencionadamente información personal de menores. Si eres padre/madre/tutor y crees que tu hijo nos ha proporcionado información personal, por favor contáctanos en la dirección de correo electrónico proporcionada a continuación.
+Katalyst no está destinado a menores de 13 años. No recopilamos intencionadamente información personal de menores. Si eres padre/madre/tutor y crees que tu hijo nos ha proporcionado información personal, por favor contáctanos en la dirección de correo electrónico proporcionada a continuación.
 
 5. Actualizaciones a la Política de Privacidad
 
@@ -101,11 +101,4 @@ Correo electrónico: marc@shipfa.st
 
 Para todas las demás consultas, por favor visita nuestra página de Contacto en el Sitio Web.
 
-Al usar Muegano, aceptas los términos de esta Política de Privacidad.`}
-        </pre>
-      </div>
-    </main>
-  );
-};
-
-export default PrivacyPolicy;
+Al usar Katalyst, aceptas los términos de esta Política de Privacidad.`

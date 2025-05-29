@@ -23,18 +23,18 @@ export const categories = [
     titleShort: "Features",
     // The description of the category to display in the category page. Up to 160 characters.
     description:
-      "Aquí están las últimas funciones que hemos añadido a Muegano. Mejoramos constantemente nuestro producto para ayudarte a lanzar más rápido.",
+      "Aquí están las últimas funciones que hemos añadido a Katalyst. Mejoramos constantemente nuestro producto para ayudarte a lanzar más rápido.",
     // A short version of the description above, only displayed in the <Header /> on mobile. Up to 60 characters.
-    descriptionShort: "Últimas funciones añadidas a Muegano.",
+    descriptionShort: "Últimas funciones añadidas a Katalyst.",
   },
   {
     slug: categorySlugs.tutorial,
     title: "How Tos & Tutorials",
     titleShort: "Tutorials",
     description:
-      "Aprende a usar Muegano con estos tutoriales paso a paso. Te mostraré cómo lanzar más rápido y ahorrar tiempo.",
+      "Aprende a usar Katalyst con estos tutoriales paso a paso. Te mostraré cómo lanzar más rápido y ahorrar tiempo.",
     descriptionShort:
-      "Aprende a usar Muegano con estos tutoriales paso a paso.",
+      "Aprende a usar Katalyst con estos tutoriales paso a paso.",
   },
 ];
 
@@ -156,10 +156,10 @@ export const articles = [
     // The unique slug to use in the URL. It's also used to generate the canonical URL.
     slug: "introducing-supabase",
     // The title to display in the article page (h1). Less than 60 characters. It's also used to generate the meta title.
-    title: "Presentando Supabase en Muegano",
+    title: "Presentando Supabase en Katalyst",
     // The description of the article to display in the article page. Up to 160 characters. It's also used to generate the meta description.
     description:
-      "Supabase es una alternativa open-source a Firebase. Es una gran herramienta para crear el backend de tu app. ¡Ahora está integrado con Muegano!",
+      "Supabase es una alternativa open-source a Firebase. Es una gran herramienta para crear el backend de tu app. ¡Ahora está integrado con Katalyst!",
     // An array of categories of the article. It's used to generate the category badges, the category filter, and more.
     categories: [
       categories.find((category) => category.slug === categorySlugs.feature),
@@ -173,14 +173,14 @@ export const articles = [
       src: introducingSupabaseImg,
       // The relative URL of the same image to use in the Open Graph meta tags & the Schema Markup JSON-LD.
       urlRelative: "/blog/introducing-supabase/header.jpg",
-      alt: "Supabase y Muegano combinados",
+      alt: "Supabase y Katalyst combinados",
     },
     // The actual content of the article that will be shown under the <h1> title in the article page.
     content: (
       <>
         <Image
           src={introducingSupabaseImg}
-          alt="Supabase y Muegano combinados"
+          alt="Supabase y Katalyst combinados"
           width={700}
           height={500}
           priority={true}
@@ -192,7 +192,7 @@ export const articles = [
           <p className={styles.p}>
             Supabase es una alternativa open-source a Firebase. Es una gran
             herramienta para crear el backend de tu app. ¡Ahora está integrado
-            con Muegano!
+            con Katalyst!
           </p>
         </section>
 
@@ -225,12 +225,12 @@ export const articles = [
         </section>
 
         <section>
-          <h3 className={styles.h3}>2. Agrega tus credenciales a Muegano</h3>
+          <h3 className={styles.h3}>2. Agrega tus credenciales a Katalyst</h3>
           <p className={styles.p}>
             Copy the <span className={styles.codeInline}>API URL</span> and{" "}
             <span className={styles.codeInline}>API Key</span> from your
             Supabase project settings and configura tu proyecto de Supabase y
-            agrégalo a tu proyecto de Muegano. Add these files to your project:
+            agrégalo a tu proyecto de Katalyst. Add these files to your project:
           </p>
 
           <ul className={styles.ul}>

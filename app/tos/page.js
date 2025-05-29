@@ -59,17 +59,17 @@ const TOS = () => {
         >
           {`Last Updated: September 26, 2023
 
-¡Bienvenido a Muegano!
+¡Bienvenido a Katalyst!
 
-Estos Términos de Servicio ("Términos") rigen el uso del sitio web de Muegano en https://muegano.net ("Sitio Web") y los servicios proporcionados por Muegano. Al usar nuestro Sitio Web y servicios, aceptas estos Términos.
+Estos Términos de Servicio ("Términos") rigen el uso del sitio web de Katalyst en https://katalyst.org.mx ("Sitio Web") y los servicios proporcionados por Katalyst. Al usar nuestro Sitio Web y servicios, aceptas estos Términos.
 
-1. Descripción de Muegano
+1. Descripción de Katalyst
 
-Muegano es una plataforma que ofrece un boilerplate de código JavaScript para ayudar a emprendedores a lanzar sus comunidades de manera eficiente.
+Katalyst es una plataforma que ofrece un boilerplate de código JavaScript para ayudar a emprendedores a lanzar sus comunidades de manera eficiente.
 
 2. Ownership and Usage Rights
 
-Cuando compras un paquete de Muegano, obtienes el derecho a descargar y usar el código proporcionado para crear aplicaciones. Eres dueño del código que creas pero no tienes derecho a revenderlo. Ofrecemos reembolso completo dentro de los 7 días o...
+Cuando compras un paquete de Katalyst, obtienes el derecho a descargar y usar el código proporcionado para crear aplicaciones. Eres dueño del código que creas pero no tienes derecho a revenderlo. Ofrecemos reembolso completo dentro de los 7 días o...
 
 3. User Data and Privacy
 
@@ -89,7 +89,7 @@ We may update these Terms from time to time. Users will be notified of any chang
 
 For any questions or concerns regarding these Terms of Service, please contact us at marc@shipfa.st.
 
-¡Gracias por usar Muegano!`}
+¡Gracias por usar Katalyst!`}
         </pre>
       </div>
     </main>

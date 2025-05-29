@@ -443,7 +443,7 @@ const FeaturesListicle = () => {
           <div className="text-base-content/80 leading-relaxed mb-8 lg:text-lg">
             {/* 💡 COPY TIP: Explain how your product delivers what you promise in the headline. */}
             Login users, process payments and send emails at lightspeed. Spend
-            tu tiempo construyendo tu comunidad, no integrando APIs. Muegano
+            tu tiempo construyendo tu comunidad, no integrando APIs. Katalyst
             provides you with the boilerplate code you need to launch, FAST.
           </div>
         </div>

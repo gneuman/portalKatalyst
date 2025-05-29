@@ -40,8 +40,8 @@ const faqList = [
       <div className="space-y-2 leading-relaxed">
         <p>
           Al crear tu comunidad, puedes elegir un subdominio personalizado
-          (ejemplo: tucomunidad.muegano.net). Este será el acceso principal a tu
-          comunidad.
+          (ejemplo: tucomunidad.katalyst.org.mx). Este será el acceso principal
+          a tu comunidad.
         </p>
         <p>
           El subdominio debe contener solo letras minúsculas y números, sin
