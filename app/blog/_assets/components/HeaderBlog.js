@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Popover, Transition } from "@headlessui/react";
 import Link from "next/link";
@@ -137,10 +137,7 @@ const ButtonAccordionCategories = () => {
   );
 };
 
-// This is the header that appears on all pages in the /blog folder.
-// By default it shows the logo, the links, and the CTA.
-// In the links, there's a popover with the categories.
-const HeaderBlog = () => {
+function HeaderBlogContent() {
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -148,6 +145,8 @@ const HeaderBlog = () => {
   useEffect(() => {
     setIsOpen(false);
   }, [searchParams]);
+
+  const search = searchParams.get("search") || "";
 
   return (
     <header className="bg-base-200">
@@ -286,6 +285,23 @@ const HeaderBlog = () => {
       </div>
     </header>
   );
-};
+}
 
-export default HeaderBlog;
+export default function HeaderBlog() {
+  return (
+    <Suspense
+      fallback={
+        <header className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-6">
+              <div className="animate-pulse h-8 w-24 bg-gray-200 rounded"></div>
+              <div className="animate-pulse h-10 w-64 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </header>
+      }
+    >
+      <HeaderBlogContent />
+    </Suspense>
+  );
+}
