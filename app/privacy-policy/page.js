@@ -102,3 +102,10 @@ Correo electrónico: marc@shipfa.st
 Para todas las demás consultas, por favor visita nuestra página de Contacto en el Sitio Web.
 
 Al usar Katalyst, aceptas los términos de esta Política de Privacidad.`
+        </pre>
+      </div>
+    </main>
+  );
+};
+
+export default PrivacyPolicy;
