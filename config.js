@@ -99,7 +99,7 @@ const config = {
     defaultProvider: "google",
   },
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
+    baseUrl: process.env.NEXTAUTH_URL + "/api" || "http://localhost:3000/api",
   },
   database: {
     type: "mongodb", // o "postgresql", "mysql", etc.
