@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { Popover, Transition } from "@headlessui/react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import apiClient from "@/libs/api";
 
 // A button to show user some account actions
@@ -35,8 +35,17 @@ const ButtonAccount = () => {
     setIsLoading(false);
   };
 
-  // Don't show anything if not authenticated (we don't have any info about the user)
-  if (status === "unauthenticated") return null;
+  if (status === "loading") {
+    return <button className="btn btn-ghost loading">Cargando...</button>;
+  }
+
+  if (status === "unauthenticated" || !session) {
+    return (
+      <button className="btn btn-primary" onClick={() => signIn()}>
+        Iniciar sesión
+      </button>
+    );
+  }
 
   return (
     <Popover className="relative z-10">

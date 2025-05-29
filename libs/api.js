@@ -3,10 +3,15 @@ import { toast } from "react-hot-toast";
 import { signIn } from "next-auth/react";
 import config from "@/config";
 
+const baseURL =
+  process.env.NEXT_PUBLIC_API_URL || process.env.NEXTAUTH_URL
+    ? `${process.env.NEXTAUTH_URL}/api`
+    : "/api";
+
 // use this to interact with our own API (/app/api folder) from the front-end side
 // See https://shipfa.st/docs/tutorials/api-call
 const apiClient = axios.create({
-  baseURL: "/api",
+  baseURL,
 });
 
 apiClient.interceptors.response.use(
