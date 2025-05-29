@@ -5,26 +5,22 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import ButtonSignin from "./ButtonSignin";
-import logo from "@/app/icon.png";
-import config from "@/config";
 import { useSession } from "next-auth/react";
 
 const links = [
   {
-    href: "/#pricing",
-    label: "Pricing",
+    href: "/programas",
+    label: "Programas",
   },
   {
-    href: "/#testimonials",
-    label: "Reviews",
+    href: "/blog",
+    label: "Blog",
   },
   {
-    href: "/#faq",
-    label: "FAQ",
+    href: "/nosotros",
+    label: "Nosotros",
   },
 ];
-
-const cta = <ButtonSignin extraStyle="btn-primary" />;
 
 // A header with a logo on the left, links in the center (like Pricing, etc...), and a CTA (like Get Started or Login) on the right.
 // The header is responsive, and on mobile, the links are hidden behind a burger button.
@@ -38,22 +34,33 @@ function HeaderContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-6">
           <div className="flex items-center">
-            <Link href="/" className="text-2xl font-bold text-gray-900">
-              Portal Katalyst
+            <Link href="/" className="text-2xl font-bold text-blue-600">
+              Katalyst
             </Link>
+          </div>
+          <div className="hidden md:flex items-center space-x-8">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
           <div className="flex items-center space-x-4">
             {session ? (
               <Link
                 href="/dashboard"
-                className="text-gray-600 hover:text-gray-900"
+                className="text-gray-600 hover:text-blue-600 transition-colors"
               >
                 Dashboard
               </Link>
             ) : (
               <Link
                 href="/api/auth/signin"
-                className="text-gray-600 hover:text-gray-900"
+                className="text-gray-600 hover:text-blue-600 transition-colors"
               >
                 Iniciar Sesión
               </Link>

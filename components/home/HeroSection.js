@@ -23,13 +23,9 @@ export default function HeroSection() {
             </Link>
           </div>
           <div className="md:w-1/2">
-            <Image
-              src="/images/hero-image.jpg"
-              alt="Katalyst Education"
-              width={600}
-              height={400}
-              className="rounded-lg shadow-xl"
-            />
+            <div className="bg-blue-500 rounded-lg shadow-xl w-full h-[400px] flex items-center justify-center">
+              <p className="text-white text-xl">Imagen del Hero</p>
+            </div>
           </div>
         </div>
       </div>
