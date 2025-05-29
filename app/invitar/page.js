@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { toast } from "react-hot-toast";
 
 export default function InvitarPage() {
   const router = useRouter();
@@ -31,12 +32,26 @@ export default function InvitarPage() {
         }
         setStatus("loading");
         setMessage("Procesando invitación...");
-        // Validar invitación (opcional, pero lo dejamos para feedback)
+        // Validar invitación y obtener el email de la invitación
         const res = await fetch(`/api/invite/validate?token=${token}`);
+        const data = await res.json();
         if (!res.ok) {
-          const data = await res.json();
           setStatus("error");
           setMessage(data.error || "Invitación no válida");
+          return;
+        }
+        // Validar que el usuario logueado sea el invitado
+        if (
+          session?.user?.email &&
+          data?.debug?.email &&
+          session.user.email !== data.debug.email
+        ) {
+          toast.error(
+            "Este enlace es para otro usuario. Por favor, inicia sesión con el email correcto."
+          );
+          setTimeout(() => {
+            router.replace("/invitar");
+          }, 2000);
           return;
         }
         // Aceptar invitación automáticamente
@@ -64,7 +79,7 @@ export default function InvitarPage() {
       }
     };
     processInvite();
-  }, [searchParams, router, sessionStatus]);
+  }, [searchParams, router, session, sessionStatus]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toast } from "react-hot-toast";
 
 const InviteModalV2 = ({
   onClose,
@@ -40,6 +41,10 @@ const InviteModalV2 = ({
       setInvitedEmails([...invitedEmails, email]);
       setEmail("");
       if (onSuccess) onSuccess(email);
+      toast.success("¡Invitación enviada correctamente!");
+      setTimeout(() => {
+        onClose();
+      }, 2000);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -116,7 +121,7 @@ const InviteModalV2 = ({
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
               disabled={loading}
             >
-              Cancelar
+              Cerrar
             </button>
             <button
               type="submit"
