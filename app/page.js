@@ -1,12 +1,10 @@
+"use client";
 import { Suspense } from "react";
 import Header from "@/components/Header";
-import Hero from "@/components/Hero";
-import Problem from "@/components/Problem";
-import FeaturesAccordion from "@/components/FeaturesAccordion";
-import Pricing from "@/components/Pricing";
-import FAQ from "@/components/FAQ";
-import CTA from "@/components/CTA";
-import Footer from "@/components/Footer";
+import HeroSection from "@/components/home/HeroSection";
+import ProgramsSection from "@/components/home/ProgramsSection";
+import ImpactSection from "@/components/home/ImpactSection";
+import CTASection from "@/components/home/CTASection";
 
 export default function Home() {
   return (
@@ -15,14 +13,11 @@ export default function Home() {
         <Header />
       </Suspense>
       <main>
-        <Hero />
-        <Problem />
-        <FeaturesAccordion />
-        <Pricing />
-        <FAQ />
-        <CTA />
+        <HeroSection />
+        <ProgramsSection />
+        <ImpactSection />
+        <CTASection />
       </main>
-      <Footer />
     </>
   );
 }
