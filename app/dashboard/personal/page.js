@@ -11,6 +11,7 @@ import {
   FaBuilding,
 } from "react-icons/fa";
 import Link from "next/link";
+import Image from "next/image";
 
 const CAMPOS = [
   { title: "Nombre", icon: <FaUser className="text-blue-600" /> },
@@ -157,19 +158,21 @@ export default function PerfilPersonal() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-8 text-center">Perfil Personal</h1>
-      <div className="bg-white rounded shadow p-6 mb-6">
+    <div className="max-w-5xl mx-auto py-10">
+      <h1 className="text-4xl font-bold mb-8 text-center text-[#233746] flex items-center justify-center gap-4">
+        Perfil Personal
+      </h1>
+      <div className="bg-white rounded-xl shadow-lg p-10 mb-6 border border-gray-100">
         {loading && <p className="text-center">Cargando...</p>}
         {error && <p className="text-red-600 text-center">{error}</p>}
         {profile && (
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
             {CAMPOS.map(({ title, icon }) => {
               if (title === "Email") {
                 return (
                   <div
                     key={title}
-                    className="flex items-center gap-3 border-b py-2 col-span-1 md:col-span-2"
+                    className="col-span-2 flex items-center gap-3 border-b py-2"
                   >
                     {icon}
                     <div className="flex-1">
@@ -229,11 +232,11 @@ export default function PerfilPersonal() {
                 </div>
               );
             })}
-            <div className="flex gap-2 mt-6 justify-end col-span-1 md:col-span-2">
+            <div className="col-span-2 flex gap-2 mt-6 justify-end">
               {!editMode ? (
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="btn btn-primary bg-[#233746] border-[#233746] hover:bg-[#f99d25] hover:border-[#f99d25] text-white"
                   onClick={() => setEditMode(true)}
                 >
                   Editar
@@ -242,7 +245,7 @@ export default function PerfilPersonal() {
                 <>
                   <button
                     type="button"
-                    className="btn btn-success"
+                    className="btn btn-success bg-[#f99d25] border-[#f99d25] text-white"
                     onClick={handleSave}
                     disabled={saving}
                   >
@@ -264,7 +267,7 @@ export default function PerfilPersonal() {
         {/* Resumen de empresas asociadas */}
         {!loading && empresas && (
           <div className="mt-8">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 text-[#233746]">
               <FaBuilding className="text-yellow-600" />
               <span className="font-bold">Empresas asociadas:</span>
             </div>
@@ -284,7 +287,7 @@ export default function PerfilPersonal() {
             )}
             <div className="mt-4">
               <Link href="/dashboard/empresas">
-                <button className="btn btn-secondary">
+                <button className="btn btn-secondary bg-[#f99d25] border-[#f99d25] text-white">
                   {empresas.length > 0 ? "Ir a Empresas" : "Agregar Empresa"}
                 </button>
               </Link>

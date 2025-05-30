@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaUser, FaBuilding, FaChartBar } from "react-icons/fa";
 import ButtonAccount from "@/components/ButtonAccount";
+import Image from "next/image";
 
 // This is a server-side component to ensure the user is logged in.
 // If not, it will redirect to the login page.
@@ -15,9 +16,18 @@ export default function DashboardLayout({ children }) {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header alineado */}
       <div className="bg-[#232F36] py-4 px-6 flex flex-row items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold text-white tracking-widest mb-0 flex items-center gap-2">
-          KATALYST
-        </h1>
+        <div className="flex items-center gap-4">
+          <Image
+            src="/Katalyst.png"
+            alt="Katalyst Logo"
+            width={120}
+            height={40}
+            className="object-contain"
+          />
+          <h1 className="text-3xl font-bold text-white tracking-widest mb-0 flex items-center gap-2">
+            KATALYST
+          </h1>
+        </div>
         <div className="flex items-center">
           <ButtonAccount />
         </div>
