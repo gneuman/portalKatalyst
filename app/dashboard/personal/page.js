@@ -167,7 +167,6 @@ export default function PerfilPersonal() {
           <form className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-6">
             {CAMPOS.map(({ title, icon }) => {
               if (title === "Email" || title === "Género") {
-                // Mostrar Género y Email juntos en la misma fila
                 if (title === "Género") {
                   const colGenero = columns.find((c) => c.title === "Género");
                   const colEmail = columns.find((c) => c.title === "Email");
@@ -181,40 +180,25 @@ export default function PerfilPersonal() {
                         {icon}
                         <div className="flex-1">
                           <div className="font-medium mb-1">Género</div>
-                          {!editMode ? (
-                            <div className="text-gray-700">
-                              {form["Género"] || (
-                                <span className="text-gray-400">-</span>
-                              )}
-                            </div>
-                          ) : colGenero?.type === "status" &&
-                            colGenero?.settings_str ? (
-                            <select
-                              className="input input-bordered w-full"
-                              value={form["Género"] || ""}
-                              onChange={(e) =>
-                                handleChange("Género", e.target.value)
-                              }
-                            >
-                              <option value="">Selecciona una opción</option>
-                              {Object.values(
+                          <select
+                            className="input input-bordered w-full"
+                            value={form["Género"] || ""}
+                            onChange={(e) =>
+                              handleChange("Género", e.target.value)
+                            }
+                            disabled={!editMode}
+                          >
+                            <option value="">Selecciona una opción</option>
+                            {colGenero &&
+                              colGenero.settings_str &&
+                              Object.values(
                                 JSON.parse(colGenero.settings_str).labels || {}
                               ).map((label) => (
                                 <option key={label} value={label}>
                                   {label}
                                 </option>
                               ))}
-                            </select>
-                          ) : (
-                            <input
-                              type="text"
-                              className="input input-bordered w-full"
-                              value={form["Género"] || ""}
-                              onChange={(e) =>
-                                handleChange("Género", e.target.value)
-                              }
-                            />
-                          )}
+                          </select>
                         </div>
                       </div>
                       {/* Email */}
@@ -228,12 +212,13 @@ export default function PerfilPersonal() {
                     </div>
                   );
                 }
-                // No renderizar Email por separado
                 return null;
               }
-              // Para Comunidad, forzar select en edición:
+              // Para Comunidad, siempre mostrar como select
               if (title === "Comunidad") {
-                const col = columns.find((c) => c.title === title);
+                const colComunidad = columns.find(
+                  (c) => c.title === "Comunidad"
+                );
                 return (
                   <div
                     key={title}
@@ -242,35 +227,23 @@ export default function PerfilPersonal() {
                     {icon}
                     <div className="flex-1">
                       <div className="font-medium mb-1">{title}</div>
-                      {!editMode ? (
-                        <div className="text-gray-700">
-                          {form[title] || (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </div>
-                      ) : col?.type === "dropdown" && col?.settings_str ? (
-                        <select
-                          className="input input-bordered w-full"
-                          value={form[title] || ""}
-                          onChange={(e) => handleChange(title, e.target.value)}
-                        >
-                          <option value="">Selecciona una opción</option>
-                          {Object.values(
-                            JSON.parse(col.settings_str).labels || {}
+                      <select
+                        className="input input-bordered w-full"
+                        value={form[title] || ""}
+                        onChange={(e) => handleChange(title, e.target.value)}
+                        disabled={!editMode}
+                      >
+                        <option value="">Selecciona una opción</option>
+                        {colComunidad &&
+                          colComunidad.settings_str &&
+                          Object.values(
+                            JSON.parse(colComunidad.settings_str).labels || {}
                           ).map((label) => (
                             <option key={label} value={label}>
                               {label}
                             </option>
                           ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          className="input input-bordered w-full"
-                          value={form[title] || ""}
-                          onChange={(e) => handleChange(title, e.target.value)}
-                        />
-                      )}
+                      </select>
                     </div>
                   </div>
                 );
