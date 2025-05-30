@@ -193,11 +193,17 @@ export default function PerfilPersonal() {
                               colGenero.settings_str &&
                               Object.values(
                                 JSON.parse(colGenero.settings_str).labels || {}
-                              ).map((label) => (
-                                <option key={label} value={label}>
-                                  {label}
-                                </option>
-                              ))}
+                              ).map((label) => {
+                                const labelStr =
+                                  typeof label === "object"
+                                    ? label.name
+                                    : label;
+                                return (
+                                  <option key={labelStr} value={labelStr}>
+                                    {labelStr}
+                                  </option>
+                                );
+                              })}
                           </select>
                         </div>
                       </div>
@@ -238,11 +244,15 @@ export default function PerfilPersonal() {
                           colComunidad.settings_str &&
                           Object.values(
                             JSON.parse(colComunidad.settings_str).labels || {}
-                          ).map((label) => (
-                            <option key={label} value={label}>
-                              {label}
-                            </option>
-                          ))}
+                          ).map((label) => {
+                            const labelStr =
+                              typeof label === "object" ? label.name : label;
+                            return (
+                              <option key={labelStr} value={labelStr}>
+                                {labelStr}
+                              </option>
+                            );
+                          })}
                       </select>
                     </div>
                   </div>
