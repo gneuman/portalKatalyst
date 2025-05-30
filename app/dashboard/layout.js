@@ -18,15 +18,12 @@ export default function DashboardLayout({ children }) {
       <div className="bg-[#232F36] py-4 px-6 flex flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Image
-            src="/Katalyst.png"
+            src="/images/Katalyst.png"
             alt="Katalyst Logo"
             width={120}
             height={40}
             className="object-contain"
           />
-          <h1 className="text-3xl font-bold text-white tracking-widest mb-0 flex items-center gap-2">
-            KATALYST
-          </h1>
         </div>
         <div className="flex items-center">
           <ButtonAccount />

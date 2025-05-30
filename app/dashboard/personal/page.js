@@ -158,15 +158,15 @@ export default function PerfilPersonal() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-10">
+    <div className="w-full min-h-[80vh] flex flex-col items-center justify-center bg-gray-50">
       <h1 className="text-4xl font-bold mb-8 text-center text-[#233746] flex items-center justify-center gap-4">
         Perfil Personal
       </h1>
-      <div className="bg-white rounded-xl shadow-lg p-10 mb-6 border border-gray-100">
+      <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg p-12 mb-6 border border-gray-100">
         {loading && <p className="text-center">Cargando...</p>}
         {error && <p className="text-red-600 text-center">{error}</p>}
         {profile && (
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-6">
             {CAMPOS.map(({ title, icon }) => {
               if (title === "Email") {
                 return (
