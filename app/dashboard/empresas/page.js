@@ -62,47 +62,26 @@ function getColumnValue(col, formValue) {
 
   switch (col.column?.type) {
     case "status":
-      if (col.column?.settings_str) {
-        const labels = JSON.parse(col.column.settings_str).labels || {};
-        const index = Object.values(labels).findIndex(
-          (label) => label === formValue
-        );
-        return index !== -1 ? { index } : null;
-      }
-      return null;
-
+      return { label: formValue };
+    case "dropdown":
+      return { labels: [formValue] };
     case "location":
       return {
         address: formValue,
         lat: null,
         lng: null,
       };
-
     case "date":
       return { date: formValue };
-
     case "numbers":
       return { number: parseFloat(formValue) };
-
     case "checkbox":
       return { checked: formValue === "true" };
-
-    case "dropdown":
-      if (col.column?.settings_str) {
-        const labels = JSON.parse(col.column.settings_str).labels || {};
-        const index = Object.values(labels).findIndex(
-          (label) => label === formValue
-        );
-        return index !== -1 ? { index } : null;
-      }
-      return null;
-
     case "text":
     case "long_text":
     case "phone":
     case "link":
       return String(formValue);
-
     default:
       return formValue;
   }

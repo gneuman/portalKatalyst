@@ -114,11 +114,9 @@ export default function PerfilPersonal() {
           col.title !== "Email"
         ) {
           if (col.type === "status" && col.settings_str) {
-            const labels = JSON.parse(col.settings_str).labels || {};
-            const index = Object.values(labels).findIndex(
-              (label) => label === form[col.title]
-            );
-            columnValues[col.id] = { index };
+            columnValues[col.id] = { label: form[col.title] };
+          } else if (col.type === "dropdown" && col.settings_str) {
+            columnValues[col.id] = { labels: [form[col.title]] };
           } else if (col.type === "date") {
             columnValues[col.id] = { date: form[col.title] };
           } else {
@@ -149,7 +147,7 @@ export default function PerfilPersonal() {
       const item = mondayData?.data?.items?.[0] || null;
       setProfile(item);
       setColumns(item?.column_values?.map((col) => col.column) || []);
-      profileCache.current = null; // Limpiar caché tras editar
+      profileCache.current = null;
       setLoading(false);
     } catch (e) {
       setError(e.message);
