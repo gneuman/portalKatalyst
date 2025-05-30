@@ -80,14 +80,14 @@ const AppDataProvider = ({ children }) => {
 // 5. CrispChat: Set Crisp customer chat support (see above)
 const ClientLayout = ({ children }) => {
   return (
-    <SessionProvider>
+      <SessionProvider>
       <AppDataProvider>
         {/* Show a progress bar at the top when navigating between pages */}
         <NextTopLoader color={config.colors.main} showSpinner={false} />
 
         {/* Content inside app/page.js files  */}
         <main className="flex flex-col flex-grow min-h-screen bg-base-100">
-          {children}
+        {children}
         </main>
 
         {/* Show Success/Error messages anywhere from the app with toast() */}
@@ -106,7 +106,7 @@ const ClientLayout = ({ children }) => {
         {/* Set Crisp customer chat support */}
         <CrispChat />
       </AppDataProvider>
-    </SessionProvider>
+      </SessionProvider>
   );
 };
 

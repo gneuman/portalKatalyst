@@ -13,15 +13,16 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="bg-[#232F36] py-4 px-6 flex flex-col items-center md:items-start">
-        <div className="mb-2 w-full flex justify-end">
-          <ButtonAccount />
-        </div>
-        <h1 className="text-3xl font-bold text-white tracking-widest mb-2">
+      {/* Header alineado */}
+      <div className="bg-[#232F36] py-4 px-6 flex flex-row items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold text-white tracking-widest mb-0 flex items-center gap-2">
           KATALYST
         </h1>
+        <div className="flex items-center">
+          <ButtonAccount />
+        </div>
       </div>
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex flex-1 min-h-0 bg-gray-50">
         {/* Sidebar */}
         <aside className="w-64 bg-white shadow-lg flex flex-col py-8 px-4 gap-4">
           <h2 className="text-2xl font-bold mb-8 text-center">Dashboard</h2>
@@ -63,8 +64,10 @@ export default function DashboardLayout({ children }) {
             Portal Katalyst
           </div>
         </aside>
-        {/* Main content */}
-        <main className="flex-1 p-8">{children}</main>
+        {/* Main content expandido */}
+        <main className="flex-1 p-8 flex flex-col min-h-[80vh] max-w-full bg-base-100 rounded-lg shadow-lg mx-4 my-8">
+          {children}
+        </main>
       </div>
     </div>
   );

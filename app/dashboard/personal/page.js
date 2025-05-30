@@ -158,13 +158,13 @@ export default function PerfilPersonal() {
         {loading && <p className="text-center">Cargando...</p>}
         {error && <p className="text-red-600 text-center">{error}</p>}
         {profile && (
-          <form className="space-y-4">
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {CAMPOS.map(({ title, icon }) => {
               if (title === "Email") {
                 return (
                   <div
                     key={title}
-                    className="flex items-center gap-3 border-b py-2"
+                    className="flex items-center gap-3 border-b py-2 col-span-1 md:col-span-2"
                   >
                     {icon}
                     <div className="flex-1">
@@ -224,7 +224,7 @@ export default function PerfilPersonal() {
                 </div>
               );
             })}
-            <div className="flex gap-2 mt-6 justify-end">
+            <div className="flex gap-2 mt-6 justify-end col-span-1 md:col-span-2">
               {!editMode ? (
                 <button
                   type="button"
