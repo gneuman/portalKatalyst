@@ -65,7 +65,7 @@ export default function DashboardLayout({ children }) {
           </div>
         </aside>
         {/* Main content expandido */}
-        <main className="flex-1 p-8 flex flex-col min-h-[80vh] max-w-full bg-base-100 rounded-lg shadow-lg mx-4 my-8">
+        <main className="flex-1 flex flex-col min-h-screen w-full bg-base-100 rounded-none shadow-none p-8">
           {children}
         </main>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   FaUser,
   FaPhone,
@@ -28,6 +28,7 @@ const CAMPOS = [
 
 export default function PerfilPersonal() {
   const { data: session } = useSession();
+  const profileCache = useRef(null);
   const [profile, setProfile] = useState(null);
   const [columns, setColumns] = useState([]); // Para status y date
   const [form, setForm] = useState({});
@@ -59,6 +60,7 @@ export default function PerfilPersonal() {
         });
         const mondayData = await mondayRes.json();
         const item = mondayData?.data?.items?.[0] || null;
+        profileCache.current = item; // Guardar en caché
         setProfile(item);
         // Guardar columnas para edición
         setColumns(item?.column_values?.map((col) => col.column) || []);
@@ -89,7 +91,9 @@ export default function PerfilPersonal() {
       }
       setLoading(false);
     };
-    fetchProfile();
+    // Solo cargar si no hay caché
+    if (!profileCache.current) fetchProfile();
+    else setProfile(profileCache.current);
   }, [session?.user?.email]);
 
   const handleChange = (title, value) => {
@@ -144,6 +148,7 @@ export default function PerfilPersonal() {
       const item = mondayData?.data?.items?.[0] || null;
       setProfile(item);
       setColumns(item?.column_values?.map((col) => col.column) || []);
+      profileCache.current = null; // Limpiar caché tras editar
       setLoading(false);
     } catch (e) {
       setError(e.message);
