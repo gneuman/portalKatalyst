@@ -17,8 +17,28 @@ export default function SignIn() {
     setError("");
 
     try {
-      console.log("Iniciando proceso de autenticación para:", email);
+      console.log("=== INICIO DEL PROCESO DE AUTENTICACIÓN ===");
+      console.log("Email ingresado:", email);
 
+      // Verificar si el usuario existe
+      console.log("Verificando existencia del usuario en la base de datos...");
+      const userResponse = await fetch(`/api/user/profile?email=${email}`);
+      console.log("Respuesta del servidor:", userResponse.status);
+
+      const userData = await userResponse.json();
+      console.log("Datos del usuario:", userData);
+
+      if (userResponse.status === 404) {
+        console.log("Usuario no encontrado, redirigiendo al registro...");
+        const registerUrl = `/api/auth/register?email=${encodeURIComponent(
+          email
+        )}`;
+        console.log("URL de redirección:", registerUrl);
+        router.push(registerUrl);
+        return;
+      }
+
+      console.log("Usuario encontrado, procediendo con el inicio de sesión...");
       const result = await signIn("email", {
         email,
         callbackUrl: "/dashboard",
@@ -37,9 +57,13 @@ export default function SignIn() {
         router.push("/api/auth/verify-request");
       }
     } catch (error) {
-      console.error("Error inesperado:", error);
+      console.error("=== ERROR EN EL PROCESO DE AUTENTICACIÓN ===");
+      console.error("Tipo de error:", error.name);
+      console.error("Mensaje de error:", error.message);
+      console.error("Stack trace:", error.stack);
       setError("Ocurrió un error inesperado. Por favor, intenta de nuevo.");
     } finally {
+      console.log("=== FIN DEL PROCESO DE AUTENTICACIÓN ===");
       setLoading(false);
     }
   };
