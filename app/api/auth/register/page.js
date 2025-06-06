@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   FaUser,
@@ -13,7 +13,7 @@ import {
 } from "react-icons/fa";
 import Image from "next/image";
 
-export default function Register() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
@@ -35,12 +35,18 @@ export default function Register() {
   const [columns, setColumns] = useState([]);
 
   useEffect(() => {
+    console.log("=== INICIO DEL PROCESO DE REGISTRO ===");
+    console.log("Email recibido:", email);
+
     if (!email) {
+      console.log("No se encontró email, redirigiendo a signin");
       router.push("/api/auth/signin");
     }
+
     // Obtener estructura del board
     const fetchBoardStructure = async () => {
       try {
+        console.log("Obteniendo estructura del board...");
         const mondayRes = await fetch("/api/monday/board/structure", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -50,6 +56,7 @@ export default function Register() {
         console.log("Respuesta de Monday:", mondayData);
         const board = mondayData?.data?.boards?.[0] || null;
         if (board?.columns) {
+          console.log("Columnas encontradas:", board.columns);
           setColumns(board.columns);
         }
       } catch (error) {
@@ -61,12 +68,14 @@ export default function Register() {
   }, [email, router]);
 
   const handleChange = (field, value) => {
+    console.log(`Actualizando campo ${field}:`, value);
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      console.log("Archivo seleccionado:", file.name);
       setForm((prev) => ({ ...prev, foto: file }));
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -82,11 +91,10 @@ export default function Register() {
     setError("");
 
     try {
+      console.log("Enviando datos del formulario:", form);
       const formData = new FormData();
       Object.keys(form).forEach((key) => {
-        if (key === "foto" && form[key]) {
-          formData.append("foto", form[key]);
-        } else {
+        if (form[key] !== null) {
           formData.append(key, form[key]);
         }
       });
@@ -97,13 +105,18 @@ export default function Register() {
       });
 
       const data = await response.json();
+      console.log("Respuesta del servidor:", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Error al registrar usuario");
       }
 
-      router.push("/dashboard");
+      console.log("Registro exitoso, redirigiendo a verificación...");
+      router.push(
+        "/api/auth/verify-request?email=" + encodeURIComponent(form.email)
+      );
     } catch (error) {
+      console.error("Error en el registro:", error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -352,5 +365,13 @@ export default function Register() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function Register() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

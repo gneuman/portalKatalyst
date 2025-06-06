@@ -121,6 +121,8 @@ export const authOptions = {
             email: dbUser.email,
             image: dbUser.image,
             role: dbUser.role,
+            personalMondayId: dbUser.personalMondayId,
+            businessMondayId: dbUser.businessMondayId,
           };
           // Agregar campos extendidos
           session.user.name = dbUser?.name || null;
