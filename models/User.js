@@ -28,7 +28,7 @@ const userSchema = mongoose.Schema(
       required: true,
       unique: true,
     },
-    image: {
+    fotoPerfil: {
       type: String,
     },
     personalMondayId: {

@@ -1,87 +1,44 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  FaUser,
-  FaPhone,
-  FaCalendarAlt,
-  FaEnvelope,
-  FaUsers,
-  FaVenusMars,
-  FaCamera,
-} from "react-icons/fa";
-import Image from "next/image";
+import { toast } from "react-hot-toast";
 
-function RegisterForm() {
+export default function Register() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
 
-  const [form, setForm] = useState({
-    nombre: "",
-    apellidoPaterno: "",
-    apellidoMaterno: "",
-    telefono: "",
-    fechaNacimiento: "",
-    comunidad: "",
-    genero: "",
+  const [formData, setFormData] = useState({
+    name: "",
+    firstName: "",
+    lastName: "",
+    secondLastName: "",
     email: email || "",
-    foto: null,
   });
+
+  const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [columns, setColumns] = useState([]);
 
   useEffect(() => {
-    console.log("=== INICIO DEL PROCESO DE REGISTRO ===");
-    console.log("Email recibido:", email);
-
     if (!email) {
-      console.log("No se encontró email, redirigiendo a signin");
       router.push("/api/auth/signin");
     }
-
-    // Obtener estructura del board
-    const fetchBoardStructure = async () => {
-      try {
-        console.log("Obteniendo estructura del board...");
-        const mondayRes = await fetch("/api/monday/board/structure", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        });
-        const mondayData = await mondayRes.json();
-        console.log("Respuesta de Monday:", mondayData);
-        const board = mondayData?.data?.boards?.[0] || null;
-        if (board?.columns) {
-          console.log("Columnas encontradas:", board.columns);
-          setColumns(board.columns);
-        }
-      } catch (error) {
-        console.error("Error al obtener estructura del board:", error);
-      }
-    };
-
-    fetchBoardStructure();
   }, [email, router]);
 
-  const handleChange = (field, value) => {
-    console.log(`Actualizando campo ${field}:`, value);
-    setForm((prev) => ({ ...prev, [field]: value }));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleFileChange = (e) => {
+  const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      console.log("Archivo seleccionado:", file.name);
-      setForm((prev) => ({ ...prev, foto: file }));
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setPhoto(file);
     }
   };
 
@@ -91,261 +48,183 @@ function RegisterForm() {
     setError("");
 
     try {
-      console.log("Enviando datos del formulario:", form);
-      const formData = new FormData();
-      Object.keys(form).forEach((key) => {
-        if (form[key] !== null) {
-          formData.append(key, form[key]);
+      // 1. Subir la foto si existe
+      let photoUrl = "";
+      if (photo) {
+        const formData = new FormData();
+        formData.append("file", photo);
+
+        const uploadResponse = await fetch("/api/auth/upload-photo", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+
+        if (!uploadResponse.ok) {
+          throw new Error(uploadData.error || "Error al subir la foto");
         }
-      });
 
-      const response = await fetch("/api/user/register", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      console.log("Respuesta del servidor:", data);
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error al registrar usuario");
+        photoUrl = uploadData.url;
+        toast.success("Foto subida exitosamente");
       }
 
-      console.log("Registro exitoso, redirigiendo a verificación...");
-      router.push(
-        "/api/auth/verify-request?email=" + encodeURIComponent(form.email)
-      );
+      // 2. Crear usuario en Monday.com
+      const mondayResponse = await fetch("/api/auth/create-monday-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          fotoPerfil: photoUrl,
+        }),
+      });
+
+      if (!mondayResponse.ok) {
+        const errorData = await mondayResponse.json();
+        throw new Error(errorData.error || "Error al crear usuario en Monday");
+      }
+
+      const mondayData = await mondayResponse.json();
+      toast.success("Usuario creado en Monday exitosamente");
+
+      // 3. Crear usuario en MongoDB
+      const userResponse = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          mondayId: mondayData.mondayId,
+          fotoPerfil: photoUrl,
+        }),
+      });
+
+      if (!userResponse.ok) {
+        const errorData = await userResponse.json();
+        throw new Error(errorData.error || "Error al crear usuario en MongoDB");
+      }
+
+      toast.success("Usuario creado exitosamente");
+      router.push("/api/auth/verify-request");
     } catch (error) {
       console.error("Error en el registro:", error);
       setError(error.message);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Encontrar columnas para comunidad y género
-  const colComunidad = columns.find((c) => c.title === "Comunidad");
-  const colGenero = columns.find((c) => c.title === "Género");
+  if (!email) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl w-full space-y-8">
+      <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Completa tu registro
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Por favor, proporciona la siguiente información para continuar
+            Ingresa tus datos para crear tu cuenta
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {/* Email en una fila completa */}
-          <div className="w-full">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Correo electrónico
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              value={form.email}
-              disabled
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500"
-            />
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="name" className="sr-only">
+                Nombre completo
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                value={formData.name}
+                onChange={handleInputChange}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Nombre completo"
+              />
+            </div>
+            <div>
+              <label htmlFor="firstName" className="sr-only">
+                Primer nombre
+              </label>
+              <input
+                id="firstName"
+                name="firstName"
+                type="text"
+                required
+                value={formData.firstName}
+                onChange={handleInputChange}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Primer nombre"
+              />
+            </div>
+            <div>
+              <label htmlFor="lastName" className="sr-only">
+                Primer apellido
+              </label>
+              <input
+                id="lastName"
+                name="lastName"
+                type="text"
+                required
+                value={formData.lastName}
+                onChange={handleInputChange}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Primer apellido"
+              />
+            </div>
+            <div>
+              <label htmlFor="secondLastName" className="sr-only">
+                Segundo apellido
+              </label>
+              <input
+                id="secondLastName"
+                name="secondLastName"
+                type="text"
+                required
+                value={formData.secondLastName}
+                onChange={handleInputChange}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Segundo apellido"
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Correo electrónico
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={formData.email}
+                onChange={handleInputChange}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Correo electrónico"
+                disabled
+              />
+            </div>
           </div>
 
-          {/* Foto de perfil */}
-          <div className="flex flex-col items-center">
-            <div className="relative w-32 h-32 mb-4">
-              {previewUrl ? (
-                <Image
-                  src={previewUrl}
-                  alt="Preview"
-                  fill
-                  className="rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
-                  <FaCamera className="w-8 h-8 text-gray-400" />
-                </div>
-              )}
-            </div>
-            <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
-              <span>Seleccionar foto</span>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Foto de perfil
+            </label>
+            <div className="mt-1 flex items-center">
               <input
                 type="file"
                 accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
+                onChange={handlePhotoChange}
+                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
               />
-            </label>
-          </div>
-
-          {/* Grid 2x2 para los campos principales */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label
-                htmlFor="nombre"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Nombre
-              </label>
-              <input
-                id="nombre"
-                name="nombre"
-                type="text"
-                required
-                value={form.nombre}
-                onChange={(e) => handleChange("nombre", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="apellidoPaterno"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Apellido Paterno
-              </label>
-              <input
-                id="apellidoPaterno"
-                name="apellidoPaterno"
-                type="text"
-                required
-                value={form.apellidoPaterno}
-                onChange={(e) =>
-                  handleChange("apellidoPaterno", e.target.value)
-                }
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="apellidoMaterno"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Apellido Materno
-              </label>
-              <input
-                id="apellidoMaterno"
-                name="apellidoMaterno"
-                type="text"
-                required
-                value={form.apellidoMaterno}
-                onChange={(e) =>
-                  handleChange("apellidoMaterno", e.target.value)
-                }
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="telefono"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Teléfono
-              </label>
-              <input
-                id="telefono"
-                name="telefono"
-                type="tel"
-                required
-                value={form.telefono}
-                onChange={(e) => handleChange("telefono", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="fechaNacimiento"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Fecha de Nacimiento
-              </label>
-              <input
-                id="fechaNacimiento"
-                name="fechaNacimiento"
-                type="date"
-                required
-                value={form.fechaNacimiento}
-                onChange={(e) =>
-                  handleChange("fechaNacimiento", e.target.value)
-                }
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="comunidad"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Comunidad
-              </label>
-              <select
-                id="comunidad"
-                name="comunidad"
-                required
-                value={form.comunidad}
-                onChange={(e) => handleChange("comunidad", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Selecciona una opción</option>
-                {colComunidad &&
-                  colComunidad.settings_str &&
-                  Object.values(
-                    JSON.parse(colComunidad.settings_str).labels || {}
-                  ).map((label) => {
-                    const labelStr =
-                      typeof label === "object" ? label.name : label;
-                    return (
-                      <option key={labelStr} value={labelStr}>
-                        {labelStr}
-                      </option>
-                    );
-                  })}
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="genero"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Género
-              </label>
-              <select
-                id="genero"
-                name="genero"
-                required
-                value={form.genero}
-                onChange={(e) => handleChange("genero", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Selecciona una opción</option>
-                {colGenero &&
-                  colGenero.settings_str &&
-                  Object.values(
-                    JSON.parse(colGenero.settings_str).labels || {}
-                  ).map((label) => {
-                    const labelStr =
-                      typeof label === "object" ? label.name : label;
-                    return (
-                      <option key={labelStr} value={labelStr}>
-                        {labelStr}
-                      </option>
-                    );
-                  })}
-              </select>
             </div>
           </div>
 
@@ -357,21 +236,13 @@ function RegisterForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {loading ? "Registrando..." : "Completar Registro"}
+              {loading ? "Procesando..." : "Completar registro"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  );
-}
-
-export default function Register() {
-  return (
-    <Suspense fallback={<div>Cargando...</div>}>
-      <RegisterForm />
-    </Suspense>
   );
 }
