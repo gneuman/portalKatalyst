@@ -522,9 +522,13 @@ export default function EmpresasDashboard() {
                   !["subitems", "person", "status"].includes(
                     col.column?.type?.toLowerCase() || ""
                   ) &&
-                  !["Subitems", "Person", "Status"].includes(
-                    col.column?.title?.trim() || ""
-                  )
+                  ![
+                    "Subitems",
+                    "Person",
+                    "Status",
+                    "Contactos - Digitalización:",
+                    "Contactos - Digitalización",
+                  ].includes(col.column?.title?.trim() || "")
               );
               const isEditing = editId === empresa.id;
               return (
@@ -679,9 +683,13 @@ export default function EmpresasDashboard() {
                     !["subitems", "person", "status"].includes(
                       col.column?.type?.toLowerCase() || ""
                     ) &&
-                    !["Subitems", "Person", "Status"].includes(
-                      col.column?.title?.trim() || ""
-                    )
+                    ![
+                      "Subitems",
+                      "Person",
+                      "Status",
+                      "Contactos - Digitalización:",
+                      "Contactos - Digitalización",
+                    ].includes(col.column?.title?.trim() || "")
                 )
                 .map((col) => (
                   <div
@@ -706,9 +714,13 @@ export default function EmpresasDashboard() {
                   !["subitems", "person", "status"].includes(
                     col.column?.type?.toLowerCase() || ""
                   ) &&
-                  !["Subitems", "Person", "Status"].includes(
-                    col.column?.title?.trim() || ""
-                  )
+                  ![
+                    "Subitems",
+                    "Person",
+                    "Status",
+                    "Contactos - Digitalización:",
+                    "Contactos - Digitalización",
+                  ].includes(col.column?.title?.trim() || "")
               ).length === 0 && (
                 <div className="text-gray-400 text-sm italic">
                   No hay información relevante para mostrar.
