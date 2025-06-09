@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { toast } from "react-hot-toast";
@@ -54,7 +54,10 @@ function RegisterForm() {
           if (col.title === "Nombre") ids.nombre = col.id;
           if (col.title === "Apellido Paterno") ids.apellidoP = col.id;
           if (col.title === "Apellido Materno") ids.apellidoM = col.id;
-          if (col.title === "Fecha Nacimiento" || col.title === "Fecha de Nacimiento")
+          if (
+            col.title === "Fecha Nacimiento" ||
+            col.title === "Fecha de Nacimiento"
+          )
             ids.fechaNacimiento = col.id;
           if (col.title === "Género") ids.genero = col.id;
           if (col.title === "Comunidad") ids.comunidad = col.id;
@@ -483,4 +486,10 @@ function RegisterForm() {
   );
 }
 
-export default RegisterForm;
+export default function Register() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
