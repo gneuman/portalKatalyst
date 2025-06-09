@@ -516,17 +516,21 @@ export default function EmpresasDashboard() {
               const numContactos = contactos?.display_value
                 ? contactos.display_value.split(", ").length
                 : 0;
+              // Filtrar campos a mostrar (ni como etiqueta ni como valor)
               const camposMostrar = empresa.column_values?.filter(
                 (col) =>
-                  col.column?.type !== "subitems" &&
-                  col.column?.type !== "person" &&
-                  col.column?.type !== "status"
+                  !["subitems", "person", "status"].includes(
+                    col.column?.type?.toLowerCase() || ""
+                  ) &&
+                  !["Subitems", "Person", "Status"].includes(
+                    col.column?.title?.trim() || ""
+                  )
               );
               const isEditing = editId === empresa.id;
               return (
                 <div
                   key={empresa.id}
-                  className="border rounded shadow-sm p-4 bg-white flex flex-col gap-2"
+                  className="border rounded shadow-sm p-4 bg-white flex flex-col gap-2 hover:shadow-lg transition-shadow"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-lg flex items-center gap-2">
@@ -539,6 +543,7 @@ export default function EmpresasDashboard() {
                         backgroundColor: `${statusInfo.color}20`,
                         color: statusInfo.color,
                       }}
+                      title={statusInfo.label}
                     >
                       {statusInfo.label}
                     </span>
@@ -552,6 +557,11 @@ export default function EmpresasDashboard() {
                   </div>
                   {isEditing ? (
                     <>
+                      {camposMostrar.length === 0 && (
+                        <div className="text-gray-400 text-sm italic mb-2">
+                          No hay campos editables para esta empresa.
+                        </div>
+                      )}
                       {camposMostrar.map((col) => (
                         <div
                           key={col.id}
@@ -585,10 +595,15 @@ export default function EmpresasDashboard() {
                     </>
                   ) : (
                     <>
-                      {empresa.column_values?.map((col) => (
+                      {camposMostrar.length === 0 && (
+                        <div className="text-gray-400 text-sm italic mb-2">
+                          No hay información relevante para mostrar.
+                        </div>
+                      )}
+                      {camposMostrar.map((col) => (
                         <div
                           key={col.id}
-                          className="flex justify-between text-sm mb-2"
+                          className="flex justify-between text-sm mb-2 border-b pb-1 last:border-b-0 last:pb-0"
                         >
                           <span className="font-medium flex items-center gap-2">
                             {ICONOS_TIPOS[col.column?.type] || (
@@ -596,7 +611,11 @@ export default function EmpresasDashboard() {
                             )}
                             {col.column?.title}:
                           </span>
-                          <span>{col.text || col.value || "-"}</span>
+                          <span>
+                            {col.text || col.value || (
+                              <span className="text-gray-300">-</span>
+                            )}
+                          </span>
                         </div>
                       ))}
                       <div className="flex gap-2 mt-2">
@@ -657,8 +676,12 @@ export default function EmpresasDashboard() {
               {empresaDetalle.column_values
                 ?.filter(
                   (col) =>
-                    col.column?.type !== "subitems" &&
-                    col.column?.type !== "person"
+                    !["subitems", "person", "status"].includes(
+                      col.column?.type?.toLowerCase() || ""
+                    ) &&
+                    !["Subitems", "Person", "Status"].includes(
+                      col.column?.title?.trim() || ""
+                    )
                 )
                 .map((col) => (
                   <div
@@ -671,9 +694,26 @@ export default function EmpresasDashboard() {
                       )}
                       {col.column?.title}:
                     </span>
-                    <span>{col.text || col.value || "-"}</span>
+                    <span>
+                      {col.text || col.value || (
+                        <span className="text-gray-300">-</span>
+                      )}
+                    </span>
                   </div>
                 ))}
+              {empresaDetalle.column_values?.filter(
+                (col) =>
+                  !["subitems", "person", "status"].includes(
+                    col.column?.type?.toLowerCase() || ""
+                  ) &&
+                  !["Subitems", "Person", "Status"].includes(
+                    col.column?.title?.trim() || ""
+                  )
+              ).length === 0 && (
+                <div className="text-gray-400 text-sm italic">
+                  No hay información relevante para mostrar.
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <button
