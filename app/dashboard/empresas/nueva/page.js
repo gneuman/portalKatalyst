@@ -163,7 +163,10 @@ export default function NuevaEmpresa() {
       const columnValues = {};
       const camposMostrar = columns.filter(
         (col) =>
-          !["subitems", "person", "status"].includes(col.type) &&
+          !["subitems", "person"].includes(col.type?.toLowerCase() || "") &&
+          !["Subitems", "Person", "Name", "Name:"].includes(
+            col.title?.trim() || ""
+          ) &&
           col.id !== "board_relation_mkrcrrm"
       );
       camposMostrar.forEach((col) => {
@@ -372,42 +375,46 @@ export default function NuevaEmpresa() {
           </div>
         )}
         {!loading && (
-          <form onSubmit={handleSave} className="space-y-2 max-w-md mx-auto">
-            {columns
-              .filter(
-                (col) =>
-                  !["subitems", "person", "status"].includes(col.type) &&
-                  col.id !== "board_relation_mkrcrrm"
-              )
-              .map((col) => (
-                <div
-                  key={col.id}
-                  className="flex justify-between items-center text-sm mb-1 gap-2 py-1"
-                >
-                  <span className="font-medium flex items-center gap-2">
-                    {ICONOS_TIPOS[col.type] || (
-                      <FaBuilding className="text-gray-600" />
-                    )}
-                    {col.title}:
-                  </span>
-                  {renderField(col)}
-                </div>
-              ))}
-            <div className="flex gap-2 justify-end mt-4">
+          <form onSubmit={handleSave} className="space-y-4 max-w-md mx-auto">
+            {camposMostrar.map((col) => (
+              <div
+                key={col.id}
+                className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm mb-2 gap-2 py-1"
+              >
+                <span className="font-medium flex items-center gap-2 min-w-[120px]">
+                  {ICONOS_TIPOS[col.type] || (
+                    <FaBuilding className="text-gray-600" />
+                  )}
+                  {col.title}:
+                </span>
+                {renderField(col)}
+              </div>
+            ))}
+            <div className="flex flex-col sm:flex-row gap-2 justify-end mt-4">
               <button
                 type="button"
-                className="btn btn-ghost"
+                className="btn btn-ghost min-w-[100px]"
                 onClick={() => router.push("/dashboard/empresas")}
                 disabled={saving}
+                aria-label="Cancelar creación de empresa"
               >
                 <FaTimes className="inline mr-1" /> Cancelar
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="btn btn-primary min-w-[140px]"
                 disabled={saving}
+                aria-label="Guardar empresa"
               >
-                <FaCheck className="inline mr-1" /> Guardar Empresa
+                {saving ? (
+                  <span className="flex items-center gap-2">
+                    <FaCheck className="inline" /> Guardando...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <FaCheck className="inline" /> Guardar Empresa
+                  </span>
+                )}
               </button>
             </div>
           </form>

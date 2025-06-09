@@ -507,7 +507,7 @@ export default function EmpresasDashboard() {
           </div>
         )}
         {empresas.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {empresas.map((empresa) => {
               const statusInfo = getStatusInfo(empresa);
               const contactos = empresa.column_values?.find(
@@ -534,7 +534,9 @@ export default function EmpresasDashboard() {
               return (
                 <div
                   key={empresa.id}
-                  className="border rounded shadow-sm p-4 bg-white flex flex-col gap-2 hover:shadow-lg transition-shadow"
+                  className="border rounded-xl shadow-lg p-6 bg-white flex flex-col gap-3 hover:shadow-2xl transition-shadow focus-within:ring-2 focus-within:ring-[#233746]"
+                  tabIndex={0}
+                  aria-label={`Tarjeta de empresa ${empresa.name}`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-lg flex items-center gap-2">
@@ -622,25 +624,28 @@ export default function EmpresasDashboard() {
                           </span>
                         </div>
                       ))}
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex gap-2 mt-2 flex-wrap">
                         <button
-                          className="btn btn-sm btn-outline"
+                          className="btn btn-sm btn-outline min-w-[90px]"
                           onClick={() => {
                             setEmpresaDetalle(empresa);
                             setShowInfoModal(true);
                           }}
+                          aria-label="Ver información de la empresa"
                         >
                           Ver info
                         </button>
                         <button
-                          className="btn btn-sm btn-primary"
+                          className="btn btn-sm btn-primary min-w-[90px]"
                           onClick={() => handleEdit(empresa)}
+                          aria-label="Editar empresa"
                         >
                           <FaEdit className="inline mr-1" /> Editar
                         </button>
                         <button
-                          className="btn btn-sm btn-primary"
+                          className="btn btn-sm btn-primary min-w-[90px]"
                           onClick={() => handleInviteContact(empresa)}
+                          aria-label="Invitar contacto a empresa"
                         >
                           <FaUserPlus className="inline mr-1" /> Invitar
                         </button>

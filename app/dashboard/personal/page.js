@@ -169,7 +169,7 @@ export default function PerfilPersonal() {
         {loading && <p className="text-center">Cargando...</p>}
         {error && <p className="text-red-600 text-center">{error}</p>}
         {profile && (
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-6">
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full max-w-3xl mx-auto">
             {CAMPOS.map(({ title, icon }) => {
               if (title === "Email" || title === "Género") {
                 if (title === "Género") {
@@ -342,12 +342,13 @@ export default function PerfilPersonal() {
                 }}
               />
             </div>
-            <div className="col-span-2 flex gap-2 mt-6 justify-end">
+            <div className="col-span-2 flex gap-2 mt-6 justify-end flex-wrap">
               {!editMode ? (
                 <button
                   type="button"
-                  className="btn btn-primary bg-[#233746] border-[#233746] hover:bg-[#f99d25] hover:border-[#f99d25] text-white"
+                  className="btn btn-primary bg-[#233746] border-[#233746] hover:bg-[#f99d25] hover:border-[#f99d25] text-white min-w-[120px]"
                   onClick={() => setEditMode(true)}
+                  aria-label="Editar perfil"
                 >
                   Editar
                 </button>
@@ -355,17 +356,19 @@ export default function PerfilPersonal() {
                 <>
                   <button
                     type="button"
-                    className="btn btn-success bg-[#f99d25] border-[#f99d25] text-white"
+                    className="btn btn-success bg-[#f99d25] border-[#f99d25] text-white min-w-[120px]"
                     onClick={handleSave}
                     disabled={saving}
+                    aria-label="Guardar cambios de perfil"
                   >
                     {saving ? "Guardando..." : "Guardar"}
                   </button>
                   <button
                     type="button"
-                    className="btn btn-ghost"
+                    className="btn btn-ghost min-w-[100px]"
                     onClick={() => setEditMode(false)}
                     disabled={saving}
+                    aria-label="Cancelar edición de perfil"
                   >
                     Cancelar
                   </button>
