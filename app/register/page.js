@@ -5,11 +5,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FaCamera } from "react-icons/fa";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
+import { signIn } from "next-auth/react";
 
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
+
+  const paises = [
+    { nombre: "México", codigo: "MX", prefijo: "+52" },
+    { nombre: "Israel", codigo: "IL", prefijo: "+972" },
+    { nombre: "Estados Unidos", codigo: "US", prefijo: "+1" },
+  ];
 
   const [form, setForm] = useState({
     nombre: "",
@@ -22,6 +29,7 @@ function RegisterForm() {
     email: email || "",
     foto: null,
     nombreCompleto: "",
+    pais: "MX",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -53,7 +61,11 @@ function RegisterForm() {
           if (col.title === "Nombre") ids.nombre = col.id;
           if (col.title === "Apellido Paterno") ids.apellidoP = col.id;
           if (col.title === "Apellido Materno") ids.apellidoM = col.id;
-          if (col.title === "Fecha de Nacimiento") ids.fechaNac = col.id;
+          if (
+            col.title === "Fecha Nacimiento" ||
+            col.title === "Fecha de Nacimiento"
+          )
+            ids.fechaNacimiento = col.id;
           if (col.title === "Género") ids.genero = col.id;
           if (col.title === "Comunidad") ids.comunidad = col.id;
           if (col.title === "Teléfono") ids.telefono = col.id;
@@ -67,6 +79,12 @@ function RegisterForm() {
     };
     fetchBoardSchema();
   }, [email, router]);
+
+  useEffect(() => {
+    if (!email) {
+      window.location.href = "/register";
+    }
+  }, [email]);
 
   useEffect(() => {
     setForm((prev) => ({
@@ -119,6 +137,9 @@ function RegisterForm() {
     console.clear();
     console.log("=== INICIO REGISTRO ===");
     try {
+      // Mostrar el contenido del formulario antes de cualquier procesamiento
+      console.log("==== FORMULARIO ANTES DE SUBIR FOTO ====");
+      console.log(JSON.stringify(form, null, 2));
       // 1. Subir foto a Google Storage si existe
       let fotoUrl = null;
       if (form.foto) {
@@ -138,15 +159,19 @@ function RegisterForm() {
         console.log("Foto subida:", fotoUrl);
       }
       // Construir payload programático para Monday.com usando los IDs y tipos del schema
+      console.log("Valor de form.fechaNacimiento:", form.fechaNacimiento);
+      console.log("colIds.fechaNacimiento:", colIds.fechaNacimiento);
       const mondayPayload = {
         name: form.nombreCompleto,
         ...(colIds.nombre && { [colIds.nombre]: form.nombre }),
         ...(colIds.apellidoP && { [colIds.apellidoP]: form.apellidoPaterno }),
         ...(colIds.apellidoM && { [colIds.apellidoM]: form.apellidoMaterno }),
-        ...(colIds.fechaNac && {
-          [colIds.fechaNac]: { date: form.fechaNacimiento },
-        }),
-        ...(colIds.genero && { [colIds.genero]: { labels: [form.genero] } }),
+        ...(colIds.fechaNacimiento &&
+          form.fechaNacimiento && {
+            [colIds.fechaNacimiento]: { date: form.fechaNacimiento },
+          }),
+        ...(colIds.genero &&
+          form.genero && { [colIds.genero]: { labels: [form.genero] } }),
         ...(colIds.comunidad && { [colIds.comunidad]: form.comunidad }),
         ...(colIds.telefono && { [colIds.telefono]: form.telefono }),
         ...(colIds.email && { [colIds.email]: form.email }),
@@ -154,8 +179,10 @@ function RegisterForm() {
         ...(colIds.status && {
           [colIds.status]: { label: form.comunidad || "Activo" },
         }),
+        pais: form.pais,
       };
-      console.log("[FRONTEND] Payload programático:", mondayPayload);
+      console.log("==== PAYLOAD QUE SE ENVÍA AL BACKEND ====");
+      console.log(JSON.stringify(mondayPayload, null, 2));
       const mondayResponse = await fetch("/api/auth/create-monday-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -178,14 +205,14 @@ function RegisterForm() {
       }
       toast.success("Usuario creado en Monday exitosamente");
       console.log("Respuesta Monday:", mondayResult);
-      // 4. Crear usuario en MongoDB (puedes ajustar el payload según tu modelo)
+      // 4. Crear usuario en MongoDB (ajustar el payload)
       const userPayload = {
         name: form.nombreCompleto,
         firstName: form.nombre,
         lastName: form.apellidoPaterno,
         secondLastName: form.apellidoMaterno,
         email: form.email,
-        mondayId: mondayResult.mondayId,
+        personalMondayId: mondayResult.mondayId,
         fotoPerfil: fotoUrl,
       };
       console.log("Payload MongoDB:", userPayload);
@@ -204,7 +231,15 @@ function RegisterForm() {
       }
       toast.success("Usuario creado exitosamente");
       console.log("Respuesta MongoDB:", userResult);
-      router.push("/register?email=" + encodeURIComponent(form.email));
+      // Disparar el flujo de NextAuth para enviar el correo de verificación
+      await signIn("email", {
+        email: form.email,
+        callbackUrl: "/dashboard",
+        redirect: false,
+      });
+      window.location.href =
+        "/api/auth/verify-request?email=" + encodeURIComponent(form.email);
+      return;
     } catch (error) {
       console.error("Error en el registro:", error);
       setError(error.message);
@@ -340,20 +375,49 @@ function RegisterForm() {
 
             <div>
               <label
+                htmlFor="pais"
+                className="block text-sm font-medium text-gray-700"
+              >
+                País
+              </label>
+              <select
+                id="pais"
+                name="pais"
+                required
+                value={form.pais}
+                onChange={(e) => handleChange("pais", e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              >
+                {paises.map((pais) => (
+                  <option key={pais.codigo} value={pais.codigo}>
+                    {pais.nombre} ({pais.prefijo})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
                 htmlFor="telefono"
                 className="block text-sm font-medium text-gray-700"
               >
                 Teléfono
               </label>
-              <input
-                id="telefono"
-                name="telefono"
-                type="tel"
-                required
-                value={form.telefono}
-                onChange={(e) => handleChange("telefono", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
+              <div className="flex">
+                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                  {paises.find((p) => p.codigo === form.pais)?.prefijo || "+52"}
+                </span>
+                <input
+                  id="telefono"
+                  name="telefono"
+                  type="tel"
+                  required
+                  value={form.telefono}
+                  onChange={(e) => handleChange("telefono", e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-r-md shadow-sm"
+                  placeholder="Número sin prefijo"
+                />
+              </div>
             </div>
 
             <div>

@@ -31,18 +31,18 @@
 
 ### 1.0 Actualización del Sistema de Autenticación
 
-- [ ] 1.1 Actualizar `libs/next-auth.js` para:
+- [x] 1.1 Actualizar `libs/next-auth.js` para:
 
   - [x] 1.1.1 Remover el Proveedor de Google
-  - [ ] 1.1.2 Remover la autenticación por contraseña del modelo de usuario
-  - [ ] 1.1.3 Ajustar el callback de sesión para manejar solo email
-  - [ ] 1.1.4 Actualizar la plantilla del correo de verificación
-  - [ ] 1.1.5 Configurar el tiempo de expiración del token de verificación
+  - [x] 1.1.2 Remover la autenticación por contraseña del modelo de usuario
+  - [x] 1.1.3 Ajustar el callback de sesión para manejar solo email
+  - [x] 1.1.4 Actualizar la plantilla del correo de verificación
+  - [x] 1.1.5 Configurar el tiempo de expiración del token de verificación
 
-- [ ] 1.2 Mejorar la verificación de email:
+- [x] 1.2 Mejorar la verificación de email:
 
-  - [ ] 1.2.1 Implementar validación de dominio de email
-  - [ ] 1.2.2 Agregar manejo de reintentos de envío
+  - [x] 1.2.1 Implementar validación de dominio de email
+  - [x] 1.2.2 Agregar manejo de reintentos de envío
   - [ ] 1.2.3 Mejorar el logging de la verificación
   - [ ] 1.2.4 Implementar límite de intentos de verificación por email
 

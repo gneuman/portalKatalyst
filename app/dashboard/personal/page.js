@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import Link from "next/link";
 import Image from "next/image";
+import ImageUpload from "@/components/ImageUpload";
 
 const CAMPOS = [
   { title: "Nombre", icon: <FaUser className="text-blue-600" /> },
@@ -50,6 +51,10 @@ export default function PerfilPersonal() {
           `/api/user/profile?email=${session.user.email}`
         );
         const user = await res.json();
+        // Guardar mongoId en localStorage
+        if (user._id) {
+          localStorage.setItem("mongoId", user._id);
+        }
         if (!user.personalMondayId)
           throw new Error("No se encontró personalMondayId");
         // 2. Traer datos de Monday
@@ -160,7 +165,7 @@ export default function PerfilPersonal() {
       <h1 className="text-4xl font-bold mb-8 text-center text-[#233746] flex items-center justify-center gap-4">
         Perfil Personal
       </h1>
-      <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg p-12 mb-6 border border-gray-100">
+      <div className="w-full bg-white rounded-xl shadow-lg p-12 mb-6 border border-gray-100">
         {loading && <p className="text-center">Cargando...</p>}
         {error && <p className="text-red-600 text-center">{error}</p>}
         {profile && (
@@ -308,6 +313,35 @@ export default function PerfilPersonal() {
                 </div>
               );
             })}
+            <div className="col-span-2 flex flex-col items-center mb-8">
+              <ImageUpload
+                initialUrl={
+                  // Buscar primero en Monday (column_values)
+                  profile?.column_values?.find((c) =>
+                    c.column?.title?.toLowerCase().includes("foto")
+                  )?.text ||
+                  form["Foto de Perfil"] ||
+                  form["Foto"] ||
+                  form["fotoPerfil"] ||
+                  form["foto"] ||
+                  ""
+                }
+                onUpload={async (url) => {
+                  // Actualizar fotoPerfil en MongoDB
+                  await fetch(`/api/user/profile`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      email: session.user.email,
+                      fotoPerfil: url,
+                    }),
+                  });
+                  // Refrescar perfil
+                  profileCache.current = null;
+                  window.location.reload();
+                }}
+              />
+            </div>
             <div className="col-span-2 flex gap-2 mt-6 justify-end">
               {!editMode ? (
                 <button

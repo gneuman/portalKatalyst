@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -31,9 +30,7 @@ export default function SignIn() {
 
       if (userResponse.status === 404) {
         console.log("Usuario no encontrado, redirigiendo al registro...");
-        const registerUrl = `/api/auth/register?email=${encodeURIComponent(
-          email
-        )}`;
+        const registerUrl = `/register?email=${encodeURIComponent(email)}`;
         console.log("URL de redirección:", registerUrl);
         router.push(registerUrl);
         return;
@@ -55,7 +52,9 @@ export default function SignIn() {
         );
       } else {
         console.log("Redirigiendo a la página de verificación...");
-        router.push("/api/auth/verify-request");
+        router.push(
+          `/api/auth/verify-request?email=${encodeURIComponent(email)}`
+        );
       }
     } catch (error) {
       console.error("=== ERROR EN EL PROCESO DE AUTENTICACIÓN ===");

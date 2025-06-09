@@ -1,5 +1,7 @@
 "use client";
 import { FaBuilding, FaUser, FaBook, FaClock } from "react-icons/fa";
+import CardGrid from "@/components/dashboard/CardGrid";
+import Image from "next/image";
 
 export default function Dashboard() {
   // KPIs de ejemplo (puedes conectar estos valores a tu backend o lógica real)
@@ -27,22 +29,31 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-8 text-center">Resumen</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-        {kpis.map((kpi) => (
-          <div
-            key={kpi.label}
-            className="bg-white rounded shadow p-6 flex flex-col items-center"
-          >
-            {kpi.icon}
-            <div className="text-3xl font-extrabold mt-2">{kpi.value}</div>
-            <div className="text-gray-600 mt-1 text-lg">{kpi.label}</div>
+    <div className="max-w-7xl mx-auto py-8 px-4">
+      {/* Cards principales */}
+      <h2 className="text-2xl font-bold mt-8 mb-4">Para ti</h2>
+      <CardGrid />
+      {/* Banner visual */}
+      <div className="w-full rounded-xl overflow-hidden shadow-lg mt-10 mb-8">
+        <div className="relative w-full h-40 sm:h-56">
+          <Image
+            src="/images/banner-departamentos.jpg"
+            alt="Departamentos de 185, 208 y 237 m²"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-[#232F36]/90 flex flex-col justify-center items-center text-center px-4">
+            <div className="text-white text-lg sm:text-2xl font-semibold tracking-widest mb-2">
+              DEPARTAMENTOS DE
+              <br />
+              185, 208 Y 237m²
+            </div>
+            <div className="text-[#FFA726] text-xs sm:text-base tracking-widest">
+              ENTREGA: MARZO DEL 2019. PRECIOS DESDE $7.2 MILLONES
+            </div>
           </div>
-        ))}
-      </div>
-      <div className="text-center text-gray-400">
-        Selecciona una sección en el menú lateral para ver más detalles.
+        </div>
       </div>
     </div>
   );
