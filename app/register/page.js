@@ -6,6 +6,7 @@ import { FaCamera } from "react-icons/fa";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { signIn } from "next-auth/react";
+import ImageUpload from "@/components/ImageUpload";
 
 function RegisterForm() {
   const router = useRouter();
