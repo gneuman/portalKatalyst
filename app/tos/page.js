@@ -5,7 +5,7 @@ import config from "@/config";
 // CHATGPT PROMPT TO GENERATE YOUR TERMS & SERVICES — replace with your own data 👇
 
 // 1. Go to https://chat.openai.com/
-// 2. Copy paste bellow
+// 2. Copy paste bellow and replace the data with your own (if needed)
 // 3. Replace the data with your own (if needed)
 // 4. Paste the answer from ChatGPT directly in the <pre> tag below
 
