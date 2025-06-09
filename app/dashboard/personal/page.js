@@ -161,15 +161,23 @@ export default function PerfilPersonal() {
   };
 
   return (
-    <div className="w-full min-h-[80vh] flex flex-col items-center justify-center bg-gray-50">
-      <h1 className="text-4xl font-bold mb-8 text-center text-[#233746] flex items-center justify-center gap-4">
+    <div className="w-full min-h-[80vh] flex flex-col items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
+      <h1 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8 text-center text-[#233746] flex items-center justify-center gap-4">
         Perfil Personal
       </h1>
-      <div className="w-full bg-white rounded-xl shadow-lg p-12 mb-6 border border-gray-100">
-        {loading && <p className="text-center">Cargando...</p>}
-        {error && <p className="text-red-600 text-center">{error}</p>}
+      <div className="w-full max-w-3xl bg-white rounded-xl shadow-lg p-4 sm:p-8 md:p-12 mb-6 border border-gray-100">
+        {loading && (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#233746]"></div>
+          </div>
+        )}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-4 mb-4">
+            {error}
+          </div>
+        )}
         {profile && (
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full max-w-3xl mx-auto">
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full">
             {CAMPOS.map(({ title, icon }) => {
               if (title === "Email" || title === "Género") {
                 if (title === "Género") {
@@ -178,15 +186,17 @@ export default function PerfilPersonal() {
                   return (
                     <div
                       key="genero-email"
-                      className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 border-b py-2 items-center"
+                      className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 border-b py-4"
                     >
                       {/* Género */}
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-start gap-3">
                         {icon}
                         <div className="flex-1">
-                          <div className="font-medium mb-1">Género</div>
+                          <div className="font-medium mb-2 text-gray-700">
+                            {title}
+                          </div>
                           <select
-                            className="input input-bordered w-full"
+                            className="select select-bordered w-full bg-white"
                             value={form["Género"] || ""}
                             onChange={(e) =>
                               handleChange("Género", e.target.value)
@@ -213,11 +223,15 @@ export default function PerfilPersonal() {
                         </div>
                       </div>
                       {/* Email */}
-                      <div className="flex items-center gap-3">
-                        <FaEnvelope className="text-gray-600" />
+                      <div className="flex items-start gap-3">
+                        <FaEnvelope className="text-gray-600 mt-1" />
                         <div className="flex-1">
-                          <div className="font-medium mb-1">Email</div>
-                          <div className="text-gray-500">{form["Email"]}</div>
+                          <div className="font-medium mb-2 text-gray-700">
+                            Email
+                          </div>
+                          <div className="text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                            {form["Email"]}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -225,6 +239,7 @@ export default function PerfilPersonal() {
                 }
                 return null;
               }
+
               // Para Comunidad, siempre mostrar como select
               if (title === "Comunidad") {
                 const colComunidad = columns.find(
@@ -233,13 +248,15 @@ export default function PerfilPersonal() {
                 return (
                   <div
                     key={title}
-                    className="flex items-center gap-3 border-b py-2"
+                    className="flex items-start gap-3 border-b py-4"
                   >
                     {icon}
                     <div className="flex-1">
-                      <div className="font-medium mb-1">{title}</div>
+                      <div className="font-medium mb-2 text-gray-700">
+                        {title}
+                      </div>
                       <select
-                        className="input input-bordered w-full"
+                        className="select select-bordered w-full bg-white"
                         value={form[title] || ""}
                         onChange={(e) => handleChange(title, e.target.value)}
                         disabled={!editMode}
@@ -263,18 +280,21 @@ export default function PerfilPersonal() {
                   </div>
                 );
               }
+
               // Buscar columna para tipo
               const col = columns.find((c) => c.title === title);
               return (
                 <div
                   key={title}
-                  className="flex items-center gap-3 border-b py-2"
+                  className="flex items-start gap-3 border-b py-4"
                 >
                   {icon}
                   <div className="flex-1">
-                    <div className="font-medium mb-1">{title}</div>
+                    <div className="font-medium mb-2 text-gray-700">
+                      {title}
+                    </div>
                     {!editMode ? (
-                      <div className="text-gray-700">
+                      <div className="text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
                         {form[title] || (
                           <span className="text-gray-400">-</span>
                         )}
@@ -282,29 +302,14 @@ export default function PerfilPersonal() {
                     ) : col?.type === "date" ? (
                       <input
                         type="date"
-                        className="input input-bordered w-full"
+                        className="input input-bordered w-full bg-white"
                         value={form[title] || ""}
                         onChange={(e) => handleChange(title, e.target.value)}
                       />
-                    ) : col?.type === "status" && col?.settings_str ? (
-                      <select
-                        className="input input-bordered w-full"
-                        value={form[title] || ""}
-                        onChange={(e) => handleChange(title, e.target.value)}
-                      >
-                        <option value="">Selecciona una opción</option>
-                        {Object.values(
-                          JSON.parse(col.settings_str).labels || {}
-                        ).map((label) => (
-                          <option key={label} value={label}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
                     ) : (
                       <input
                         type={title === "Teléfono" ? "tel" : "text"}
-                        className="input input-bordered w-full"
+                        className="input input-bordered w-full bg-white"
                         value={form[title] || ""}
                         onChange={(e) => handleChange(title, e.target.value)}
                       />
@@ -313,62 +318,63 @@ export default function PerfilPersonal() {
                 </div>
               );
             })}
-            <div className="col-span-2 flex flex-col items-center mb-8">
-              <ImageUpload
-                initialUrl={
-                  // Buscar primero en Monday (column_values)
-                  profile?.column_values?.find((c) =>
-                    c.column?.title?.toLowerCase().includes("foto")
-                  )?.text ||
-                  form["Foto de Perfil"] ||
-                  form["Foto"] ||
-                  form["fotoPerfil"] ||
-                  form["foto"] ||
-                  ""
-                }
-                onUpload={async (url) => {
-                  // Actualizar fotoPerfil en MongoDB
-                  await fetch(`/api/user/profile`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      email: session.user.email,
-                      fotoPerfil: url,
-                    }),
-                  });
-                  // Refrescar perfil
-                  profileCache.current = null;
-                  window.location.reload();
-                }}
-              />
+
+            {/* Foto de perfil */}
+            <div className="col-span-2 border-b py-4">
+              <div className="flex flex-col items-center gap-4">
+                <div className="font-medium text-gray-700">Foto de Perfil</div>
+                <ImageUpload
+                  initialUrl={
+                    profile?.column_values?.find((c) =>
+                      c.column?.title?.toLowerCase().includes("foto")
+                    )?.text ||
+                    form["Foto de Perfil"] ||
+                    form["Foto"] ||
+                    form["fotoPerfil"] ||
+                    form["foto"] ||
+                    ""
+                  }
+                  onUpload={async (url) => {
+                    await fetch(`/api/user/profile`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        email: session.user.email,
+                        fotoPerfil: url,
+                      }),
+                    });
+                    profileCache.current = null;
+                    window.location.reload();
+                  }}
+                />
+              </div>
             </div>
-            <div className="col-span-2 flex gap-2 mt-6 justify-end flex-wrap">
+
+            {/* Botones de acción */}
+            <div className="col-span-2 flex flex-col sm:flex-row gap-4 justify-end mt-6">
               {!editMode ? (
                 <button
                   type="button"
-                  className="btn btn-primary bg-[#233746] border-[#233746] hover:bg-[#f99d25] hover:border-[#f99d25] text-white min-w-[120px]"
+                  className="btn btn-primary bg-[#233746] border-[#233746] hover:bg-[#f99d25] hover:border-[#f99d25] text-white w-full sm:w-auto"
                   onClick={() => setEditMode(true)}
-                  aria-label="Editar perfil"
                 >
-                  Editar
+                  Editar Perfil
                 </button>
               ) : (
                 <>
                   <button
                     type="button"
-                    className="btn btn-success bg-[#f99d25] border-[#f99d25] text-white min-w-[120px]"
+                    className="btn btn-success bg-[#f99d25] border-[#f99d25] text-white w-full sm:w-auto"
                     onClick={handleSave}
                     disabled={saving}
-                    aria-label="Guardar cambios de perfil"
                   >
-                    {saving ? "Guardando..." : "Guardar"}
+                    {saving ? "Guardando..." : "Guardar Cambios"}
                   </button>
                   <button
                     type="button"
-                    className="btn btn-ghost min-w-[100px]"
+                    className="btn btn-ghost w-full sm:w-auto"
                     onClick={() => setEditMode(false)}
                     disabled={saving}
-                    aria-label="Cancelar edición de perfil"
                   >
                     Cancelar
                   </button>
@@ -378,7 +384,9 @@ export default function PerfilPersonal() {
           </form>
         )}
         {!loading && !profile && !error && (
-          <p className="text-center">No se encontró información de perfil.</p>
+          <div className="text-center py-8 text-gray-500">
+            No se encontró información de perfil.
+          </div>
         )}
       </div>
     </div>
