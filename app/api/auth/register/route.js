@@ -30,9 +30,9 @@ export async function POST(request) {
     }
 
     // 2. Si no existe en MongoDB, buscar en Monday
-    const boardId = process.env.MONDAY_CONTACTS_BOARD_ID;
+    const contactsBoardId = process.env.MONDAY_CONTACTS_BOARD_ID;
     const query = `query {
-      items_by_column_values (board_id: ${boardId}, column_id: "email", column_value: "${email}") {
+      items_by_column_values (board_id: ${contactsBoardId}, column_id: "email", column_value: "${email}") {
         id
         name
         column_values {

@@ -76,9 +76,9 @@ export async function POST(request) {
     }
 
     // Verificar si el usuario ya existe en Monday
-    const boardId = process.env.MONDAY_CONTACTS_BOARD_ID;
+    const contactsBoardId = process.env.MONDAY_CONTACTS_BOARD_ID;
     const checkQuery = `query {
-      items_by_column_values (board_id: ${boardId}, column_id: "email", column_value: "${normalizedData.email}") {
+      items_by_column_values (board_id: ${contactsBoardId}, column_id: "email", column_value: "${normalizedData.email}") {
         id
         name
         column_values {
