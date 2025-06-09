@@ -238,8 +238,7 @@ export default function EmpresasDashboard() {
     const initial = {};
     empresa.column_values?.forEach((col) => {
       if (
-        col.column?.type !== "subitems" &&
-        col.column?.type !== "person" &&
+        !["subitems", "person", "status"].includes(col.column?.type) &&
         col.column?.id !== "board_relation_mkrcrrm"
       ) {
         initial[col.id] = col.text || col.value || "";
@@ -520,7 +519,8 @@ export default function EmpresasDashboard() {
               const camposMostrar = empresa.column_values?.filter(
                 (col) =>
                   col.column?.type !== "subitems" &&
-                  col.column?.type !== "person"
+                  col.column?.type !== "person" &&
+                  col.column?.type !== "status"
               );
               const isEditing = editId === empresa.id;
               return (
@@ -585,7 +585,7 @@ export default function EmpresasDashboard() {
                     </>
                   ) : (
                     <>
-                      {camposMostrar.map((col) => (
+                      {empresa.column_values?.map((col) => (
                         <div
                           key={col.id}
                           className="flex justify-between text-sm mb-2"
