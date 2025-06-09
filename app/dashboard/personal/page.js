@@ -374,36 +374,6 @@ export default function PerfilPersonal() {
             </div>
           </form>
         )}
-        {/* Resumen de empresas asociadas */}
-        {!loading && empresas && (
-          <div className="mt-8">
-            <div className="flex items-center gap-2 mb-2 text-[#233746]">
-              <FaBuilding className="text-yellow-600" />
-              <span className="font-bold">Empresas asociadas:</span>
-            </div>
-            {empresas.length > 0 ? (
-              <ul className="list-disc ml-6">
-                {empresas.map((e) => (
-                  <li key={e.id} className="mb-1">
-                    <span className="font-medium">{e.name}</span>{" "}
-                    <span className="text-xs text-gray-400">(ID: {e.id})</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-gray-500 mb-2">
-                No tienes empresas asociadas.
-              </div>
-            )}
-            <div className="mt-4">
-              <Link href="/dashboard/empresas">
-                <button className="btn btn-secondary bg-[#f99d25] border-[#f99d25] text-white">
-                  {empresas.length > 0 ? "Ir a Empresas" : "Agregar Empresa"}
-                </button>
-              </Link>
-            </div>
-          </div>
-        )}
         {!loading && !profile && !error && (
           <p className="text-center">No se encontró información de perfil.</p>
         )}
