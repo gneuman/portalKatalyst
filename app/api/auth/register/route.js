@@ -48,7 +48,7 @@ export async function POST(request) {
     const mondayUser = mondayResponse?.data?.items_by_column_values?.[0];
 
     if (mondayUser) {
-      // Si existe en Monday, crear usuario en MongoDB
+      // Si existe en Monday, actualizar los datos y crear usuario en MongoDB
       const userData = {
         email,
         name: mondayUser.name,
@@ -64,6 +64,27 @@ export async function POST(request) {
         }
       });
 
+      // Actualizar el usuario en Monday.com
+      const updateMutation = `mutation {
+        change_multiple_column_values (
+          board_id: ${boardId},
+          item_id: ${mondayUser.id},
+          column_values: ${JSON.stringify(
+            JSON.stringify({
+              text_mkqc3cea: { text: userData.firstName },
+              text_mkqcmqh0: { text: userData.lastName },
+              text_mkqcjqph: { text: userData.secondLastName },
+              email: { email: email, text: email },
+            })
+          )}
+        ) {
+          id
+        }
+      }`;
+
+      await postMonday(updateMutation);
+
+      // Crear usuario en MongoDB
       user = await User.create(userData);
 
       return NextResponse.json({

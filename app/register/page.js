@@ -29,6 +29,7 @@ function RegisterForm() {
   const [colIds, setColIds] = useState({});
   const [previewUrl, setPreviewUrl] = useState(null);
   const [fotoUrl, setFotoUrl] = useState(null);
+  const [showFullForm, setShowFullForm] = useState(false);
 
   useEffect(() => {
     console.log("=== INICIO DEL PROCESO DE REGISTRO ===");
@@ -37,7 +38,39 @@ function RegisterForm() {
     if (!email) {
       console.log("No se encontró email, redirigiendo a signin");
       router.push("/api/auth/signin");
+      return;
     }
+
+    // Primero verificar si el usuario existe
+    const checkUser = async () => {
+      try {
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          if (data.redirect) {
+            // Si el usuario existe, redirigir a verificación
+            window.location.href = data.redirect;
+            return;
+          }
+        } else if (response.status === 404) {
+          // Si no existe, mostrar formulario completo
+          setShowFullForm(true);
+        } else {
+          throw new Error(data.error || "Error al verificar usuario");
+        }
+      } catch (error) {
+        console.error("Error al verificar usuario:", error);
+        toast.error(error.message);
+      }
+    };
+
+    checkUser();
 
     // Obtener estructura del board de Monday.com
     const fetchBoardSchema = async () => {
@@ -72,12 +105,6 @@ function RegisterForm() {
     };
     fetchBoardSchema();
   }, [email, router]);
-
-  useEffect(() => {
-    if (!email) {
-      window.location.href = "/register";
-    }
-  }, [email]);
 
   useEffect(() => {
     setForm((prev) => ({
@@ -226,6 +253,10 @@ function RegisterForm() {
   // Encontrar columnas para comunidad y género
   const colComunidad = columns.find((c) => c.title === "Comunidad");
   const colGenero = columns.find((c) => c.title === "Género");
+
+  if (!showFullForm) {
+    return <div>Cargando...</div>;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
