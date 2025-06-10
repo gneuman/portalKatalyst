@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 import { FaCamera } from "react-icons/fa";
 
 export default function UpdateUser() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
   const [loading, setLoading] = useState(false);
@@ -242,10 +241,6 @@ export default function UpdateUser() {
         throw new Error(data.error || "Error al actualizar usuario en MongoDB");
       }
       toast.success("Datos actualizados correctamente");
-      if (data.redirect) {
-        window.location.href = data.redirect;
-        return;
-      }
     } catch (err) {
       setError(err.message);
       toast.error(err.message);
