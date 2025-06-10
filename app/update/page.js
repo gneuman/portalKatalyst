@@ -1,19 +1,17 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { toast } from "react-hot-toast";
-import ImageUpload from "@/components/ImageUpload";
-import { FaCamera } from "react-icons/fa";
 import Image from "next/image";
+import { FaCamera } from "react-icons/fa";
 
-function RegisterForm() {
+export default function UpdateUser() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     email: email || "",
     nombre: "",
@@ -23,117 +21,92 @@ function RegisterForm() {
     fechaNacimiento: "",
     genero: "",
     comunidad: "",
-    pais: "MX",
+    fotoPerfil: "",
   });
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [columns, setColumns] = useState([]);
   const [colIds, setColIds] = useState({});
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [fotoUrl, setFotoUrl] = useState(null);
-  const [showFullForm, setShowFullForm] = useState(false);
 
   useEffect(() => {
-    console.log("=== INICIO DEL PROCESO DE REGISTRO ===");
-    console.log("Email recibido:", email);
-
-    if (!email) {
-      console.log("No se encontró email, redirigiendo a signin");
-      router.push("/api/auth/signin");
-      return;
-    }
-
-    // Primero verificar si el usuario existe
-    const checkUser = async () => {
+    if (!email) return;
+    // Obtener datos del usuario desde el backend
+    const fetchUser = async () => {
+      setLoading(true);
       try {
-        const response = await fetch("/api/auth/register", {
+        // 1. Obtener estructura del board de Monday.com
+        const schemaRes = await fetch("/api/monday/board/structure", {
+          method: "POST",
+        });
+        const schemaData = await schemaRes.json();
+        const board = schemaData?.data?.boards?.[0];
+        let ids = {};
+        if (board?.columns) {
+          setColumns(board.columns);
+          // Mapea los títulos a IDs
+          board.columns.forEach((col) => {
+            if (col.title === "Nombre") ids.nombre = col.id;
+            if (col.title === "Apellido Paterno") ids.apellidoP = col.id;
+            if (col.title === "Apellido Materno") ids.apellidoM = col.id;
+            if (
+              col.title === "Fecha Nacimiento" ||
+              col.title === "Fecha de Nacimiento"
+            )
+              ids.fechaNacimiento = col.id;
+            if (col.title === "Género") ids.genero = col.id;
+            if (col.title === "Comunidad") ids.comunidad = col.id;
+            if (col.title === "Teléfono") ids.telefono = col.id;
+            if (col.title === "Email") ids.email = col.id;
+            if (col.title === "Foto Perfil" || col.title === "Foto de perfil")
+              ids.foto = col.id;
+            if (col.type === "color") ids.status = col.id;
+          });
+          setColIds(ids);
+        }
+        // 2. Obtener datos del usuario
+        const res = await fetch(`/api/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
         });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          if (data.needsValidation && data.userData) {
-            // Si encontramos datos en Monday.com, rellenar el formulario
-            const userData = data.userData;
-            setForm((prev) => ({
-              ...prev,
-              nombre: userData.firstName || "",
-              apellidoPaterno: userData.lastName || "",
-              apellidoMaterno: userData.secondLastName || "",
-              telefono: userData.phone || "",
-              fechaNacimiento: userData.dateOfBirth || "",
-              genero: userData.gender || "",
-              comunidad: userData.comunity || "",
-            }));
-            if (userData.fotoPerfil) {
-              setPreviewUrl(userData.fotoPerfil);
-              setFotoUrl(userData.fotoPerfil);
-            }
-            setShowFullForm(true);
-            toast.success(
-              "Se encontraron datos existentes. Por favor, valida y completa la información."
-            );
-          } else if (data.redirect) {
-            // Si el usuario existe en MongoDB, redirigir a verificación
-            window.location.href = data.redirect;
-            return;
-          } else {
-            // Si no se encontró el usuario, mostrar formulario vacío
-            setShowFullForm(true);
-          }
-        } else {
-          throw new Error(data.error || "Error al verificar usuario");
+        const data = await res.json();
+        if (data.userData && data.userData.columnValues) {
+          // Si tenemos los valores de columna, mapearlos dinámicamente
+          const cv = data.userData.columnValues;
+          setForm({
+            email: data.userData.email,
+            nombre: cv[ids.nombre] || "",
+            apellidoPaterno: cv[ids.apellidoP] || "",
+            apellidoMaterno: cv[ids.apellidoM] || "",
+            telefono: cv[ids.telefono] || "",
+            fechaNacimiento: cv[ids.fechaNacimiento] || "",
+            genero: cv[ids.genero] || "",
+            comunidad: cv[ids.status] || "",
+            fotoPerfil: cv[ids.foto] || "",
+          });
+          setPreviewUrl(cv[ids.foto] || null);
+        } else if (data.userData) {
+          // Fallback si no hay columnValues
+          setForm({
+            email: data.userData.email,
+            nombre: data.userData.firstName || "",
+            apellidoPaterno: data.userData.lastName || "",
+            apellidoMaterno: data.userData.secondLastName || "",
+            telefono: data.userData.phone || "",
+            fechaNacimiento: data.userData.dateOfBirth || "",
+            genero: data.userData.gender || "",
+            comunidad: data.userData.community || "",
+            fotoPerfil: data.userData.fotoPerfil || "",
+          });
+          setPreviewUrl(data.userData.fotoPerfil || null);
         }
-      } catch (error) {
-        console.error("Error al verificar usuario:", error);
-        toast.error(error.message);
+      } catch (err) {
+        toast.error("Error al obtener datos del usuario o estructura");
+      } finally {
+        setLoading(false);
       }
     };
-
-    checkUser();
-
-    // Obtener estructura del board de Monday.com
-    const fetchBoardSchema = async () => {
-      const res = await fetch("/api/monday/board/structure", {
-        method: "POST",
-      });
-      const data = await res.json();
-      const board = data?.data?.boards?.[0];
-      if (board?.columns) {
-        setColumns(board.columns);
-        // Mapea los títulos a IDs
-        const ids = {};
-        board.columns.forEach((col) => {
-          if (col.title === "Nombre") ids.nombre = col.id;
-          if (col.title === "Apellido Paterno") ids.apellidoP = col.id;
-          if (col.title === "Apellido Materno") ids.apellidoM = col.id;
-          if (
-            col.title === "Fecha Nacimiento" ||
-            col.title === "Fecha de Nacimiento"
-          )
-            ids.fechaNacimiento = col.id;
-          if (col.title === "Género") ids.genero = col.id;
-          if (col.title === "Comunidad") ids.comunidad = col.id;
-          if (col.title === "Teléfono") ids.telefono = col.id;
-          if (col.title === "Email") ids.email = col.id;
-          if (col.title === "Foto Perfil" || col.title === "Foto de perfil")
-            ids.foto = col.id;
-          if (col.type === "color") ids.status = col.id;
-        });
-        setColIds(ids);
-      }
-    };
-    fetchBoardSchema();
-  }, [email, router]);
-
-  useEffect(() => {
-    setForm((prev) => ({
-      ...prev,
-      nombreCompleto:
-        `${prev.nombre} ${prev.apellidoPaterno} ${prev.apellidoMaterno}`.trim(),
-    }));
-  }, [form.nombre, form.apellidoPaterno, form.apellidoMaterno]);
+    fetchUser();
+  }, [email]);
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -155,15 +128,8 @@ function RegisterForm() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    console.clear();
-    console.log("=== INICIO REGISTRO ===");
     try {
-      // Mostrar el contenido del formulario antes de cualquier procesamiento
-      console.log("==== FORMULARIO ANTES DE SUBIR FOTO ====");
-      console.log(JSON.stringify(form, null, 2));
-
-      // 1. Subir foto a Google Storage si existe
-      let fotoUrl = null;
+      let fotoUrl = form.fotoPerfil;
       if (form.foto) {
         const photoFormData = new FormData();
         photoFormData.append("file", form.foto);
@@ -173,57 +139,40 @@ function RegisterForm() {
         });
         const photoData = await photoResponse.json();
         if (!photoResponse.ok) {
-          console.error("Error subida foto:", photoData);
           throw new Error(photoData.error || "Error al subir la foto");
         }
         fotoUrl = photoData.url;
-        toast.success("Foto subida exitosamente");
-        console.log("Foto subida:", fotoUrl);
       }
-
-      // 2. Enviar datos al endpoint de registro
       const userData = {
-        name: form.nombreCompleto,
+        email: form.email,
         firstName: form.nombre,
         lastName: form.apellidoPaterno,
         secondLastName: form.apellidoMaterno,
-        email: form.email,
         phone: form.telefono,
         dateOfBirth: form.fechaNacimiento,
         gender: form.genero,
         community: form.comunidad,
         fotoPerfil: fotoUrl,
       };
-
-      console.log("Datos a enviar:", JSON.stringify(userData, null, 2));
-
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
-
       const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Error al registrar usuario");
+        throw new Error(data.error || "Error al actualizar usuario");
       }
-
+      toast.success("Datos actualizados correctamente");
       if (data.redirect) {
-        // Si la actualización fue exitosa, redirigir a verificación
         window.location.href = data.redirect;
         return;
       }
-
-      toast.success(data.message || "Usuario registrado exitosamente");
-      setShowFullForm(false);
-    } catch (error) {
-      console.error("Error en el registro:", error);
-      setError(error.message);
-      toast.error(error.message);
+    } catch (err) {
+      setError(err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
-      console.log("=== FIN REGISTRO ===");
     }
   };
 
@@ -231,24 +180,21 @@ function RegisterForm() {
   const colComunidad = columns.find((c) => c.title === "Comunidad");
   const colGenero = columns.find((c) => c.title === "Género");
 
-  if (!showFullForm) {
-    return <div>Cargando...</div>;
-  }
+  if (!email) return <div>Falta el email</div>;
+  if (loading) return <div>Cargando...</div>;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Completa tu registro
+            Actualiza tus datos
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Por favor, proporciona la siguiente información para continuar
+            Por favor, revisa y actualiza tu información
           </p>
         </div>
-
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {/* Email en una fila completa */}
           <div className="w-full">
             <label
               htmlFor="email"
@@ -266,36 +212,30 @@ function RegisterForm() {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500"
             />
           </div>
-
-          {/* Foto de perfil */}
-          <div className="flex flex-col items-center">
-            <div className="relative w-32 h-32 mb-4">
-              {previewUrl ? (
-                <Image
-                  src={previewUrl}
-                  alt="Preview"
-                  fill
-                  className="rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
-                  <FaCamera className="w-8 h-8 text-gray-400" />
-                </div>
-              )}
-            </div>
-            <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300">
-              <span>Seleccionar foto</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
+          <div className="relative w-32 h-32 mb-4">
+            {previewUrl ? (
+              <Image
+                src={previewUrl}
+                alt="Preview"
+                fill
+                className="rounded-full object-cover"
               />
-            </label>
+            ) : (
+              <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+                <FaCamera className="w-8 h-8 text-gray-400" />
+              </div>
+            )}
           </div>
-
-          {/* Grid 2x2 para los campos principales */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300">
+            <span>Seleccionar foto</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label
                 htmlFor="nombre"
@@ -313,7 +253,6 @@ function RegisterForm() {
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-
             <div>
               <label
                 htmlFor="apellidoPaterno"
@@ -333,7 +272,6 @@ function RegisterForm() {
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-
             <div>
               <label
                 htmlFor="apellidoMaterno"
@@ -353,7 +291,6 @@ function RegisterForm() {
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-
             <div>
               <label
                 htmlFor="telefono"
@@ -371,7 +308,6 @@ function RegisterForm() {
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-
             <div>
               <label
                 htmlFor="fechaNacimiento"
@@ -391,7 +327,6 @@ function RegisterForm() {
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-
             <div>
               <label
                 htmlFor="comunidad"
@@ -408,22 +343,39 @@ function RegisterForm() {
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Selecciona una opción</option>
-                {colComunidad &&
-                  colComunidad.settings_str &&
-                  Object.values(
-                    JSON.parse(colComunidad.settings_str).labels || {}
-                  ).map((label) => {
-                    const labelStr =
-                      typeof label === "object" ? label.name : label;
-                    return (
-                      <option key={labelStr} value={labelStr}>
-                        {labelStr}
-                      </option>
-                    );
-                  })}
+                {(() => {
+                  const options =
+                    colComunidad && colComunidad.settings_str
+                      ? Object.values(
+                          JSON.parse(colComunidad.settings_str).labels || {}
+                        )
+                      : [];
+                  const labelList = options.map((label) =>
+                    typeof label === "object" ? label.name : label
+                  );
+                  const needsExtra =
+                    form.comunidad && !labelList.includes(form.comunidad);
+                  return (
+                    <>
+                      {options.map((label) => {
+                        const labelStr =
+                          typeof label === "object" ? label.name : label;
+                        return (
+                          <option key={labelStr} value={labelStr}>
+                            {labelStr}
+                          </option>
+                        );
+                      })}
+                      {needsExtra && (
+                        <option key={form.comunidad} value={form.comunidad}>
+                          {form.comunidad} (valor antiguo)
+                        </option>
+                      )}
+                    </>
+                  );
+                })()}
               </select>
             </div>
-
             <div>
               <label
                 htmlFor="genero"
@@ -440,64 +392,54 @@ function RegisterForm() {
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Selecciona una opción</option>
-                {colGenero &&
-                  colGenero.settings_str &&
-                  Object.values(
-                    JSON.parse(colGenero.settings_str).labels || {}
-                  ).map((label) => {
-                    const labelStr =
-                      typeof label === "object" ? label.name : label;
-                    return (
-                      <option key={labelStr} value={labelStr}>
-                        {labelStr}
-                      </option>
-                    );
-                  })}
+                {(() => {
+                  const options =
+                    colGenero && colGenero.settings_str
+                      ? Object.values(
+                          JSON.parse(colGenero.settings_str).labels || {}
+                        )
+                      : [];
+                  const labelList = options.map((label) =>
+                    typeof label === "object" ? label.name : label
+                  );
+                  const needsExtra =
+                    form.genero && !labelList.includes(form.genero);
+                  return (
+                    <>
+                      {options.map((label) => {
+                        const labelStr =
+                          typeof label === "object" ? label.name : label;
+                        return (
+                          <option key={labelStr} value={labelStr}>
+                            {labelStr}
+                          </option>
+                        );
+                      })}
+                      {needsExtra && (
+                        <option key={form.genero} value={form.genero}>
+                          {form.genero} (valor antiguo)
+                        </option>
+                      )}
+                    </>
+                  );
+                })()}
               </select>
             </div>
           </div>
-
-          {/* Nombre completo solo lectura */}
-          <div className="w-full">
-            <label
-              htmlFor="nombreCompleto"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Nombre completo (Item Name)
-            </label>
-            <input
-              id="nombreCompleto"
-              name="nombreCompleto"
-              type="text"
-              value={form.nombreCompleto || ""}
-              disabled
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500"
-            />
-          </div>
-
           {error && (
             <div className="text-red-600 text-sm text-center">{error}</div>
           )}
-
           <div>
             <button
               type="submit"
               disabled={loading}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {loading ? "Registrando..." : "Completar Registro"}
+              {loading ? "Actualizando..." : "Actualizar datos"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  );
-}
-
-export default function Register() {
-  return (
-    <Suspense fallback={<div>Cargando...</div>}>
-      <RegisterForm />
-    </Suspense>
   );
 }

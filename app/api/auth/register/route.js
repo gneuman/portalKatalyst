@@ -5,105 +5,223 @@ import { postMonday } from "@/libs/monday";
 
 export async function POST(request) {
   try {
-    const data = await request.json();
-    console.log("[register] Payload recibido:", data);
-    await connectDB();
-    const { email } = data;
+    const { email, ...userData } = await request.json();
+    console.log("[register] Payload recibido:", { email, userData });
 
     if (!email) {
       return NextResponse.json(
-        { error: "El email es requerido" },
+        { error: "Email es requerido" },
         { status: 400 }
       );
     }
 
-    // 1. Buscar usuario en MongoDB
-    let user = await User.findOne({ email });
-
-    if (user) {
-      // Si existe en MongoDB, enviar directamente el link de verificación
-      return NextResponse.json({
-        success: true,
-        user,
-        redirect: "/api/auth/verify-request?email=" + encodeURIComponent(email),
-      });
-    }
-
-    // 2. Si no existe en MongoDB, buscar en Monday
+    // 1. Obtener la estructura del tablero primero
     const boardId = process.env.MONDAY_BOARD_ID;
-    const query = `query {
-      items_by_column_values (board_id: ${boardId}, column_id: "email", column_value: "${email}") {
-        id
-        name
-        column_values {
+    console.log("=== OBTENIENDO ESTRUCTURA DEL TABLERO ===");
+    console.log("Board ID:", boardId);
+
+    const boardQuery = `
+      query {
+        boards(ids: [${boardId}]) {
           id
-          text
-          value
-          type
+          name
+          columns {
+            id
+            title
+            type
+            settings_str
+          }
         }
       }
-    }`;
+    `;
 
-    const mondayResponse = await postMonday(query);
-    const mondayUser = mondayResponse?.data?.items_by_column_values?.[0];
+    console.log("Query de estructura:", boardQuery);
 
-    if (mondayUser) {
-      // Si existe en Monday, actualizar los datos y crear usuario en MongoDB
-      const userData = {
-        email,
-        name: mondayUser.name,
-        personalMondayId: mondayUser.id,
-      };
+    const boardData = await postMonday(boardQuery);
+    console.log("Estructura del tablero:", JSON.stringify(boardData, null, 2));
 
-      // Extraer datos adicionales de las columnas
-      mondayUser.column_values.forEach((col) => {
-        if (col.type === "text") {
-          if (col.id === "text_mkqc3cea") userData.firstName = col.text;
-          if (col.id === "text_mkqcmqh0") userData.lastName = col.text;
-          if (col.id === "text_mkqcjqph") userData.secondLastName = col.text;
-        }
-      });
+    // Encontrar el ID de la columna Email
+    const emailColumn = boardData.data.boards[0].columns.find(
+      (col) => col.title.toLowerCase() === "email"
+    );
 
-      // Actualizar el usuario en Monday.com
-      const updateMutation = `mutation {
-        change_multiple_column_values (
-          board_id: ${boardId},
-          item_id: ${mondayUser.id},
-          column_values: ${JSON.stringify(
-            JSON.stringify({
-              text_mkqc3cea: { text: userData.firstName },
-              text_mkqcmqh0: { text: userData.lastName },
-              text_mkqcjqph: { text: userData.secondLastName },
-              email: { email: email, text: email },
-            })
-          )}
-        ) {
-          id
-        }
-      }`;
-
-      await postMonday(updateMutation);
-
-      // Crear usuario en MongoDB
-      user = await User.create(userData);
-
-      return NextResponse.json({
-        success: true,
-        user,
-        redirect: "/api/auth/verify-request?email=" + encodeURIComponent(email),
-      });
+    if (!emailColumn) {
+      console.error("No se encontró la columna Email en el tablero");
+      return NextResponse.json(
+        { error: "No se encontró la columna Email en el tablero" },
+        { status: 500 }
+      );
     }
 
-    // Si no existe en ninguno de los dos, devolver 404
-    return NextResponse.json(
-      { error: "Usuario no encontrado" },
-      { status: 404 }
-    );
+    console.log("ID de columna Email encontrado:", emailColumn.id);
+
+    // 2. Buscar en Monday.com usando el ID de columna correcto
+    console.log("=== BUSCANDO USUARIO EN MONDAY ===");
+
+    const searchQuery = `
+      query {
+        items_page_by_column_values (
+          limit: 100,
+          board_id: ${boardId},
+          columns: [
+            {
+              column_id: "${emailColumn.id}",
+              column_values: ["${email}"]
+            }
+          ]
+        ) {
+          cursor
+          items {
+            id
+            name
+            created_at
+            updated_at
+            board {
+              id
+            }
+            creator_id
+            group {
+              id
+            }
+            column_values {
+              id
+              value
+              text
+              ...on MirrorValue {
+                display_value
+              }
+              ...on BoardRelationValue {
+                display_value
+              }
+              ...on DependencyValue {
+                display_value
+              }
+              ...on StatusValue {
+                label
+                updated_at
+                label_style {
+                  color
+                }
+              }
+              ...on NumbersValue {
+                symbol
+                direction
+              }
+              ...on TimeTrackingValue {
+                column {
+                  type
+                }
+                history {
+                  id
+                  started_user_id
+                  ended_user_id
+                  started_at
+                  ended_at
+                  manually_entered_start_time
+                  manually_entered_end_time
+                  manually_entered_start_date
+                  manually_entered_end_date
+                  created_at
+                  updated_at
+                  status
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    console.log("Query de búsqueda:", searchQuery);
+
+    try {
+      const mondayData = await postMonday(searchQuery);
+      console.log("Respuesta de Monday:", JSON.stringify(mondayData, null, 2));
+
+      if (mondayData.data?.items_page_by_column_values?.items?.length > 0) {
+        const mondayUser = mondayData.data.items_page_by_column_values.items[0];
+        console.log(
+          "Usuario encontrado en Monday:",
+          JSON.stringify(mondayUser, null, 2)
+        );
+
+        const columnValues = {};
+        mondayUser.column_values.forEach((col) => {
+          columnValues[col.id] = col.text || col.value || "";
+        });
+
+        console.log(
+          "Valores de columnas:",
+          JSON.stringify(columnValues, null, 2)
+        );
+
+        // Buscar el campo de foto de perfil por título o id
+        let fotoPerfilValue = "";
+        for (const key of Object.keys(columnValues)) {
+          if (key.toLowerCase().includes("foto")) {
+            fotoPerfilValue = columnValues[key];
+            break;
+          }
+        }
+
+        // Redirigir a la página de actualización
+        return NextResponse.json({
+          redirect: `/update?email=${encodeURIComponent(email)}`,
+          userData: {
+            email: email,
+            columnValues,
+            name: mondayUser.name,
+            firstName:
+              columnValues[
+                Object.keys(columnValues).find((key) => key.includes("nombre"))
+              ] || "",
+            lastName:
+              columnValues[
+                Object.keys(columnValues).find((key) =>
+                  key.includes("apellidoP")
+                )
+              ] || "",
+            secondLastName:
+              columnValues[
+                Object.keys(columnValues).find((key) =>
+                  key.includes("apellidoM")
+                )
+              ] || "",
+            phone:
+              columnValues[
+                Object.keys(columnValues).find((key) =>
+                  key.includes("telefono")
+                )
+              ] || "",
+            dateOfBirth:
+              columnValues[
+                Object.keys(columnValues).find((key) => key.includes("fecha"))
+              ] || "",
+            gender:
+              columnValues[
+                Object.keys(columnValues).find((key) => key.includes("genero"))
+              ] || "",
+            community: columnValues["status"] || "",
+            fotoPerfil: fotoPerfilValue,
+            personalMondayId: mondayUser.id,
+          },
+          needsUpdate: true,
+        });
+      }
+
+      console.log("No se encontró usuario en Monday.com");
+      // Si no existe en Monday.com, retornar éxito para mostrar formulario vacío
+      return NextResponse.json({
+        success: true,
+        message: "Usuario no encontrado, proceder con registro",
+        needsValidation: false,
+      });
+    } catch (mondayError) {
+      console.error("Error específico de Monday:", mondayError);
+      throw mondayError;
+    }
   } catch (error) {
     console.error("Error en el registro:", error);
-    return NextResponse.json(
-      { error: "Error en el proceso de registro" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
