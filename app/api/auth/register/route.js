@@ -30,9 +30,9 @@ export async function POST(request) {
     }
 
     // 2. Si no existe en MongoDB, buscar en Monday
-    const contactsBoardId = process.env.MONDAY_CONTACTS_BOARD_ID;
+    const boardId = process.env.MONDAY_BOARD_ID;
     const query = `query {
-      items_by_column_values (board_id: ${contactsBoardId}, column_id: "email", column_value: "${email}") {
+      items_by_column_values (board_id: ${boardId}, column_id: "email", column_value: "${email}") {
         id
         name
         column_values {
@@ -48,37 +48,40 @@ export async function POST(request) {
     const mondayUser = mondayResponse?.data?.items_by_column_values?.[0];
 
     if (mondayUser) {
-      // 2.1 Si existe en Monday, crear usuario en MongoDB con esa información
-      const mondayData = mondayUser.column_values.reduce((acc, col) => {
-        acc[col.id] = col.text;
-        return acc;
-      }, {});
-
-      user = await User.create({
+      // Si existe en Monday, crear usuario en MongoDB
+      const userData = {
         email,
         name: mondayUser.name,
         personalMondayId: mondayUser.id,
-        updatedAt: new Date(),
-        validado: false,
+      };
+
+      // Extraer datos adicionales de las columnas
+      mondayUser.column_values.forEach((col) => {
+        if (col.type === "text") {
+          if (col.id === "text_mkqc3cea") userData.firstName = col.text;
+          if (col.id === "text_mkqcmqh0") userData.lastName = col.text;
+          if (col.id === "text_mkqcjqph") userData.secondLastName = col.text;
+        }
       });
+
+      user = await User.create(userData);
 
       return NextResponse.json({
         success: true,
         user,
-        mondayData,
         redirect: "/api/auth/verify-request?email=" + encodeURIComponent(email),
       });
     }
 
-    // 2.2 Si no existe en Monday, devolver error
+    // Si no existe en ninguno de los dos, devolver 404
     return NextResponse.json(
-      { error: "El usuario no existe en Monday.com" },
+      { error: "Usuario no encontrado" },
       { status: 404 }
     );
   } catch (error) {
-    console.error("[register] Error:", error);
+    console.error("Error en el registro:", error);
     return NextResponse.json(
-      { error: error.message || "Error inesperado en registro" },
+      { error: "Error en el proceso de registro" },
       { status: 500 }
     );
   }
