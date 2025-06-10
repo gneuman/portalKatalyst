@@ -187,7 +187,7 @@ export default function UpdateUser() {
       const boardId =
         columns[0]?.board_id || process.env.NEXT_PUBLIC_MONDAY_BOARD_ID;
       const itemId = searchParams.get("itemId") || null; // O pásalo desde el backend si lo tienes
-      // Si no tienes el itemId, puedes obtenerlo de userData.personalMondayId
+      // Si no tienes el itemId, puedes obtenerlo de userData.personalMondayId V2
       // Aquí asumimos que el backend lo envía en userData.personalMondayId
       const resUser = await fetch(`/api/auth/register`, {
         method: "POST",
