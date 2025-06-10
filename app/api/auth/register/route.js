@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/libs/mongodb";
 import User from "@/app/models/User";
 import { postMonday } from "@/libs/monday";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const RESEND_AUDIENCE_ID = process.env.RESEND_AUDIENCE_ID;
 
 export async function POST(request) {
   try {
@@ -165,6 +169,37 @@ export async function POST(request) {
         }
 
         // Redirigir a la página de actualización
+        await resend.contacts.create({
+          email: email,
+          firstName: mondayUser.name.split(" ")[0] || "",
+          lastName: mondayUser.name.split(" ").slice(1).join(" ") || "",
+          unsubscribed: false,
+          audienceId: RESEND_AUDIENCE_ID,
+        });
+        console.log(
+          "[Resend] Contacto agregado a la audiencia Katalyst:",
+          email
+        );
+
+        // Guardar o actualizar usuario en MongoDB con todos los datos relevantes
+        await connectDB();
+        const userPayload = {
+          email,
+          emailVerified: userData.emailVerified || new Date(),
+          businessMondayId: userData.businessMondayId || [],
+          personalMondayId: userData.personalMondayId || "",
+          validado: userData.validado !== undefined ? userData.validado : false,
+          updatedAt: new Date(),
+          fotoPerfil: userData.fotoPerfil || "",
+          // Puedes agregar aquí más campos si tu modelo lo permite
+        };
+        await User.updateOne(
+          { email },
+          { $set: userPayload },
+          { upsert: true }
+        );
+        console.log("[MongoDB] Usuario guardado/actualizado:", userPayload);
+
         return NextResponse.json({
           redirect: `/update?email=${encodeURIComponent(email)}`,
           userData: {
