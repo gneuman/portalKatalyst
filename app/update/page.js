@@ -80,7 +80,7 @@ export default function UpdateUser() {
             telefono: cv[ids.telefono] || "",
             fechaNacimiento: cv[ids.fechaNacimiento] || "",
             genero: cv[ids.genero] || "",
-            comunidad: cv[ids.status] || "",
+            comunidad: cv[ids.status] || data.userData.community || "",
             fotoPerfil: cv[ids.foto] || "",
           });
           setPreviewUrl(cv[ids.foto] || null);
