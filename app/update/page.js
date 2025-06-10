@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 import { FaCamera } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 function UpdateUser() {
   const searchParams = useSearchParams();
@@ -25,6 +27,8 @@ function UpdateUser() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [columns, setColumns] = useState([]);
   const [colIds, setColIds] = useState({});
+  const [personalMondayId, setPersonalMondayId] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (!email) return;
@@ -68,6 +72,7 @@ function UpdateUser() {
           body: JSON.stringify({ email }),
         });
         const data = await res.json();
+        console.log("[UPDATE] Respuesta de backend:", data);
         if (data.userData && data.userData.columnValues) {
           // Si tenemos los valores de columna, mapearlos dinámicamente
           const cv = data.userData.columnValues;
@@ -97,6 +102,18 @@ function UpdateUser() {
             fotoPerfil: data.userData.fotoPerfil || "",
           });
           setPreviewUrl(data.userData.fotoPerfil || null);
+        }
+        if (data.userData && data.userData.personalMondayId) {
+          setPersonalMondayId(data.userData.personalMondayId);
+          console.log(
+            "[UPDATE] MondayID seteado en estado:",
+            data.userData.personalMondayId
+          );
+        } else {
+          console.warn(
+            "[UPDATE] No se encontró personalMondayId en la respuesta:",
+            data
+          );
         }
       } catch (err) {
         toast.error("Error al obtener datos del usuario o estructura");
@@ -142,7 +159,6 @@ function UpdateUser() {
         }
         fotoUrl = photoData.url;
       }
-
       // Construir column_values dinámicamente
       const column_values = {};
       columns.forEach((col) => {
@@ -164,7 +180,6 @@ function UpdateUser() {
         if (col.title === "Género" && col.type === "dropdown")
           column_values[col.id] = { labels: [form.genero] };
         if (col.title === "Comunidad" && col.type === "status") {
-          // Buscar el índice del label
           const labels = col.settings_str
             ? JSON.parse(col.settings_str).labels
             : {};
@@ -183,35 +198,41 @@ function UpdateUser() {
           column_values[col.id] = fotoUrl;
       });
 
-      // Obtener el boardId y itemId (personalMondayId)
-      const boardId =
-        columns[0]?.board_id || process.env.NEXT_PUBLIC_MONDAY_BOARD_ID;
-      const itemId = searchParams.get("itemId") || null; // O pásalo desde el backend si lo tienes
-      // Si no tienes el itemId, puedes obtenerlo de userData.personalMondayId V2
-      // Aquí asumimos que el backend lo envía en userData.personalMondayId
-      const resUser = await fetch(`/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email }),
-      });
-      const dataUser = await resUser.json();
-      const personalMondayId = dataUser.userData?.personalMondayId;
-      const board_id = boardId || dataUser.userData?.boardId;
+      // Usar el MondayID ya cargado
+      let board_id = process.env.NEXT_PUBLIC_MONDAY_BOARD_ID;
+      console.log("[UPDATE] MondayID usado para update:", personalMondayId);
+      console.log("[UPDATE] board_id usado para update:", board_id);
+      console.log("[UPDATE] column_values enviados a Monday:", column_values);
+
       if (!personalMondayId || !board_id)
         throw new Error("No se encontró el ID de Monday.com para actualizar");
 
       // Mutation a Monday.com
       const mutation = {
-        query: `mutation { change_multiple_column_values (board_id: ${board_id}, item_id: ${personalMondayId}, column_values: "${JSON.stringify(
-          column_values
-        ).replace(/"/g, '"')}", create_labels_if_missing: false) { id } }`,
+        query: `mutation { 
+          change_multiple_column_values (
+            board_id: ${board_id}, 
+            item_id: ${personalMondayId}, 
+            column_values: "${JSON.stringify(column_values).replace(
+              /"/g,
+              '\\"'
+            )}",
+            create_labels_if_missing: false
+          ) { 
+            id 
+          } 
+        }`,
       };
+
+      console.log("[UPDATE] Mutation a enviar:", mutation.query);
+
       const mondayRes = await fetch("/api/monday/item", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(mutation),
       });
       const mondayData = await mondayRes.json();
+      console.log("[UPDATE] Respuesta de Monday.com:", mondayData);
       if (!mondayRes.ok || mondayData.errors) {
         throw new Error(
           "Error al actualizar datos en Monday.com: " +
@@ -230,17 +251,37 @@ function UpdateUser() {
         gender: form.genero,
         community: form.comunidad,
         fotoPerfil: fotoUrl,
+        personalMondayId: personalMondayId,
+        isVerified: false,
       };
+
+      console.log("[UPDATE] Datos enviados a MongoDB:", userData);
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
       const data = await response.json();
+      console.log("[UPDATE] Respuesta de MongoDB:", data);
       if (!response.ok) {
         throw new Error(data.error || "Error al actualizar usuario en MongoDB");
       }
-      toast.success("Datos actualizados correctamente");
+
+      // Enviar correo mágico usando NextAuth
+      const result = await signIn("email", {
+        email: form.email,
+        redirect: false,
+        callbackUrl: "/dashboard",
+      });
+      if (result?.error) {
+        throw new Error("Hubo un error al enviar el correo de verificación.");
+      }
+      toast.success(
+        "Datos actualizados correctamente. Por favor, verifica tu correo electrónico."
+      );
+      router.push(
+        `/api/auth/verify-request?email=${encodeURIComponent(form.email)}`
+      );
     } catch (err) {
       setError(err.message);
       toast.error(err.message);
@@ -263,6 +304,11 @@ function UpdateUser() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Actualiza tus datos
           </h2>
+          {personalMondayId && (
+            <div className="text-center text-xs text-gray-400 mt-1">
+              <span className="font-mono">MondayID: {personalMondayId}</span>
+            </div>
+          )}
           <p className="mt-2 text-center text-sm text-gray-600">
             Por favor, revisa y actualiza tu información
           </p>
@@ -286,18 +332,14 @@ function UpdateUser() {
             />
           </div>
           <div className="relative w-32 h-32 mb-4">
-            {previewUrl ? (
+            {previewUrl && previewUrl !== "" ? (
               <Image
                 src={previewUrl}
                 alt="Preview"
                 fill
                 className="rounded-full object-cover"
               />
-            ) : (
-              <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
-                <FaCamera className="w-8 h-8 text-gray-400" />
-              </div>
-            )}
+            ) : null}
           </div>
           <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300">
             <span>Seleccionar foto</span>
@@ -508,7 +550,33 @@ function UpdateUser() {
               disabled={loading}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {loading ? "Actualizando..." : "Actualizar datos"}
+              {loading ? (
+                <span className="flex items-center gap-2 justify-center">
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    ></path>
+                  </svg>
+                  Actualizando...
+                </span>
+              ) : (
+                "Actualizar datos"
+              )}
             </button>
           </div>
         </form>
