@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { FaUsers, FaComments, FaCalendarAlt } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -69,26 +70,35 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-black">
       {/* Columna izquierda - Formulario */}
-      <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:w-1/2 lg:px-20 xl:px-24">
-        <div className="mx-auto w-full max-w-sm lg:w-96">
-          <div>
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-              Inicia sesión en tu cuenta
+      <div className="flex-1 flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:flex-none lg:w-1/2 lg:px-20 xl:px-24 bg-gray-800">
+        <div className="mx-auto w-full max-w-sm lg:w-96 flex flex-col items-center justify-center h-full">
+          {/* Logo */}
+          <div className="flex justify-center mb-8 w-full">
+            <Image
+              src="/images/Katalyst.png"
+              alt="Katalyst Logo"
+              width={180}
+              height={60}
+            />
+          </div>
+          <div className="w-full">
+            <h2 className="mt-6 text-3xl font-extrabold text-white text-center">
+              Bienvenido a Katalyst
             </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Ingresa tu correo electrónico para recibir un enlace mágico
+            <p className="mt-2 text-sm text-white text-center">
+              Innova, emprende e impulsa tu futuro.
             </p>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-8 w-full">
             <div className="mt-6">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-white"
                   >
                     Correo electrónico
                   </label>
@@ -101,19 +111,21 @@ export default function SignIn() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-400 focus:border-orange-400 sm:text-sm bg-white text-black"
                       placeholder="tu@correo.com"
                     />
                   </div>
                 </div>
 
-                {error && <div className="text-red-600 text-sm">{error}</div>}
+                {error && (
+                  <div className="text-orange-400 text-sm">{error}</div>
+                )}
 
                 <div>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-400 disabled:opacity-50"
                   >
                     {loading ? "Enviando..." : "Enviar enlace mágico"}
                   </button>
@@ -125,52 +137,17 @@ export default function SignIn() {
       </div>
 
       {/* Columna derecha - Imagen y características */}
-      <div className="hidden lg:block relative w-0 flex-1">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800">
-          <div className="absolute inset-0 bg-black opacity-20" />
-          <div className="relative h-full flex flex-col justify-center px-12">
-            <div className="space-y-8">
-              <div className="flex items-center space-x-4">
-                <div className="flex-shrink-0">
-                  <FaUsers className="h-8 w-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">
-                    Comunidad Activa
-                  </h3>
-                  <p className="mt-1 text-blue-100">
-                    Únete a nuestra comunidad de usuarios
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <div className="flex-shrink-0">
-                  <FaComments className="h-8 w-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Soporte 24/7</h3>
-                  <p className="mt-1 text-blue-100">
-                    Estamos aquí para ayudarte
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <div className="flex-shrink-0">
-                  <FaCalendarAlt className="h-8 w-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">
-                    Actualizaciones Regulares
-                  </h3>
-                  <p className="mt-1 text-blue-100">
-                    Nuevas características cada semana
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="hidden lg:block relative w-0 flex-1 bg-black flex items-center justify-center min-h-screen">
+        <div className="text-center flex flex-col items-center justify-center h-full w-full">
+          <h1 className="text-4xl font-extrabold text-white mb-4 tracking-widest">
+            KATALYST
+          </h1>
+          <p className="text-lg text-orange-400 font-semibold mb-2">
+            INNOVA · EMPRENDE · IMPULSA
+          </p>
+          <p className="text-white text-base opacity-70">
+            Bienvenido a la comunidad Katalyst
+          </p>
         </div>
       </div>
     </div>
