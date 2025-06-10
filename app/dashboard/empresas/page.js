@@ -485,7 +485,7 @@ export default function EmpresasDashboard() {
 
   return (
     <div className="max-w-2xl mx-auto py-10">
-      <div className="flex justify-between items-center mb-8">
+      <div className="max-w-2xl mx-auto py-10">
         <h1 className="text-3xl font-bold">Empresas</h1>
         <Link href="/dashboard/empresas/nueva">
           <button className="btn btn-primary">

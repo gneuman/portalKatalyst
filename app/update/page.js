@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
@@ -143,6 +143,84 @@ export default function UpdateUser() {
         }
         fotoUrl = photoData.url;
       }
+
+      // Construir column_values dinámicamente
+      const column_values = {};
+      columns.forEach((col) => {
+        if (col.title === "Nombre") column_values[col.id] = form.nombre;
+        if (col.title === "Apellido Paterno")
+          column_values[col.id] = form.apellidoPaterno;
+        if (col.title === "Apellido Materno")
+          column_values[col.id] = form.apellidoMaterno;
+        if (col.title === "Teléfono")
+          column_values[col.id] = {
+            phone: form.telefono,
+            countryShortName: "MX",
+          };
+        if (
+          col.title === "Fecha Nacimiento" ||
+          col.title === "Fecha de Nacimiento"
+        )
+          column_values[col.id] = { date: form.fechaNacimiento };
+        if (col.title === "Género" && col.type === "dropdown")
+          column_values[col.id] = { labels: [form.genero] };
+        if (col.title === "Comunidad" && col.type === "status") {
+          // Buscar el índice del label
+          const labels = col.settings_str
+            ? JSON.parse(col.settings_str).labels
+            : {};
+          const index = Object.entries(labels).find(
+            ([i, v]) => (typeof v === "object" ? v.name : v) === form.comunidad
+          )?.[0];
+          if (index !== undefined)
+            column_values[col.id] = { index: parseInt(index) };
+        }
+        if (
+          (col.title === "Foto Perfil" ||
+            col.title === "Foto De Perfil" ||
+            col.title === "Foto de perfil") &&
+          fotoUrl
+        )
+          column_values[col.id] = fotoUrl;
+      });
+
+      // Obtener el boardId y itemId (personalMondayId)
+      const boardId =
+        columns[0]?.board_id || process.env.NEXT_PUBLIC_MONDAY_BOARD_ID;
+      const itemId = searchParams.get("itemId") || null; // O pásalo desde el backend si lo tienes
+      // Si no tienes el itemId, puedes obtenerlo de userData.personalMondayId
+      // Aquí asumimos que el backend lo envía en userData.personalMondayId
+      const resUser = await fetch(`/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email }),
+      });
+      const dataUser = await resUser.json();
+      const personalMondayId = dataUser.userData?.personalMondayId;
+      const board_id = boardId || dataUser.userData?.boardId;
+      if (!personalMondayId || !board_id)
+        throw new Error("No se encontró el ID de Monday.com para actualizar");
+
+      // Mutation a Monday.com
+      const mutation = {
+        query: `mutation { change_multiple_column_values (board_id: ${board_id}, item_id: ${personalMondayId}, column_values: "${JSON.stringify(
+          column_values
+        ).replace(/"/g, '"')}", create_labels_if_missing: false) { id } }`,
+      };
+      const mondayRes = await fetch("/api/monday/item", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(mutation),
+      });
+      const mondayData = await mondayRes.json();
+      if (!mondayRes.ok || mondayData.errors) {
+        throw new Error(
+          "Error al actualizar datos en Monday.com: " +
+            (mondayData.errors?.[0]?.message || "")
+        );
+      }
+
+      // Actualizar MongoDB
       const userData = {
         email: form.email,
         firstName: form.nombre,
@@ -161,7 +239,7 @@ export default function UpdateUser() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Error al actualizar usuario");
+        throw new Error(data.error || "Error al actualizar usuario en MongoDB");
       }
       toast.success("Datos actualizados correctamente");
       if (data.redirect) {
@@ -441,5 +519,13 @@ export default function UpdateUser() {
         </form>
       </div>
     </div>
+  );
+}
+
+export function UpdateUserPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <UpdateUser />
+    </Suspense>
   );
 }
