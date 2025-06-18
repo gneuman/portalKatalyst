@@ -75,6 +75,37 @@ export async function POST(request) {
       );
     }
 
+    // Verificar si el usuario ya existe en Monday
+    const contactsBoardId = process.env.MONDAY_CONTACTS_BOARD_ID;
+    const checkQuery = `query {
+      items_by_column_values (board_id: ${contactsBoardId}, column_id: "email", column_value: "${normalizedData.email}") {
+        id
+        name
+        column_values {
+          id
+          text
+          value
+          type
+        }
+      }
+    }`;
+
+    const checkResponse = await postMonday(checkQuery);
+    const existingUser = checkResponse?.data?.items_by_column_values?.[0];
+
+    if (existingUser) {
+      // Si el usuario existe, devolver sus datos
+      return NextResponse.json({
+        mondayId: existingUser.id,
+        success: true,
+        existing: true,
+        mondayData: existingUser.column_values.reduce((acc, col) => {
+          acc[col.id] = col.text;
+          return acc;
+        }, {}),
+      });
+    }
+
     // Lista de campos requeridos (sin foto, ya que puede venir después)
     const requiredFields = [
       "name",

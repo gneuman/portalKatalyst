@@ -2,51 +2,36 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { toast } from "react-hot-toast";
+import ImageUpload from "@/components/ImageUpload";
 import { FaCamera } from "react-icons/fa";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { signIn } from "next-auth/react";
 
-const CAMPOS_REQUERIDOS = {
-  nombre: true,
-  apellidoPaterno: true,
-  apellidoMaterno: true,
-  telefono: true,
-  fechaNacimiento: true,
-  comunidad: true,
-  genero: true,
-  foto: false, // Este campo puede ser opcional
-};
-
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
-
-  const paises = [
-    { nombre: "México", codigo: "MX", prefijo: "+52" },
-    { nombre: "Israel", codigo: "IL", prefijo: "+972" },
-    { nombre: "Estados Unidos", codigo: "US", prefijo: "+1" },
-  ];
-
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [form, setForm] = useState({
+    email: email || "",
     nombre: "",
     apellidoPaterno: "",
     apellidoMaterno: "",
     telefono: "",
     fechaNacimiento: "",
-    comunidad: "",
     genero: "",
-    email: email || "",
-    foto: null,
-    nombreCompleto: "",
+    comunidad: "",
     pais: "MX",
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [previewUrl, setPreviewUrl] = useState("");
   const [columns, setColumns] = useState([]);
   const [colIds, setColIds] = useState({});
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [fotoUrl, setFotoUrl] = useState(null);
+  const [showFullForm, setShowFullForm] = useState(false);
 
   useEffect(() => {
     console.log("=== INICIO DEL PROCESO DE REGISTRO ===");
@@ -57,6 +42,58 @@ function RegisterForm() {
       router.push("/api/auth/signin");
       return;
     }
+
+    // Primero verificar si el usuario existe
+    const checkUser = async () => {
+      try {
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          if (data.needsValidation && data.userData) {
+            // Si encontramos datos en Monday.com, rellenar el formulario
+            const userData = data.userData;
+            setForm((prev) => ({
+              ...prev,
+              nombre: userData.firstName || "",
+              apellidoPaterno: userData.lastName || "",
+              apellidoMaterno: userData.secondLastName || "",
+              telefono: userData.phone || "",
+              fechaNacimiento: userData.dateOfBirth || "",
+              genero: userData.gender || "",
+              comunidad: userData.comunity || "",
+            }));
+            if (userData.fotoPerfil) {
+              setPreviewUrl(userData.fotoPerfil);
+              setFotoUrl(userData.fotoPerfil);
+            }
+            setShowFullForm(true);
+            toast.success(
+              "Se encontraron datos existentes. Por favor, valida y completa la información."
+            );
+          } else if (data.redirect) {
+            // Si el usuario existe en MongoDB, redirigir a verificación
+            window.location.href = data.redirect;
+            return;
+          } else {
+            // Si no se encontró el usuario, mostrar formulario vacío
+            setShowFullForm(true);
+          }
+        } else {
+          throw new Error(data.error || "Error al verificar usuario");
+        }
+      } catch (error) {
+        console.error("Error al verificar usuario:", error);
+        toast.error(error.message);
+      }
+    };
+
+    checkUser();
 
     // Obtener estructura del board de Monday.com
     const fetchBoardSchema = async () => {
@@ -105,33 +142,13 @@ function RegisterForm() {
     }));
   }, [form.nombre, form.apellidoPaterno, form.apellidoMaterno]);
 
-  useEffect(() => {
-    setForm((prev) => ({
-      ...prev,
-      email: email || "",
-    }));
-  }, [email]);
-
   const handleChange = (field, value) => {
-    console.log(`Actualizando campo ${field}:`, value);
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleFileChange = async (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validar tipo de archivo
-      if (!file.type.startsWith("image/")) {
-        setError("Por favor selecciona una imagen válida");
-        return;
-      }
-
-      // Validar tamaño (máximo 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError("La imagen no debe superar los 5MB");
-        return;
-      }
-
       setForm((prev) => ({ ...prev, foto: file }));
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -213,7 +230,6 @@ function RegisterForm() {
       } else if (CAMPOS_REQUERIDOS.foto) {
         throw new Error("La foto de perfil es obligatoria");
       }
-
       // Construir payload programático para Monday.com usando los IDs y tipos del schema
       console.log("Valor de form.fechaNacimiento:", form.fechaNacimiento);
       console.log("colIds.fechaNacimiento:", colIds.fechaNacimiento);
@@ -268,34 +284,35 @@ function RegisterForm() {
         lastName: form.apellidoPaterno,
         secondLastName: form.apellidoMaterno,
         email: form.email,
-        personalMondayId: mondayResult.mondayId,
+        phone: form.telefono,
+        dateOfBirth: form.fechaNacimiento,
+        gender: form.genero,
+        community: form.comunidad,
         fotoPerfil: fotoUrl,
       };
-      console.log("Payload MongoDB:", userPayload);
-      const userResponse = await fetch("/api/auth/register", {
+
+      console.log("Datos a enviar:", JSON.stringify(userData, null, 2));
+
+      const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userPayload),
+        body: JSON.stringify(userData),
       });
-      const userResult = await userResponse.json();
-      if (!userResponse.ok) {
-        console.error("Error MongoDB:", userResult);
-        setError(userResult.error || JSON.stringify(userResult));
-        throw new Error(
-          userResult.error || "Error al crear usuario en MongoDB"
-        );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al registrar usuario");
       }
-      toast.success("Usuario creado exitosamente");
-      console.log("Respuesta MongoDB:", userResult);
-      // Disparar el flujo de NextAuth para enviar el correo de verificación
-      await signIn("email", {
-        email: form.email,
-        callbackUrl: "/dashboard",
-        redirect: false,
-      });
-      window.location.href =
-        "/api/auth/verify-request?email=" + encodeURIComponent(form.email);
-      return;
+
+      if (data.redirect) {
+        // Si la actualización fue exitosa, redirigir a verificación
+        window.location.href = data.redirect;
+        return;
+      }
+
+      toast.success(data.message || "Usuario registrado exitosamente");
+      setShowFullForm(false);
     } catch (error) {
       console.error("Error en el registro:", error);
       setError(error.message);
@@ -310,9 +327,13 @@ function RegisterForm() {
   const colComunidad = columns.find((c) => c.title === "Comunidad");
   const colGenero = columns.find((c) => c.title === "Género");
 
+  if (!showFullForm) {
+    return <div>Cargando...</div>;
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl w-full space-y-8">
+      <div className="max-w-4xl w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Completa tu registro
@@ -361,7 +382,7 @@ function RegisterForm() {
                 </div>
               )}
             </div>
-            <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300">
               <span>Seleccionar foto</span>
               <input
                 type="file"
@@ -437,7 +458,7 @@ function RegisterForm() {
                 htmlFor="pais"
                 className="block text-sm font-medium text-gray-700"
               >
-                País *
+                País
               </label>
               <select
                 id="pais"
@@ -470,7 +491,7 @@ function RegisterForm() {
                   id="telefono"
                   name="telefono"
                   type="tel"
-                  required={CAMPOS_REQUERIDOS.telefono}
+                  required
                   value={form.telefono}
                   onChange={(e) => handleChange("telefono", e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-r-md shadow-sm"

@@ -99,19 +99,7 @@ export const authOptions = {
 
   callbacks: {
     async session({ session, token }) {
-      // Si estamos en desarrollo, forzamos la sesión de neumang@gmail.com
-      if (process.env.NODE_ENV === "development") {
-        session.user = {
-          id: "dev-user-id",
-          name: "Neuman G.",
-          email: "neumang@gmail.com",
-          image: "https://randomuser.me/api/portraits/men/32.jpg",
-          role: "user",
-          personalMondayId: "dev-monday-id",
-          businessMondayId: [],
-        };
-        return session;
-      }
+      // Eliminado el forzado de sesión en desarrollo
       console.log("Session callback - Token:", token);
       console.log("Session callback - Session:", session);
 

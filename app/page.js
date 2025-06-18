@@ -1,23 +1,14 @@
-"use client";
-import { Suspense } from "react";
-import Header from "@/components/Header";
-import HeroSection from "@/components/home/HeroSection";
-import ProgramsSection from "@/components/home/ProgramsSection";
-import ImpactSection from "@/components/home/ImpactSection";
-import CTASection from "@/components/home/CTASection";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/libs/next-auth";
 
-export default function Home() {
-  return (
-    <>
-      <Suspense>
-        <Header />
-      </Suspense>
-      <main>
-        <HeroSection />
-        <ProgramsSection />
-        <ImpactSection />
-        <CTASection />
-      </main>
-    </>
-  );
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    redirect("/api/auth/signin");
+  }
+
+  // Si quieres, puedes redirigir a dashboard si está logueado:
+  redirect("/dashboard");
 }

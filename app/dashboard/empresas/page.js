@@ -485,7 +485,7 @@ export default function EmpresasDashboard() {
 
   return (
     <div className="max-w-2xl mx-auto py-10">
-      <div className="flex justify-between items-center mb-8">
+      <div className="max-w-2xl mx-auto py-10">
         <h1 className="text-3xl font-bold">Empresas</h1>
         <Link href="/dashboard/empresas/nueva">
           <button className="btn btn-primary">
@@ -507,7 +507,7 @@ export default function EmpresasDashboard() {
           </div>
         )}
         {empresas.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {empresas.map((empresa) => {
               const statusInfo = getStatusInfo(empresa);
               const contactos = empresa.column_values?.find(
