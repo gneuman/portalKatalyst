@@ -8,11 +8,10 @@ import {
   FaEnvelope,
   FaUsers,
   FaVenusMars,
-  FaBuilding,
+  FaCamera,
 } from "react-icons/fa";
-import Link from "next/link";
 import Image from "next/image";
-import ImageUpload from "@/components/ImageUpload";
+import { toast } from "react-hot-toast";
 
 const CAMPOS = [
   { title: "Nombre", icon: <FaUser className="text-blue-600" /> },
@@ -38,7 +37,9 @@ export default function PerfilPersonal() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [empresas, setEmpresas] = useState([]);
+  const [, setEmpresas] = useState([]);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -111,6 +112,23 @@ export default function PerfilPersonal() {
     setSaving(true);
     setError(null);
     try {
+      // Primero subir la foto si hay una nueva
+      let fotoUrl = null;
+      if (selectedFile) {
+        const photoFormData = new FormData();
+        photoFormData.append("file", selectedFile);
+        const photoResponse = await fetch("/api/auth/upload-photo", {
+          method: "POST",
+          body: photoFormData,
+        });
+        const photoData = await photoResponse.json();
+        if (!photoResponse.ok) {
+          throw new Error(photoData.error || "Error al subir la foto");
+        }
+        fotoUrl = photoData.url;
+        toast.success("Foto subida exitosamente");
+      }
+
       // Mapear a column_values para Monday
       const columnValues = {};
       columns.forEach((col) => {
@@ -127,6 +145,10 @@ export default function PerfilPersonal() {
           } else {
             columnValues[col.id] = form[col.title];
           }
+        }
+        // Agregar la foto si hay una nueva
+        if (col.title.toLowerCase().includes("foto") && fotoUrl) {
+          columnValues[col.id] = fotoUrl;
         }
       });
       const mutation = `mutation { change_multiple_column_values (item_id: ${
@@ -174,7 +196,6 @@ export default function PerfilPersonal() {
               if (title === "Email" || title === "Género") {
                 if (title === "Género") {
                   const colGenero = columns.find((c) => c.title === "Género");
-                  const colEmail = columns.find((c) => c.title === "Email");
                   return (
                     <div
                       key="genero-email"
@@ -314,33 +335,57 @@ export default function PerfilPersonal() {
               );
             })}
             <div className="col-span-2 flex flex-col items-center mb-8">
-              <ImageUpload
-                initialUrl={
-                  // Buscar primero en Monday (column_values)
-                  profile?.column_values?.find((c) =>
-                    c.column?.title?.toLowerCase().includes("foto")
-                  )?.text ||
-                  form["Foto de Perfil"] ||
-                  form["Foto"] ||
-                  form["fotoPerfil"] ||
-                  form["foto"] ||
-                  ""
-                }
-                onUpload={async (url) => {
-                  // Actualizar fotoPerfil en MongoDB
-                  await fetch(`/api/user/profile`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      email: session.user.email,
-                      fotoPerfil: url,
-                    }),
-                  });
-                  // Refrescar perfil
-                  profileCache.current = null;
-                  window.location.reload();
-                }}
-              />
+              <div className="relative w-32 h-32 mb-4">
+                {previewUrl ||
+                profile?.column_values?.find((c) =>
+                  c.column?.title?.toLowerCase().includes("foto")
+                )?.text ? (
+                  <Image
+                    src={
+                      previewUrl ||
+                      profile?.column_values?.find((c) =>
+                        c.column?.title?.toLowerCase().includes("foto")
+                      )?.text
+                    }
+                    alt="Foto de perfil"
+                    fill
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+                    <FaCamera className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
+              </div>
+              {editMode && (
+                <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  <span>Seleccionar foto</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        if (!file.type.startsWith("image/")) {
+                          setError("Por favor selecciona una imagen válida");
+                          return;
+                        }
+                        if (file.size > 5 * 1024 * 1024) {
+                          setError("La imagen no debe superar los 5MB");
+                          return;
+                        }
+                        setSelectedFile(file);
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setPreviewUrl(reader.result);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
             <div className="col-span-2 flex gap-2 mt-6 justify-end flex-wrap">
               {!editMode ? (

@@ -7,6 +7,17 @@ import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { signIn } from "next-auth/react";
 
+const CAMPOS_REQUERIDOS = {
+  nombre: true,
+  apellidoPaterno: true,
+  apellidoMaterno: true,
+  telefono: true,
+  fechaNacimiento: true,
+  comunidad: true,
+  genero: true,
+  foto: false, // Este campo puede ser opcional
+};
+
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -44,47 +55,47 @@ function RegisterForm() {
     if (!email) {
       console.log("No se encontró email, redirigiendo a signin");
       router.push("/api/auth/signin");
+      return;
     }
 
     // Obtener estructura del board de Monday.com
     const fetchBoardSchema = async () => {
-      const res = await fetch("/api/monday/board/structure", {
-        method: "POST",
-      });
-      const data = await res.json();
-      const board = data?.data?.boards?.[0];
-      if (board?.columns) {
-        setColumns(board.columns);
-        // Mapea los títulos a IDs
-        const ids = {};
-        board.columns.forEach((col) => {
-          if (col.title === "Nombre") ids.nombre = col.id;
-          if (col.title === "Apellido Paterno") ids.apellidoP = col.id;
-          if (col.title === "Apellido Materno") ids.apellidoM = col.id;
-          if (
-            col.title === "Fecha Nacimiento" ||
-            col.title === "Fecha de Nacimiento"
-          )
-            ids.fechaNacimiento = col.id;
-          if (col.title === "Género") ids.genero = col.id;
-          if (col.title === "Comunidad") ids.comunidad = col.id;
-          if (col.title === "Teléfono") ids.telefono = col.id;
-          if (col.title === "Email") ids.email = col.id;
-          if (col.title === "Foto Perfil" || col.title === "Foto de perfil")
-            ids.foto = col.id;
-          if (col.type === "color") ids.status = col.id;
+      try {
+        const res = await fetch("/api/monday/board/structure", {
+          method: "POST",
         });
-        setColIds(ids);
+        const data = await res.json();
+        const board = data?.data?.boards?.[0];
+        if (board?.columns) {
+          setColumns(board.columns);
+          // Mapea los títulos a IDs
+          const ids = {};
+          board.columns.forEach((col) => {
+            if (col.title === "Nombre") ids.nombre = col.id;
+            if (col.title === "Apellido Paterno") ids.apellidoP = col.id;
+            if (col.title === "Apellido Materno") ids.apellidoM = col.id;
+            if (
+              col.title === "Fecha Nacimiento" ||
+              col.title === "Fecha de Nacimiento"
+            )
+              ids.fechaNacimiento = col.id;
+            if (col.title === "Género") ids.genero = col.id;
+            if (col.title === "Comunidad") ids.comunidad = col.id;
+            if (col.title === "Teléfono") ids.telefono = col.id;
+            if (col.title === "Email") ids.email = col.id;
+            if (col.title === "Foto Perfil" || col.title === "Foto de perfil")
+              ids.foto = col.id;
+            if (col.type === "color") ids.status = col.id;
+          });
+          setColIds(ids);
+        }
+      } catch (error) {
+        console.error("Error al obtener estructura:", error);
+        setError("Error al cargar la estructura del formulario");
       }
     };
     fetchBoardSchema();
   }, [email, router]);
-
-  useEffect(() => {
-    if (!email) {
-      window.location.href = "/register";
-    }
-  }, [email]);
 
   useEffect(() => {
     setForm((prev) => ({
@@ -136,28 +147,73 @@ function RegisterForm() {
     setError("");
     console.clear();
     console.log("=== INICIO REGISTRO ===");
+
+    // Validar campos requeridos
+    const camposFaltantes = Object.entries(CAMPOS_REQUERIDOS)
+      .filter(([campo, requerido]) => {
+        if (campo === "foto") {
+          return requerido && !form.foto;
+        }
+        return requerido && !form[campo];
+      })
+      .map(([campo]) => {
+        // Convertir nombres de campos a formato legible
+        const nombres = {
+          nombre: "Nombre",
+          apellidoPaterno: "Apellido Paterno",
+          apellidoMaterno: "Apellido Materno",
+          telefono: "Teléfono",
+          fechaNacimiento: "Fecha de Nacimiento",
+          comunidad: "Comunidad",
+          genero: "Género",
+          foto: "Foto de Perfil",
+        };
+        return nombres[campo] || campo;
+      });
+
+    if (camposFaltantes.length > 0) {
+      const mensaje = `Por favor completa los siguientes campos: ${camposFaltantes.join(
+        ", "
+      )}`;
+      setError(mensaje);
+      setLoading(false);
+      toast.error("Faltan campos requeridos");
+      return;
+    }
+
     try {
       // Mostrar el contenido del formulario antes de cualquier procesamiento
       console.log("==== FORMULARIO ANTES DE SUBIR FOTO ====");
       console.log(JSON.stringify(form, null, 2));
+
       // 1. Subir foto a Google Storage si existe
       let fotoUrl = null;
       if (form.foto) {
         const photoFormData = new FormData();
         photoFormData.append("file", form.foto);
-        const photoResponse = await fetch("/api/auth/upload-photo", {
-          method: "POST",
-          body: photoFormData,
-        });
-        const photoData = await photoResponse.json();
-        if (!photoResponse.ok) {
-          console.error("Error subida foto:", photoData);
-          throw new Error(photoData.error || "Error al subir la foto");
+
+        try {
+          const photoResponse = await fetch("/api/auth/upload-photo", {
+            method: "POST",
+            body: photoFormData,
+          });
+          const photoData = await photoResponse.json();
+
+          if (!photoResponse.ok) {
+            throw new Error(photoData.error || "Error al subir la foto");
+          }
+
+          fotoUrl = photoData.url;
+          toast.success("Foto subida exitosamente");
+          console.log("Foto subida:", fotoUrl);
+        } catch (photoError) {
+          console.error("Error subida foto:", photoError);
+          throw new Error("Error al subir la foto: " + photoError.message);
         }
-        fotoUrl = photoData.url;
-        toast.success("Foto subida exitosamente");
-        console.log("Foto subida:", fotoUrl);
+      } else if (CAMPOS_REQUERIDOS.foto) {
+        throw new Error("La foto de perfil es obligatoria");
       }
+
       // Construir payload programático para Monday.com usando los IDs y tipos del schema
       console.log("Valor de form.fechaNacimiento:", form.fechaNacimiento);
       console.log("colIds.fechaNacimiento:", colIds.fechaNacimiento);
@@ -262,7 +318,7 @@ function RegisterForm() {
             Completa tu registro
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Por favor, proporciona la siguiente información para continuar
+            Los campos marcados con * son obligatorios
           </p>
         </div>
 
@@ -273,7 +329,7 @@ function RegisterForm() {
               htmlFor="email"
               className="block text-sm font-medium text-gray-700"
             >
-              Correo electrónico
+              Correo electrónico *
             </label>
             <input
               id="email"
@@ -288,6 +344,9 @@ function RegisterForm() {
 
           {/* Foto de perfil */}
           <div className="flex flex-col items-center">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Foto de perfil {CAMPOS_REQUERIDOS.foto ? "*" : ""}
+            </label>
             <div className="relative w-32 h-32 mb-4">
               {previewUrl ? (
                 <Image
@@ -320,13 +379,13 @@ function RegisterForm() {
                 htmlFor="nombre"
                 className="block text-sm font-medium text-gray-700"
               >
-                Nombre
+                Nombre {CAMPOS_REQUERIDOS.nombre ? "*" : ""}
               </label>
               <input
                 id="nombre"
                 name="nombre"
                 type="text"
-                required
+                required={CAMPOS_REQUERIDOS.nombre}
                 value={form.nombre}
                 onChange={(e) => handleChange("nombre", e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -338,13 +397,13 @@ function RegisterForm() {
                 htmlFor="apellidoPaterno"
                 className="block text-sm font-medium text-gray-700"
               >
-                Apellido Paterno
+                Apellido Paterno {CAMPOS_REQUERIDOS.apellidoPaterno ? "*" : ""}
               </label>
               <input
                 id="apellidoPaterno"
                 name="apellidoPaterno"
                 type="text"
-                required
+                required={CAMPOS_REQUERIDOS.apellidoPaterno}
                 value={form.apellidoPaterno}
                 onChange={(e) =>
                   handleChange("apellidoPaterno", e.target.value)
@@ -358,13 +417,13 @@ function RegisterForm() {
                 htmlFor="apellidoMaterno"
                 className="block text-sm font-medium text-gray-700"
               >
-                Apellido Materno
+                Apellido Materno {CAMPOS_REQUERIDOS.apellidoMaterno ? "*" : ""}
               </label>
               <input
                 id="apellidoMaterno"
                 name="apellidoMaterno"
                 type="text"
-                required
+                required={CAMPOS_REQUERIDOS.apellidoMaterno}
                 value={form.apellidoMaterno}
                 onChange={(e) =>
                   handleChange("apellidoMaterno", e.target.value)
@@ -378,7 +437,7 @@ function RegisterForm() {
                 htmlFor="pais"
                 className="block text-sm font-medium text-gray-700"
               >
-                País
+                País *
               </label>
               <select
                 id="pais"
@@ -401,7 +460,7 @@ function RegisterForm() {
                 htmlFor="telefono"
                 className="block text-sm font-medium text-gray-700"
               >
-                Teléfono
+                Teléfono {CAMPOS_REQUERIDOS.telefono ? "*" : ""}
               </label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
@@ -411,7 +470,7 @@ function RegisterForm() {
                   id="telefono"
                   name="telefono"
                   type="tel"
-                  required
+                  required={CAMPOS_REQUERIDOS.telefono}
                   value={form.telefono}
                   onChange={(e) => handleChange("telefono", e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-r-md shadow-sm"
@@ -425,13 +484,14 @@ function RegisterForm() {
                 htmlFor="fechaNacimiento"
                 className="block text-sm font-medium text-gray-700"
               >
-                Fecha de Nacimiento
+                Fecha de Nacimiento{" "}
+                {CAMPOS_REQUERIDOS.fechaNacimiento ? "*" : ""}
               </label>
               <input
                 id="fechaNacimiento"
                 name="fechaNacimiento"
                 type="date"
-                required
+                required={CAMPOS_REQUERIDOS.fechaNacimiento}
                 value={form.fechaNacimiento}
                 onChange={(e) =>
                   handleChange("fechaNacimiento", e.target.value)
@@ -445,12 +505,12 @@ function RegisterForm() {
                 htmlFor="comunidad"
                 className="block text-sm font-medium text-gray-700"
               >
-                Comunidad
+                Comunidad {CAMPOS_REQUERIDOS.comunidad ? "*" : ""}
               </label>
               <select
                 id="comunidad"
                 name="comunidad"
-                required
+                required={CAMPOS_REQUERIDOS.comunidad}
                 value={form.comunidad}
                 onChange={(e) => handleChange("comunidad", e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -477,12 +537,12 @@ function RegisterForm() {
                 htmlFor="genero"
                 className="block text-sm font-medium text-gray-700"
               >
-                Género
+                Género {CAMPOS_REQUERIDOS.genero ? "*" : ""}
               </label>
               <select
                 id="genero"
                 name="genero"
-                required
+                required={CAMPOS_REQUERIDOS.genero}
                 value={form.genero}
                 onChange={(e) => handleChange("genero", e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
