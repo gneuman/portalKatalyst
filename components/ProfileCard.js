@@ -27,14 +27,34 @@ export default function ProfileCard() {
             d="M4 12a8 8 0 018-8v8z"
           ></path>
         </svg>
+        <div className="text-white text-sm mt-2">Cargando perfil...</div>
       </div>
     );
   }
 
   if (error || !profile) {
+    // Mostrar un mensaje más amigable o un placeholder
     return (
       <div className="w-full max-w-[240px] h-[220px] rounded-lg shadow-lg p-4 bg-gradient-to-br from-[#1C384A] via-[#54B8B4aa] to-[#1C384A] flex flex-col items-center justify-center text-white text-center mx-auto">
-        Error: No tienes acceso o el usuario no existe en la base de datos.
+        <div className="w-[56px] h-[56px] rounded-full bg-gray-300 flex items-center justify-center mb-2">
+          <svg
+            className="w-8 h-8 text-gray-600"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+        <div className="text-white font-bold text-lg text-center break-words w-full mb-1">
+          Perfil no disponible
+        </div>
+        <div className="text-xs text-gray-300">
+          {error ? "Error al cargar el perfil" : "Completa tu registro"}
+        </div>
       </div>
     );
   }

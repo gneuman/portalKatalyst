@@ -28,24 +28,86 @@ export async function GET(req) {
 export async function PUT(req) {
   await connectMongo();
   const body = await req.json();
-  const { email, businessMondayId } = body;
-  if (!email || !businessMondayId) {
-    return new Response(JSON.stringify({ error: "Faltan parámetros" }), {
+  const { email, ...updateData } = body;
+
+  if (!email) {
+    return new Response(JSON.stringify({ error: "Email requerido" }), {
       status: 400,
     });
   }
-  const user = await User.findOneAndUpdate(
-    { email },
-    { $set: { businessMondayId } },
-    { new: true }
-  );
-  if (!user) {
-    return new Response(JSON.stringify({ error: "Usuario no encontrado" }), {
-      status: 404,
+
+  try {
+    // Construir objeto de actualización dinámicamente
+    const updateFields = {};
+
+    // Campos permitidos para actualización
+    const allowedFields = [
+      "fotoPerfil",
+      "name",
+      "firstName",
+      "lastName",
+      "secondLastName",
+      "phone",
+      "dateOfBirth",
+      "gender",
+      "community",
+      "comunidad",
+      "personalMondayId",
+      "businessMondayId",
+      "isVerified",
+    ];
+
+    // Solo incluir campos que están presentes y son válidos
+    Object.keys(updateData).forEach((key) => {
+      if (allowedFields.includes(key) && updateData[key] !== undefined) {
+        updateFields[key] = updateData[key];
+      }
     });
+
+    if (Object.keys(updateFields).length === 0) {
+      return new Response(
+        JSON.stringify({ error: "No hay campos válidos para actualizar" }),
+        {
+          status: 400,
+        }
+      );
+    }
+
+    console.log(
+      "[MONGODB] Actualizando usuario:",
+      email,
+      "con campos:",
+      updateFields
+    );
+
+    const user = await User.findOneAndUpdate(
+      { email },
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Usuario no encontrado" }), {
+        status: 404,
+      });
+    }
+
+    console.log("[MONGODB] Usuario actualizado exitosamente:", user._id);
+
+    return new Response(JSON.stringify(user), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("[MONGODB] Error al actualizar usuario:", error);
+    return new Response(
+      JSON.stringify({
+        error: "Error al actualizar usuario",
+        details: error.message,
+      }),
+      {
+        status: 500,
+      }
+    );
   }
-  return new Response(JSON.stringify(user), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
 }
