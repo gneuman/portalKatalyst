@@ -3,7 +3,7 @@ import { connectDB } from "@/libs/mongodb";
 import User from "@/models/User";
 import { postMonday } from "@/libs/monday";
 
-export async function POST(request) {
+export async function POST(_request) {
   try {
     await connectDB();
 

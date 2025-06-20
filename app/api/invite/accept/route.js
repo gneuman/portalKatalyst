@@ -44,9 +44,6 @@ export async function POST(req) {
     // Usar el nombre de columna fijo 'board_relation_mkrcrrm'
     const boardId = process.env.MONDAY_BUSINESS_BOARD_ID;
     const relationColId = "board_relation_mkrcrrm";
-    const columnValues = {
-      [relationColId]: { item_ids: [user.personalMondayId] },
-    };
     const mutation = `mutation { change_multiple_column_values (board_id: ${boardId}, item_id: ${empresaId}, column_values: "{ \\\"${relationColId}\\\": {\\\"item_ids\\\":[${user.personalMondayId}]}}", create_labels_if_missing: false) { id } }`;
     debug.mutation = mutation;
 

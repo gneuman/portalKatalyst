@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { FaUsers, FaComments, FaCalendarAlt } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 

@@ -11,6 +11,7 @@ import {
   FaCamera,
 } from "react-icons/fa";
 import Image from "next/image";
+import ImageUpload from "@/components/ImageUpload";
 import { toast } from "react-hot-toast";
 
 const CAMPOS = [
