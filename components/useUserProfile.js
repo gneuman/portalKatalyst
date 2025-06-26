@@ -150,7 +150,7 @@ export default function useUserProfile() {
       // Si el nombre completo de Monday es diferente al de MongoDB, actualizarlo en MongoDB
       if (nombreCompletoMonday && nombreCompletoMonday !== user.name) {
         try {
-          await fetch(`/api/user/profile`, {
+          const response = await fetch(`/api/user/profile`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -158,6 +158,13 @@ export default function useUserProfile() {
               name: nombreCompletoMonday,
             }),
           });
+          const data = await response.json();
+          console.log("[MongoDB UPDATE RESPONSE]", data);
+          // Forzar refetch si la actualización fue exitosa
+          if (response.ok) {
+            // Recargar el perfil para obtener el valor actualizado
+            setTimeout(() => fetchProfile(), 500);
+          }
         } catch (syncError) {
           console.warn(
             "Error al sincronizar nombre completo en MongoDB:",

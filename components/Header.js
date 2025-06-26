@@ -38,13 +38,15 @@ function HeaderContent() {
         <div className="flex justify-between items-center py-4 gap-4">
           {/* Logo */}
           <div className="flex items-center gap-3 min-w-[120px] sm:min-w-[180px]">
-            <Image
-              src="/images/Katalyst.png"
-              alt="Katalyst Logo"
-              width={220}
-              height={64}
-              className="object-contain"
-            />
+            <div className="bg-[#1C384A] rounded-xl p-3 flex items-center justify-center">
+              <Image
+                src="/images/Katalyst.png"
+                alt="Katalyst Logo"
+                width={220}
+                height={64}
+                className="object-contain"
+              />
+            </div>
           </div>
 
           {/* Menú hamburguesa para móvil */}
