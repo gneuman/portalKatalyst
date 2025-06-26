@@ -52,6 +52,12 @@ export default function useUserProfile() {
       let comunidad = user.comunidad || "";
       let nombreCompletoMonday = null;
       let mondayRaw = null;
+      let nombreCompleto =
+        `${user.firstName || ""} ${user.lastName || ""} ${
+          user.secondLastName || ""
+        }`.trim() ||
+        user.name ||
+        "";
       // Siempre consultar Monday.com para obtener 'Nombre Completo'
       if (user.personalMondayId) {
         try {
@@ -71,6 +77,7 @@ export default function useUserProfile() {
               );
               if (nombreCompletoCol?.text) {
                 nombreCompletoMonday = nombreCompletoCol.text;
+                nombreCompleto = nombreCompletoCol.text;
               }
             }
           }
@@ -83,13 +90,6 @@ export default function useUserProfile() {
         console.log("[Monday RAW]", mondayRaw);
       }
       // Mostrar en consola el objeto profile final
-      const nombreCompleto =
-        nombreCompletoMonday ||
-        `${user.firstName || ""} ${user.lastName || ""} ${
-          user.secondLastName || ""
-        }`.trim() ||
-        user.name ||
-        "";
       const profileObj = {
         ...user,
         name,

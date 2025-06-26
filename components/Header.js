@@ -41,9 +41,9 @@ function HeaderContent() {
             <Image
               src="/images/Katalyst.png"
               alt="Katalyst Logo"
-              width={160}
-              height={56}
-              className="rounded-xl bg-[#232F36] p-2 w-auto h-8 sm:h-14"
+              width={72}
+              height={72}
+              className="rounded-full bg-[#232F36] border-4 border-white w-[72px] h-[72px] object-cover"
             />
           </div>
 
