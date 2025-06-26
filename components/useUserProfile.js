@@ -99,7 +99,10 @@ export default function useUserProfile() {
             }),
           });
         } catch (syncError) {
-          console.warn("Error al sincronizar nombre completo en MongoDB:", syncError);
+          console.warn(
+            "Error al sincronizar nombre completo en MongoDB:",
+            syncError
+          );
         }
       }
 
@@ -199,6 +202,7 @@ export default function useUserProfile() {
         fotoPerfil,
         comunidad,
         nombreCompleto,
+        nombreCompletoMonday,
       });
     } catch (e) {
       console.error("Error al obtener perfil:", e);

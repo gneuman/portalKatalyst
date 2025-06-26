@@ -80,6 +80,9 @@ export default function ProfileCard() {
           className="w-[72px] h-[72px] rounded-full object-cover border-4 border-white"
         />
         <div className="flex flex-col justify-center">
+          <div className="text-xs text-orange-200 font-mono mb-1">
+            Katalyst ID: {profile.personalMondayId || ""}
+          </div>
           <div className="text-white font-bold text-xl leading-tight">
             {nombreMostrar}
           </div>
