@@ -1,15 +1,14 @@
 import { useSession } from "next-auth/react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 export default function useUserProfile() {
   const { data: session, status } = useSession();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [yaActualizado, setYaActualizado] = useState(false);
+  const yaActualizadoRef = useRef(false);
 
   const fetchProfile = useCallback(async () => {
-    setYaActualizado(false);
     // No hacer nada si la sesión aún está cargando
     if (status === "loading") {
       return;
@@ -71,7 +70,7 @@ export default function useUserProfile() {
       // Siempre consultar Monday.com para obtener 'Nombre Completo'
       if (user.personalMondayId) {
         try {
-          const query = `query { items (ids: [${user.personalMondayId}]) { id name column_values { id text value column { id title id } } } }`;
+          const query = `query { items (ids: [${user.personalMondayId}]) { id name board { id } column_values { id text value column { id title id } } } }`;
           const mondayRes = await fetch("/api/monday/item", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -153,7 +152,7 @@ export default function useUserProfile() {
       const emailParaActualizar = emailMonday || user.email;
       const debeActualizarEmail = emailMonday && emailMonday !== user.email;
       if (
-        !yaActualizado &&
+        !yaActualizadoRef.current &&
         ((nombreCompletoMonday && nombreCompletoMonday !== user.name) ||
           debeActualizarEmail)
       ) {
@@ -179,9 +178,61 @@ export default function useUserProfile() {
             const data = await response.json();
             console.log("[MongoDB UPDATE RESPONSE]", data);
             // Marcar como actualizado para evitar ciclo infinito
-            setYaActualizado(true);
+            yaActualizadoRef.current = true;
             // Forzar refetch si la actualización fue exitosa
             if (response.ok) {
+              // También actualizar el nombre del item en Monday.com
+              if (user.personalMondayId && nombreCompletoMonday) {
+                try {
+                  // Obtener el boardId desde Monday (ya lo tienes en mondayRaw)
+                  let boardId = null;
+                  if (
+                    mondayRaw &&
+                    mondayRaw.data &&
+                    mondayRaw.data.items &&
+                    mondayRaw.data.items[0]?.board?.id
+                  ) {
+                    boardId = mondayRaw.data.items[0].board.id;
+                  }
+                  // Si no se obtuvo el boardId, intentar obtenerlo con otra consulta
+                  if (!boardId) {
+                    // Consulta rápida para obtener el boardId
+                    const queryBoard = `query { items (ids: [${user.personalMondayId}]) { board { id } } }`;
+                    const resBoard = await fetch("/api/monday/item", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ query: queryBoard }),
+                    });
+                    const dataBoard = await resBoard.json();
+                    boardId = dataBoard?.data?.items?.[0]?.board?.id;
+                  }
+                  if (boardId) {
+                    const mutation = {
+                      query: `mutation { change_simple_column_value(item_id: ${
+                        user.personalMondayId
+                      }, board_id: ${boardId}, column_id: \"name\", value: \"${nombreCompletoMonday.replace(
+                        /"/g,
+                        '\\"'
+                      )}\") { id } }`,
+                    };
+                    const mondayUpdateRes = await fetch("/api/monday/item", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(mutation),
+                    });
+                    const mondayUpdateData = await mondayUpdateRes.json();
+                    console.log(
+                      "[Monday UPDATE NAME RESPONSE]",
+                      mondayUpdateData
+                    );
+                  }
+                } catch (err) {
+                  console.warn(
+                    "Error al actualizar el nombre del item en Monday:",
+                    err
+                  );
+                }
+              }
               setTimeout(() => fetchProfile(), 500);
             }
           } catch (syncError) {
@@ -298,7 +349,6 @@ export default function useUserProfile() {
       }
 
       setProfile({
-        ...user,
         name,
         fotoPerfil,
         comunidad,
@@ -315,6 +365,7 @@ export default function useUserProfile() {
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line
   }, [fetchProfile]);
 
   return { profile, loading, error, refetch: fetchProfile };
