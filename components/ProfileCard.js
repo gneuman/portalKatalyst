@@ -3,19 +3,23 @@ import useUserProfile from "./useUserProfile";
 export default function ProfileCard() {
   const { profile, loading, error } = useUserProfile();
 
+  // Mostrar en consola todos los datos del perfil para depuración
   if (profile) {
-    console.log("Nombre:", profile.firstName);
-    console.log("Apellido Paterno:", profile.lastName);
-    console.log("Apellido Materno:", profile.secondLastName);
-    console.log("Nombre Completo:", profile.nombreCompleto);
-    console.log("Comunidad:", profile.comunidad);
+    console.log("Perfil completo:", profile);
   }
+
+  // Determinar el nombre a mostrar: primero el de Monday, luego el de MongoDB
+  const nombreMostrar =
+    profile?.nombreCompletoMonday ||
+    profile?.nombreCompleto ||
+    profile?.name ||
+    "";
 
   if (loading) {
     return (
-      <div className="w-full max-w-[240px] h-[220px] rounded-lg shadow-lg p-4 bg-gradient-to-br from-[#1C384A] via-[#54B8B4aa] to-[#1C384A] flex flex-col items-center justify-center mx-auto">
+      <div className="w-full max-w-[340px] h-[220px] rounded-xl shadow-lg p-6 bg-[#1C384A] flex flex-col justify-center mx-auto">
         <svg
-          className="animate-spin h-10 w-10 text-white"
+          className="animate-spin h-10 w-10 text-white mx-auto"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -34,18 +38,19 @@ export default function ProfileCard() {
             d="M4 12a8 8 0 018-8v8z"
           ></path>
         </svg>
-        <div className="text-white text-sm mt-2">Cargando perfil...</div>
+        <div className="text-white text-sm mt-2 text-center">
+          Cargando perfil...
+        </div>
       </div>
     );
   }
 
   if (error || !profile) {
-    // Mostrar un mensaje más amigable o un placeholder
     return (
-      <div className="w-full max-w-[240px] h-[220px] rounded-lg shadow-lg p-4 bg-gradient-to-br from-[#1C384A] via-[#54B8B4aa] to-[#1C384A] flex flex-col items-center justify-center text-white text-center mx-auto">
-        <div className="w-[56px] h-[56px] rounded-full bg-gray-300 flex items-center justify-center mb-2">
+      <div className="w-full max-w-[340px] h-[220px] rounded-xl shadow-lg p-6 bg-[#1C384A] flex flex-col items-center justify-center text-white text-center mx-auto">
+        <div className="w-[72px] h-[72px] rounded-full bg-gray-300 flex items-center justify-center mb-2">
           <svg
-            className="w-8 h-8 text-gray-600"
+            className="w-10 h-10 text-gray-600"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -67,22 +72,21 @@ export default function ProfileCard() {
   }
 
   return (
-    <div className="w-full max-w-[240px] h-[220px] rounded-lg shadow-lg p-4 bg-gradient-to-br from-[#1C384A] via-[#54B8B4aa] to-[#1C384A] flex flex-col items-center justify-center mx-auto">
-      <img
-        src={profile.fotoPerfil}
-        alt={profile.nombreCompleto}
-        className="w-[56px] h-[56px] rounded-full object-cover border-4 border-white mb-2"
-      />
-      <div className="text-xs text-orange-200 font-mono mb-1">
-        Katalyst ID: {profile.personalMondayId || ""}
+    <div className="w-full max-w-[340px] rounded-xl shadow-lg p-6 bg-[#1C384A] flex flex-col gap-3 mx-auto">
+      <div className="flex gap-4 items-center">
+        <img
+          src={profile.fotoPerfil}
+          alt={nombreMostrar}
+          className="w-[72px] h-[72px] rounded-full object-cover border-4 border-white"
+        />
+        <div className="flex flex-col justify-center">
+          <div className="text-white font-bold text-xl leading-tight">
+            {nombreMostrar}
+          </div>
+          <div className="text-white text-sm opacity-80">{profile.email}</div>
+        </div>
       </div>
-      <div className="text-xs text-blue-200 font-mono mb-1">
-        {profile.email}
-      </div>
-      <div className="text-white font-bold text-lg text-center break-words w-full mb-1">
-        {profile.nombreCompleto}
-      </div>
-      <div className="flex justify-center w-full mt-1">
+      <div className="flex gap-2 mt-2">
         <span className="flex items-center px-3 py-1 text-xs font-semibold rounded bg-orange-400 text-white">
           {profile.comunidad || "Sin comunidad"}
         </span>
