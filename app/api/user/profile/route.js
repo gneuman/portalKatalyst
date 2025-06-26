@@ -28,7 +28,7 @@ export async function GET(req) {
 export async function PUT(req) {
   await connectMongo();
   const body = await req.json();
-  const { email, ...updateData } = body;
+  const { email, nuevoEmail, ...updateData } = body;
 
   if (!email) {
     return new Response(JSON.stringify({ error: "Email requerido" }), {
@@ -55,6 +55,7 @@ export async function PUT(req) {
       "personalMondayId",
       "businessMondayId",
       "isVerified",
+      "email",
     ];
 
     // Solo incluir campos que están presentes y son válidos
@@ -63,6 +64,11 @@ export async function PUT(req) {
         updateFields[key] = updateData[key];
       }
     });
+
+    // Si hay un nuevo email, actualizarlo
+    if (nuevoEmail && nuevoEmail !== email) {
+      updateFields.email = nuevoEmail;
+    }
 
     if (Object.keys(updateFields).length === 0) {
       return new Response(
