@@ -50,9 +50,9 @@ export default function useUserProfile() {
       let name = user.name || "";
       let fotoPerfil = user.fotoPerfil || "";
       let comunidad = user.comunidad || "";
-      let nombreCompleto = null;
       let nombreCompletoMonday = null;
-      // Siempre intentar obtener la columna 'Nombre Completo' de Monday
+      let mondayRaw = null;
+      // Siempre consultar Monday.com para obtener 'Nombre Completo'
       if (user.personalMondayId) {
         try {
           const query = `query { items (ids: [${user.personalMondayId}]) { id name column_values { id text column { title } } } }`;
@@ -63,6 +63,7 @@ export default function useUserProfile() {
           });
           if (mondayRes.ok) {
             const mondayData = await mondayRes.json();
+            mondayRaw = mondayData;
             const item = mondayData?.data?.items?.[0];
             if (item && item.column_values) {
               const nombreCompletoCol = item.column_values.find(
@@ -70,7 +71,6 @@ export default function useUserProfile() {
               );
               if (nombreCompletoCol?.text) {
                 nombreCompletoMonday = nombreCompletoCol.text;
-                nombreCompleto = nombreCompletoCol.text;
               }
             }
           }
@@ -78,33 +78,28 @@ export default function useUserProfile() {
           // No fallar si Monday no responde
         }
       }
-      // Si no se obtuvo de Monday, usar concatenación como respaldo
-      if (!nombreCompleto) {
-        nombreCompleto =
-          `${user.firstName || ""} ${user.lastName || ""} ${
-            user.secondLastName || ""
-          }`.trim() ||
-          user.name ||
-          "";
+      // Mostrar en consola el resultado crudo de Monday
+      if (mondayRaw) {
+        console.log("[Monday RAW]", mondayRaw);
       }
-      // Si el nombre completo de Monday es diferente al de MongoDB, actualizarlo en MongoDB
-      if (nombreCompletoMonday && nombreCompletoMonday !== user.name) {
-        try {
-          await fetch(`/api/user/profile`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: user.email,
-              name: nombreCompletoMonday,
-            }),
-          });
-        } catch (syncError) {
-          console.warn(
-            "Error al sincronizar nombre completo en MongoDB:",
-            syncError
-          );
-        }
-      }
+      // Mostrar en consola el objeto profile final
+      const nombreCompleto =
+        nombreCompletoMonday ||
+        `${user.firstName || ""} ${user.lastName || ""} ${
+          user.secondLastName || ""
+        }`.trim() ||
+        user.name ||
+        "";
+      const profileObj = {
+        ...user,
+        name,
+        fotoPerfil,
+        comunidad,
+        nombreCompleto,
+        nombreCompletoMonday,
+      };
+      console.log("[Profile FINAL]", profileObj);
+      setProfile(profileObj);
 
       // 2. Si falta algún dato, obtener de Monday
       if ((!name || !comunidad || !fotoPerfil) && user.personalMondayId) {
