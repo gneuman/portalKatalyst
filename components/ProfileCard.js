@@ -3,9 +3,13 @@ import useUserProfile from "./useUserProfile";
 export default function ProfileCard() {
   const { profile, loading, error } = useUserProfile();
 
-  // Mostrar en consola todos los datos del perfil para depuración
+  // Mostrar en consola los valores de Monday y MongoDB para comparación
   if (profile) {
-    console.log("Perfil completo:", profile);
+    console.log("Nombre Completo Monday:", profile.nombreCompletoMonday);
+    console.log("Nombre (MongoDB):", profile.name);
+    console.log("Katalyst ID:", profile.personalMondayId);
+    console.log("Comunidad:", profile.comunidad);
+    console.log("Email:", profile.email);
   }
 
   // Determinar el nombre a mostrar: primero el de Monday, luego el de MongoDB
