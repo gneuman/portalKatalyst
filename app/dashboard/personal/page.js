@@ -44,7 +44,6 @@ function PerfilPersonalToast() {
 
 export default function PerfilPersonal() {
   const { data: session } = useSession();
-  const searchParams = useSearchParams();
   const profileCache = useRef(null);
   const [profile, setProfile] = useState(null);
   const [columns, setColumns] = useState([]); // Para status y date
