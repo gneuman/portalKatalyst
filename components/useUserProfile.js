@@ -50,10 +50,41 @@ export default function useUserProfile() {
       let name = user.name || "";
       let fotoPerfil = user.fotoPerfil || "";
       let comunidad = user.comunidad || "";
-      let nombreCompleto =
-        `${user.firstName || ""} ${user.lastName || ""} ${
-          user.secondLastName || ""
-        }`.trim() || name;
+      let nombreCompleto = null;
+      // Siempre intentar obtener la columna 'Nombre Completo' de Monday
+      if (user.personalMondayId) {
+        try {
+          const query = `query { items (ids: [${user.personalMondayId}]) { id name column_values { id text column { title } } } }`;
+          const mondayRes = await fetch("/api/monday/item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query }),
+          });
+          if (mondayRes.ok) {
+            const mondayData = await mondayRes.json();
+            const item = mondayData?.data?.items?.[0];
+            if (item && item.column_values) {
+              const nombreCompletoCol = item.column_values.find(
+                (col) => col.column?.title === "Nombre Completo"
+              );
+              if (nombreCompletoCol?.text) {
+                nombreCompleto = nombreCompletoCol.text;
+              }
+            }
+          }
+        } catch (mondayError) {
+          // No fallar si Monday no responde
+        }
+      }
+      // Si no se obtuvo de Monday, usar concatenación como respaldo
+      if (!nombreCompleto) {
+        nombreCompleto =
+          `${user.firstName || ""} ${user.lastName || ""} ${
+            user.secondLastName || ""
+          }`.trim() ||
+          user.name ||
+          "";
+      }
 
       // 2. Si falta algún dato, obtener de Monday
       if ((!name || !comunidad || !fotoPerfil) && user.personalMondayId) {
