@@ -1,22 +1,9 @@
 import { NextResponse } from "next/server";
-import { Storage } from "@google-cloud/storage";
 
 export async function POST(request) {
   console.log("=== INICIO DE UPLOAD PHOTO ===");
 
   try {
-    // Inicializar el cliente de Google Cloud Storage
-    console.log("Inicializando Storage...");
-    const storage = new Storage({
-      projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-      credentials: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS),
-    });
-
-    console.log("Obteniendo bucket...");
-    const bucket = storage.bucket(
-      process.env.GOOGLE_CLOUD_BUCKET_PROFILE_PHOTOS
-    );
-
     console.log("Procesando formData...");
     const formData = await request.formData();
     const file = formData.get("file");
@@ -61,20 +48,42 @@ export async function POST(request) {
     const fileName = `${Date.now()}-${sanitizedName}`;
     console.log("Nombre del archivo generado:", fileName);
 
-    // Subir el archivo a Google Cloud Storage
-    console.log("Iniciando subida a Google Cloud Storage...");
-    const blob = bucket.file(fileName);
+    // Usar fetch directo a la API de Google Cloud Storage para evitar problemas con la librería
+    console.log("Iniciando subida directa a Google Cloud Storage...");
+
+    const bucketName = process.env.GOOGLE_CLOUD_BUCKET_PROFILE_PHOTOS;
+    const credentials = JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS);
+
+    // Crear URL de upload directo
+    const uploadUrl = `https://storage.googleapis.com/upload/storage/v1/b/${bucketName}/o?name=${fileName}&uploadType=media`;
 
     try {
-      console.log("Guardando archivo...");
-      await blob.save(buffer, {
-        metadata: {
-          contentType: file.type,
+      console.log("Subiendo archivo usando fetch directo...");
+
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${
+            credentials.access_token || credentials.token
+          }`,
+          "Content-Type": file.type,
+          "Content-Length": buffer.length.toString(),
         },
+        body: buffer,
       });
 
-      console.log("Archivo guardado exitosamente");
-      const url = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error en respuesta de Google Storage:", errorText);
+        throw new Error(
+          `Error de Google Storage: ${response.status} ${errorText}`
+        );
+      }
+
+      const result = await response.json();
+      console.log("Respuesta de Google Storage:", result);
+
+      const url = `https://storage.googleapis.com/${bucketName}/${fileName}`;
       console.log("URL generada:", url);
 
       return NextResponse.json({
@@ -83,13 +92,44 @@ export async function POST(request) {
       });
     } catch (uploadError) {
       console.error("Error al subir archivo:", uploadError);
-      return NextResponse.json(
-        {
-          error: "Error al subir el archivo",
-          details: uploadError.message,
-        },
-        { status: 500 }
-      );
+
+      // Si falla el método directo, intentar con la librería como fallback
+      try {
+        console.log("Intentando con librería como fallback...");
+        const { Storage } = await import("@google-cloud/storage");
+
+        const storage = new Storage({
+          projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+          credentials: credentials,
+        });
+
+        const bucket = storage.bucket(bucketName);
+        const blob = bucket.file(fileName);
+
+        await blob.save(buffer, {
+          metadata: {
+            contentType: file.type,
+          },
+          resumable: false,
+        });
+
+        const url = `https://storage.googleapis.com/${bucketName}/${fileName}`;
+        console.log("Archivo guardado exitosamente con librería");
+
+        return NextResponse.json({
+          success: true,
+          url: url,
+        });
+      } catch (libError) {
+        console.error("Error con librería también:", libError);
+        return NextResponse.json(
+          {
+            error: "Error al subir el archivo",
+            details: uploadError.message,
+          },
+          { status: 500 }
+        );
+      }
     }
   } catch (error) {
     console.error("Error general en upload-photo:", error);

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { postMonday } from "@/libs/monday";
 
-export async function POST(request) {
+export async function POST(_request) {
   try {
     console.log("=== INICIO DE OBTENCIÓN DE ESTRUCTURA DEL BOARD ===");
     const boardId = process.env.MONDAY_BOARD_ID;

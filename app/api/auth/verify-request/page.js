@@ -2,24 +2,10 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { FaEnvelope, FaExclamationTriangle } from "react-icons/fa";
-import { signIn } from "next-auth/react";
 
 function VerifyRequestContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
-
-  const handleResendEmail = async () => {
-    try {
-      await signIn("email", {
-        email,
-        callbackUrl: "/dashboard",
-        redirect: false,
-      });
-    } catch (error) {
-      console.error("Error al reenviar el correo:", error);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

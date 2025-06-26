@@ -11,6 +11,7 @@ import {
   FaCamera,
 } from "react-icons/fa";
 import Image from "next/image";
+import ImageUpload from "@/components/ImageUpload";
 import { toast } from "react-hot-toast";
 
 const CAMPOS = [
@@ -127,6 +128,16 @@ export default function PerfilPersonal() {
         }
         fotoUrl = photoData.url;
         toast.success("Foto subida exitosamente");
+
+        // Actualizar también en MongoDB
+        await fetch(`/api/user/profile`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: session.user.email,
+            fotoPerfil: fotoUrl,
+          }),
+        });
       }
 
       // Mapear a column_values para Monday
@@ -151,17 +162,26 @@ export default function PerfilPersonal() {
           columnValues[col.id] = fotoUrl;
         }
       });
+
       const mutation = `mutation { change_multiple_column_values (item_id: ${
         profile.id
       }, board_id: ${profile.board.id}, column_values: ${JSON.stringify(
         JSON.stringify(columnValues)
       )}) { id } }`;
-      await fetch("/api/monday/item", {
+
+      const mondayResponse = await fetch("/api/monday/item", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: mutation }),
       });
+
+      if (!mondayResponse.ok) {
+        throw new Error("Error al actualizar en Monday.com");
+      }
+
+      toast.success("Perfil actualizado correctamente");
       setEditMode(false);
+
       // Refrescar perfil y empresas
       setLoading(true);
       const query = `query { items (ids: [${profile.id}]) { id name board { id } column_values { id text value column { id title type settings_str } } } }`;
@@ -178,6 +198,7 @@ export default function PerfilPersonal() {
       setLoading(false);
     } catch (e) {
       setError(e.message);
+      toast.error("Error al guardar: " + e.message);
     }
     setSaving(false);
   };
@@ -353,18 +374,70 @@ export default function PerfilPersonal() {
                   ""
                 }
                 onUpload={async (url) => {
-                  // Actualizar fotoPerfil en MongoDB
-                  await fetch(`/api/user/profile`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      email: session.user.email,
-                      fotoPerfil: url,
-                    }),
-                  });
-                  // Refrescar perfil
-                  profileCache.current = null;
-                  window.location.reload();
+                  try {
+                    console.log("Actualizando foto en Monday.com y MongoDB...");
+
+                    // 1. Actualizar fotoPerfil en MongoDB
+                    const mongoResponse = await fetch(`/api/user/profile`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        email: session.user.email,
+                        fotoPerfil: url,
+                      }),
+                    });
+
+                    if (!mongoResponse.ok) {
+                      throw new Error("Error al actualizar en MongoDB");
+                    }
+
+                    // 2. Actualizar foto en Monday.com
+                    const fotoColumn = columns.find((col) =>
+                      col.title.toLowerCase().includes("foto")
+                    );
+
+                    if (fotoColumn && profile) {
+                      const columnValues = {
+                        [fotoColumn.id]: url,
+                      };
+
+                      const mutation = `mutation { 
+                        change_multiple_column_values (
+                          item_id: ${profile.id}, 
+                          board_id: ${profile.board.id}, 
+                          column_values: "${JSON.stringify(
+                            columnValues
+                          ).replace(/"/g, '\\"')}"
+                        ) { 
+                          id 
+                        } 
+                      }`;
+
+                      const mondayResponse = await fetch("/api/monday/item", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ query: mutation }),
+                      });
+
+                      if (!mondayResponse.ok) {
+                        throw new Error("Error al actualizar en Monday.com");
+                      }
+
+                      console.log(
+                        "Foto actualizada exitosamente en ambos sistemas"
+                      );
+                      toast.success("Foto actualizada correctamente");
+                    }
+
+                    // 3. Refrescar perfil
+                    profileCache.current = null;
+                    window.location.reload();
+                  } catch (error) {
+                    console.error("Error al actualizar foto:", error);
+                    toast.error(
+                      "Error al actualizar la foto: " + error.message
+                    );
+                  }
                 }}
               />
             </div>

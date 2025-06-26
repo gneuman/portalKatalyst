@@ -2,13 +2,9 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { toast } from "react-hot-toast";
-import ImageUpload from "@/components/ImageUpload";
 import { FaCamera } from "react-icons/fa";
 import Image from "next/image";
-import { toast } from "react-hot-toast";
-import { signIn } from "next-auth/react";
 
 function RegisterForm() {
   const router = useRouter();
@@ -30,7 +26,6 @@ function RegisterForm() {
   const [columns, setColumns] = useState([]);
   const [colIds, setColIds] = useState({});
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [fotoUrl, setFotoUrl] = useState(null);
   const [showFullForm, setShowFullForm] = useState(false);
 
   useEffect(() => {
@@ -70,7 +65,6 @@ function RegisterForm() {
             }));
             if (userData.fotoPerfil) {
               setPreviewUrl(userData.fotoPerfil);
-              setFotoUrl(userData.fotoPerfil);
             }
             setShowFullForm(true);
             toast.success(
@@ -277,6 +271,7 @@ function RegisterForm() {
       }
       toast.success("Usuario creado en Monday exitosamente");
       console.log("Respuesta Monday:", mondayResult);
+
       // 4. Crear usuario en MongoDB (ajustar el payload)
       const userPayload = {
         name: form.nombreCompleto,
@@ -289,14 +284,15 @@ function RegisterForm() {
         gender: form.genero,
         community: form.comunidad,
         fotoPerfil: fotoUrl,
+        personalMondayId: mondayResult.id || mondayResult.data?.create_item?.id,
       };
 
-      console.log("Datos a enviar:", JSON.stringify(userData, null, 2));
+      console.log("Datos a enviar:", JSON.stringify(userPayload, null, 2));
 
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
+        body: JSON.stringify(userPayload),
       });
 
       const data = await response.json();

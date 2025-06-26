@@ -9,10 +9,12 @@ const connectMongo = async () => {
       "Add the MONGODB_URI environment variable inside .env.local to use mongoose"
     );
   }
+
   if (isConnected) {
-    console.log("[MONGODB] Ya existe una conexión activa");
+    console.log("[MONGODB] Usando conexión existente");
     return mongoose;
   }
+
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
@@ -23,6 +25,7 @@ const connectMongo = async () => {
     return mongoose;
   } catch (e) {
     console.error("[MONGODB] Error de conexión:", e.message);
+    isConnected = false;
     throw e;
   }
 };

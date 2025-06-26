@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
-import { FaCamera } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 
@@ -26,7 +25,6 @@ function UpdateUser() {
   });
   const [previewUrl, setPreviewUrl] = useState(null);
   const [columns, setColumns] = useState([]);
-  const [colIds, setColIds] = useState({});
   const [personalMondayId, setPersonalMondayId] = useState(null);
   const router = useRouter();
 
@@ -63,7 +61,6 @@ function UpdateUser() {
               ids.foto = col.id;
             if (col.type === "color") ids.status = col.id;
           });
-          setColIds(ids);
         }
         // 2. Obtener datos del usuario
         const res = await fetch(`/api/auth/register`, {
@@ -184,7 +181,7 @@ function UpdateUser() {
             ? JSON.parse(col.settings_str).labels
             : {};
           const index = Object.entries(labels).find(
-            ([i, v]) => (typeof v === "object" ? v.name : v) === form.comunidad
+            ([, v]) => (typeof v === "object" ? v.name : v) === form.comunidad
           )?.[0];
           if (index !== undefined)
             column_values[col.id] = { index: parseInt(index) };
@@ -339,7 +336,21 @@ function UpdateUser() {
                 fill
                 className="rounded-full object-cover"
               />
-            ) : null}
+            ) : (
+              <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-gray-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+            )}
           </div>
           <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300">
             <span>Seleccionar foto</span>
