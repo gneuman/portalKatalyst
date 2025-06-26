@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaUser, FaBuilding } from "react-icons/fa";
 import Header from "@/components/Header";
-import ProfileCard from "@/components/ProfileCard";
+import PerfilConLogo from "../../components/PerfilConLogo";
 import ButtonAccount from "@/components/ButtonAccount";
 import { useState } from "react";
 
@@ -70,7 +70,7 @@ export default function DashboardLayout({ children }) {
                 />
               </svg>
             </button>
-            <ProfileCard />
+            <PerfilConLogo />
             <nav className="flex flex-col gap-2 mt-8">
               <Link
                 href="/dashboard"
