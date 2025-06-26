@@ -65,6 +65,7 @@ export default function useUserProfile() {
         }`.trim() ||
         user.name ||
         "";
+      let origenNombreCompleto = "";
       // Siempre consultar Monday.com para obtener 'Nombre Completo'
       if (user.personalMondayId) {
         try {
@@ -85,6 +86,7 @@ export default function useUserProfile() {
               );
               if (nombreCompletoCol?.text) {
                 nombreCompletoMonday = nombreCompletoCol.text;
+                origenNombreCompleto = "columna";
               }
               // Buscar columna por id 'formula_mks9bmyq'
               const formulaCol = item.column_values.find(
@@ -93,6 +95,7 @@ export default function useUserProfile() {
               if (!nombreCompletoMonday && formulaCol?.text) {
                 nombreCompletoFormula = formulaCol.text;
                 nombreCompletoMonday = formulaCol.text;
+                origenNombreCompleto = "formula";
               }
               // Si tampoco, concatenar las columnas de nombre y apellidos
               if (!nombreCompletoMonday) {
@@ -110,6 +113,7 @@ export default function useUserProfile() {
                 apellidoMaternoMonday = apellidoMCol?.text || "";
                 nombreCompletoMonday =
                   `${nombreMonday} ${apellidoPaternoMonday} ${apellidoMaternoMonday}`.trim();
+                origenNombreCompleto = "concatenado";
               }
               // Obtener email y comunidad si existen
               const emailCol = item.column_values.find(
@@ -136,7 +140,9 @@ export default function useUserProfile() {
         console.log("[Monday RAW]", mondayRaw);
       }
       // Mostrar en consola los valores obtenidos
-      console.log("[Monday] Nombre Completo:", nombreCompletoMonday);
+      console.log(
+        `[Monday] Nombre Completo: ${nombreCompletoMonday} (origen: ${origenNombreCompleto})`
+      );
       console.log("[Monday] Nombre:", nombreMonday);
       console.log("[Monday] Apellido Paterno:", apellidoPaternoMonday);
       console.log("[Monday] Apellido Materno:", apellidoMaternoMonday);
@@ -168,6 +174,7 @@ export default function useUserProfile() {
         comunidad: comunidadMonday || user.comunidad,
         nombreCompleto,
         nombreCompletoMonday,
+        origenNombreCompleto,
         email: emailMonday || user.email,
       };
       console.log("[Profile FINAL]", profileObj);
