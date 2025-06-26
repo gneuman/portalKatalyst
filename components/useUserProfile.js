@@ -257,7 +257,33 @@ export default function useUserProfile() {
                   );
                 }
               }
-              setTimeout(() => fetchProfile(), 500);
+
+              // En lugar de hacer refetch, actualizar el estado local directamente
+              console.log(
+                "[SYNC] Actualización exitosa, actualizando estado local"
+              );
+              const updatedUser = {
+                ...user,
+                name: nombreCompletoMonday || user.name,
+                email: emailMonday || user.email,
+              };
+
+              // Actualizar el objeto profile con los datos actualizados
+              nombreCompleto = nombreCompletoMonday || nombreCompleto;
+              const profileObj = {
+                ...updatedUser,
+                name: nombreCompleto,
+                fotoPerfil: fotoPerfilMonday || user.fotoPerfil,
+                comunidad: comunidadMonday || user.comunidad,
+                nombreCompleto,
+                nombreCompletoMonday,
+                origenNombreCompleto,
+                email: emailMonday || user.email,
+              };
+              console.log("[Profile ACTUALIZADO]", profileObj);
+              setProfile(profileObj);
+              setLoading(false);
+              return;
             }
           } catch (syncError) {
             console.warn(
