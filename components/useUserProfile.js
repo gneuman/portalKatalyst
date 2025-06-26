@@ -6,8 +6,10 @@ export default function useUserProfile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [yaActualizado, setYaActualizado] = useState(false);
 
   const fetchProfile = useCallback(async () => {
+    setYaActualizado(false);
     // No hacer nada si la sesión aún está cargando
     if (status === "loading") {
       return;
@@ -151,8 +153,9 @@ export default function useUserProfile() {
       const emailParaActualizar = emailMonday || user.email;
       const debeActualizarEmail = emailMonday && emailMonday !== user.email;
       if (
-        (nombreCompletoMonday && nombreCompletoMonday !== user.name) ||
-        debeActualizarEmail
+        !yaActualizado &&
+        ((nombreCompletoMonday && nombreCompletoMonday !== user.name) ||
+          debeActualizarEmail)
       ) {
         if (!emailParaActualizar) {
           console.warn(
@@ -175,6 +178,8 @@ export default function useUserProfile() {
             });
             const data = await response.json();
             console.log("[MongoDB UPDATE RESPONSE]", data);
+            // Marcar como actualizado para evitar ciclo infinito
+            setYaActualizado(true);
             // Forzar refetch si la actualización fue exitosa
             if (response.ok) {
               setTimeout(() => fetchProfile(), 500);
