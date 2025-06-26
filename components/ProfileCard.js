@@ -3,13 +3,11 @@ import useUserProfile from "./useUserProfile";
 export default function ProfileCard() {
   const { profile, loading, error } = useUserProfile();
 
-  // Mostrar en consola los valores de Monday y MongoDB para comparación
+  // Mostrar en consola solo la información relevante de nombre completo
   if (profile) {
-    console.log("Nombre Completo Monday:", profile.nombreCompletoMonday);
-    console.log("Nombre (MongoDB):", profile.name);
-    console.log("Katalyst ID:", profile.personalMondayId);
-    console.log("Comunidad:", profile.comunidad);
-    console.log("Email:", profile.email);
+    console.log(`Nombre Completo Monday: ${profile.nombreCompletoMonday}`);
+    console.log(`Nombre (MongoDB): ${profile.name}`);
+    console.log(`Origen del nombre completo: ${profile.origenNombreCompleto}`);
   }
 
   // Mostrar siempre el nombre de Monday si existe
