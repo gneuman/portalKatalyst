@@ -1,6 +1,7 @@
 "use client";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   FaUser,
   FaPhone,
@@ -30,6 +31,7 @@ const CAMPOS = [
 
 export default function PerfilPersonal() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const profileCache = useRef(null);
   const [profile, setProfile] = useState(null);
   const [columns, setColumns] = useState([]); // Para status y date
@@ -103,6 +105,12 @@ export default function PerfilPersonal() {
     if (!profileCache.current) fetchProfile();
     else setProfile(profileCache.current);
   }, [session?.user?.email]);
+
+  useEffect(() => {
+    if (searchParams.get("updated") === "1") {
+      toast.success("Perfil actualizado correctamente");
+    }
+  }, [searchParams]);
 
   const handleChange = (title, value) => {
     setForm((f) => ({ ...f, [title]: value }));
@@ -179,6 +187,13 @@ export default function PerfilPersonal() {
         throw new Error("Error al actualizar en Monday.com");
       }
 
+      // Recargar la página y pasar un query param para mostrar el toast después
+      if (typeof window !== "undefined") {
+        window.location.href = window.location.pathname + "?updated=1";
+        return;
+      }
+
+      // (Este toast solo se ejecutará si no se recarga, por fallback)
       toast.success("Perfil actualizado correctamente");
       setEditMode(false);
 

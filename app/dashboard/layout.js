@@ -53,24 +53,13 @@ export default function DashboardLayout({ children }) {
                 sidebarOpen ? "translate-x-0" : "-translate-x-full"
               } lg:translate-x-0
               fixed left-0 top-0 bottom-0 lg:static
+              lg:sticky lg:top-0
             `}
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              className="lg:hidden self-end mb-4 p-2 rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#233746]"
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Cerrar menú"
-            >
-              <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-                <path
-                  d="M6 6l12 12M6 18L18 6"
-                  stroke="#233746"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
+            {/* Logo y ProfileCard sticky arriba */}
             <PerfilConLogo />
+            {/* Menú de navegación sticky debajo */}
             <nav className="flex flex-col gap-2 mt-8">
               <Link
                 href="/dashboard"
@@ -136,7 +125,7 @@ export default function DashboardLayout({ children }) {
           </div>
         </aside>
         {/* Main content expandido, fondo blanco, sin padding extra, ocupa todo el ancho */}
-        <main className="flex-1 flex flex-col min-h-screen w-full bg-white rounded-none shadow-none p-0 sm:p-2">
+        <main className="flex-1 flex flex-col min-h-screen w-full bg-white rounded-none shadow-none p-0 sm:p-8">
           {children}
         </main>
       </div>
