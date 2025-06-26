@@ -70,30 +70,85 @@ export default function ProfileCard() {
   }
 
   return (
-    <div className="w-full max-w-[340px] rounded-xl shadow-lg p-6 bg-[#1C384A] flex flex-col gap-3 mx-auto">
-      <div className="flex gap-4 items-center">
-        <img
-          src={profile.fotoPerfil}
-          alt={nombreMostrar}
-          className="w-[72px] h-[72px] rounded-full object-cover border-4 border-white"
-        />
-        <div className="flex flex-col justify-center">
-          <div className="text-white font-bold text-xl leading-tight mb-1">
-            {nombreMostrar}
-          </div>
-          <div className="text-white text-sm opacity-80 mb-1">
-            {profile.email}
-          </div>
-          <div className="text-xs text-orange-200 font-mono mb-1">
-            Katalyst ID: {profile.personalMondayId || ""}
-          </div>
-        </div>
+    <div
+      style={{
+        width: "100%", // Ocupa todo el ancho del sidebar
+        maxWidth: "100%",
+        background: "#18304B", // Color branding Katalyst
+        borderRadius: "16px",
+        padding: "2rem 1.5rem",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        boxShadow: "0 2px 8px rgba(24,48,75,0.08)",
+        marginBottom: "2rem",
+      }}
+    >
+      <img
+        src={profile.fotoPerfil || "/images/default-avatar.png"}
+        alt="Avatar"
+        style={{
+          width: 90,
+          height: 90,
+          borderRadius: "50%",
+          objectFit: "cover",
+          border: "3px solid #fff",
+          marginBottom: "1rem",
+        }}
+      />
+      <div
+        style={{
+          color: "#fff",
+          fontWeight: 700,
+          fontSize: "1.35rem",
+          textAlign: "center",
+          marginBottom: 4,
+          lineHeight: 1.2,
+        }}
+      >
+        {nombreMostrar}
       </div>
-      <div className="flex gap-2 mt-2">
-        <span className="flex items-center px-3 py-1 text-xs font-semibold rounded bg-orange-400 text-white">
-          {profile.comunidad || "Sin comunidad"}
+      <div
+        style={{
+          color: "#e0e6ed",
+          fontSize: "1rem",
+          textAlign: "center",
+          marginBottom: 2,
+        }}
+      >
+        {profile.email}
+      </div>
+      <div
+        style={{
+          color: "#b6c2d6",
+          fontSize: "0.95rem",
+          textAlign: "center",
+          marginBottom: 8,
+        }}
+      >
+        Katalyst ID:{" "}
+        <span style={{ fontWeight: 600 }}>
+          {profile.personalMondayId || profile._id || ""}
         </span>
       </div>
+      {profile.comunidad && (
+        <div
+          style={{
+            background: "#F7931A",
+            color: "#fff",
+            borderRadius: 8,
+            padding: "0.25rem 1rem",
+            fontWeight: 600,
+            fontSize: "0.95rem",
+            marginTop: 8,
+            marginBottom: 0,
+            textAlign: "center",
+            letterSpacing: 0.5,
+          }}
+        >
+          {profile.comunidad}
+        </div>
+      )}
     </div>
   );
 }
