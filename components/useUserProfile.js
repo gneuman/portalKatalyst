@@ -25,6 +25,12 @@ export default function useUserProfile() {
     setLoading(true);
     setError(null);
 
+    // Resetear la bandera de actualización al inicio de cada fetch
+    yaActualizadoRef.current = false;
+    console.log(
+      "[SYNC] yaActualizadoRef reseteado a false al inicio de fetchProfile"
+    );
+
     try {
       // 1. Obtener usuario de MongoDB
       const res = await fetch(`/api/user/profile?email=${session.user.email}`);
@@ -148,13 +154,27 @@ export default function useUserProfile() {
       console.log("[Monday] Apellido Paterno:", apellidoPaternoMonday);
       console.log("[Monday] Apellido Materno:", apellidoMaternoMonday);
       console.log("[Monday] Email:", emailMonday);
+
+      // Agregar logs detallados para la comparación
+      console.log("Nombre (MongoDB):", user.name);
+      console.log("Origen del nombre completo:", origenNombreCompleto);
+      console.log("Nombre Completo Monday:", nombreCompletoMonday);
+      console.log("Nombre (MongoDB):", user.name);
+      console.log("¿Son diferentes?", nombreCompletoMonday !== user.name);
+      console.log("¿yaActualizadoRef.current?", yaActualizadoRef.current);
+
       // Si el nombre completo de Monday o el email de Monday es diferente al de MongoDB, actualizar ambos en MongoDB
       const emailParaActualizar = emailMonday || user.email;
       const debeActualizarEmail = emailMonday && emailMonday !== user.email;
+      const debeActualizarNombre =
+        nombreCompletoMonday && nombreCompletoMonday !== user.name;
+
+      console.log("¿Debe actualizar email?", debeActualizarEmail);
+      console.log("¿Debe actualizar nombre?", debeActualizarNombre);
+
       if (
         !yaActualizadoRef.current &&
-        ((nombreCompletoMonday && nombreCompletoMonday !== user.name) ||
-          debeActualizarEmail)
+        (debeActualizarNombre || debeActualizarEmail)
       ) {
         if (!emailParaActualizar) {
           console.warn(
@@ -177,8 +197,12 @@ export default function useUserProfile() {
             });
             const data = await response.json();
             console.log("[MongoDB UPDATE RESPONSE]", data);
-            // Marcar como actualizado para evitar ciclo infinito
+            // Marcar como actualizado para evitar ciclo infinito durante esta ejecución
             yaActualizadoRef.current = true;
+            console.log(
+              "[SYNC] Actualización completada, yaActualizadoRef establecido en true"
+            );
+
             // Forzar refetch si la actualización fue exitosa
             if (response.ok) {
               // También actualizar el nombre del item en Monday.com

@@ -78,13 +78,15 @@ export default function ProfileCard() {
           className="w-[72px] h-[72px] rounded-full object-cover border-4 border-white"
         />
         <div className="flex flex-col justify-center">
+          <div className="text-white font-bold text-xl leading-tight mb-1">
+            {nombreMostrar}
+          </div>
+          <div className="text-white text-sm opacity-80 mb-1">
+            {profile.email}
+          </div>
           <div className="text-xs text-orange-200 font-mono mb-1">
             Katalyst ID: {profile.personalMondayId || ""}
           </div>
-          <div className="text-white font-bold text-xl leading-tight">
-            {nombreMostrar}
-          </div>
-          <div className="text-white text-sm opacity-80">{profile.email}</div>
         </div>
       </div>
       <div className="flex gap-2 mt-2">
