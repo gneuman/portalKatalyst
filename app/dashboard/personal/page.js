@@ -229,7 +229,7 @@ export default function PerfilPersonal() {
       <Suspense fallback={null}>
         <PerfilPersonalToast />
       </Suspense>
-      <div className="w-full min-h-[80vh] flex flex-col items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
+      <div className="w-full min-h-[80vh] flex flex-col items-center justify-center bg-white px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8 text-center text-[#233746] flex items-center justify-center gap-4">
           Perfil Personal
         </h1>
@@ -468,6 +468,36 @@ export default function PerfilPersonal() {
                     }
                   }}
                 />
+              </div>
+              <div className="col-span-2 flex gap-2 mt-6 justify-end flex-wrap">
+                {!editMode ? (
+                  <button
+                    type="button"
+                    className="btn btn-primary bg-[#233746] border-[#233746] hover:bg-[#f99d25] hover:border-[#f99d25] text-white w-full sm:w-auto"
+                    onClick={() => setEditMode(true)}
+                  >
+                    Editar Perfil
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-success bg-[#f99d25] border-[#f99d25] text-white w-full sm:w-auto"
+                      onClick={handleSave}
+                      disabled={saving}
+                    >
+                      {saving ? "Guardando..." : "Guardar Cambios"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost w-full sm:w-auto"
+                      onClick={() => setEditMode(false)}
+                      disabled={saving}
+                    >
+                      Cancelar
+                    </button>
+                  </>
+                )}
               </div>
             </form>
           )}

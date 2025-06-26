@@ -16,27 +16,12 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-[#F5F6F7] flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Header sticky */}
-      <div className="sticky top-0 z-40">
-        <Header>
-          <button
-            className="lg:hidden absolute left-4 top-4 z-30 p-2 rounded-md bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-[#233746]"
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Abrir menú"
-          >
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-              <path
-                d="M4 6h16M4 12h16M4 18h16"
-                stroke="#233746"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </Header>
+      <div className="sticky top-0 z-40 bg-white">
+        <Header />
       </div>
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 bg-white">
         {/* Sidebar tipo drawer en móvil, fijo en desktop */}
         <aside
           className={`
@@ -57,9 +42,7 @@ export default function DashboardLayout({ children }) {
             `}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Logo y ProfileCard sticky arriba */}
             <PerfilConLogo />
-            {/* Menú de navegación sticky debajo */}
             <nav className="flex flex-col gap-2 mt-8">
               <Link
                 href="/dashboard"

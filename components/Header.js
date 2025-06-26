@@ -33,21 +33,23 @@ function HeaderContent() {
   const search = searchParams.get("search") || "";
 
   return (
-    <header className="bg-[#F5F6F7] shadow-sm">
+    <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4 gap-4">
-          {/* Logo */}
-          <div className="flex items-center gap-3 min-w-[120px] sm:min-w-[180px]">
-            <div className="bg-[#1C384A] rounded-xl p-3 flex items-center justify-center">
-              <Image
-                src="/images/Katalyst.png"
-                alt="Katalyst Logo"
-                width={220}
-                height={64}
-                className="object-contain"
-              />
+          {/* Logo solo si NO estamos en dashboard */}
+          {!pathname.startsWith("/dashboard") && (
+            <div className="flex items-center gap-3 min-w-[120px] sm:min-w-[180px]">
+              <div className="bg-[#1C384A] rounded-xl p-3 flex items-center justify-center">
+                <Image
+                  src="/images/Katalyst.png"
+                  alt="Katalyst Logo"
+                  width={220}
+                  height={64}
+                  className="object-contain"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Menú hamburguesa para móvil */}
           <button
