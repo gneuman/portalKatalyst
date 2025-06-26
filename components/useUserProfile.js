@@ -52,6 +52,13 @@ export default function useUserProfile() {
       let comunidad = user.comunidad || "";
       let nombreCompletoMonday = null;
       let mondayRaw = null;
+      let nombreMonday = null;
+      let apellidoPaternoMonday = null;
+      let apellidoMaternoMonday = null;
+      let emailMonday = null;
+      let comunidadMonday = null;
+      let fotoPerfilMonday = null;
+      let nombreCompletoFormula = null;
       let nombreCompleto =
         `${user.firstName || ""} ${user.lastName || ""} ${
           user.secondLastName || ""
@@ -61,7 +68,7 @@ export default function useUserProfile() {
       // Siempre consultar Monday.com para obtener 'Nombre Completo'
       if (user.personalMondayId) {
         try {
-          const query = `query { items (ids: [${user.personalMondayId}]) { id name column_values { id text column { title } } } }`;
+          const query = `query { items (ids: [${user.personalMondayId}]) { id name column_values { id text value column { id title id } } } }`;
           const mondayRes = await fetch("/api/monday/item", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -72,13 +79,52 @@ export default function useUserProfile() {
             mondayRaw = mondayData;
             const item = mondayData?.data?.items?.[0];
             if (item && item.column_values) {
+              // Buscar columna 'Nombre Completo' por title
               const nombreCompletoCol = item.column_values.find(
                 (col) => col.column?.title === "Nombre Completo"
               );
               if (nombreCompletoCol?.text) {
                 nombreCompletoMonday = nombreCompletoCol.text;
-                nombreCompleto = nombreCompletoCol.text;
               }
+              // Buscar columna por id 'formula_mks9bmyq'
+              const formulaCol = item.column_values.find(
+                (col) => col.column?.id === "formula_mks9bmyq"
+              );
+              if (!nombreCompletoMonday && formulaCol?.text) {
+                nombreCompletoFormula = formulaCol.text;
+                nombreCompletoMonday = formulaCol.text;
+              }
+              // Si tampoco, concatenar las columnas de nombre y apellidos
+              if (!nombreCompletoMonday) {
+                const nombreCol = item.column_values.find(
+                  (col) => col.column?.title === "Nombre"
+                );
+                const apellidoPCol = item.column_values.find(
+                  (col) => col.column?.title === "Apellido Paterno"
+                );
+                const apellidoMCol = item.column_values.find(
+                  (col) => col.column?.title === "Apellido Materno"
+                );
+                nombreMonday = nombreCol?.text || "";
+                apellidoPaternoMonday = apellidoPCol?.text || "";
+                apellidoMaternoMonday = apellidoMCol?.text || "";
+                nombreCompletoMonday =
+                  `${nombreMonday} ${apellidoPaternoMonday} ${apellidoMaternoMonday}`.trim();
+              }
+              // Obtener email y comunidad si existen
+              const emailCol = item.column_values.find(
+                (col) => col.column?.title?.toLowerCase() === "email"
+              );
+              emailMonday = emailCol?.text || user.email;
+              const comunidadCol = item.column_values.find(
+                (col) => col.column?.title === "Comunidad"
+              );
+              comunidadMonday = comunidadCol?.text || user.comunidad;
+              // Foto de perfil
+              const fotoCol = item.column_values.find((col) =>
+                col.column?.title?.toLowerCase().includes("foto")
+              );
+              fotoPerfilMonday = fotoCol?.text || user.fotoPerfil;
             }
           }
         } catch (mondayError) {
@@ -89,14 +135,40 @@ export default function useUserProfile() {
       if (mondayRaw) {
         console.log("[Monday RAW]", mondayRaw);
       }
+      // Mostrar en consola los valores obtenidos
+      console.log("[Monday] Nombre Completo:", nombreCompletoMonday);
+      console.log("[Monday] Nombre:", nombreMonday);
+      console.log("[Monday] Apellido Paterno:", apellidoPaternoMonday);
+      console.log("[Monday] Apellido Materno:", apellidoMaternoMonday);
+      console.log("[Monday] Email:", emailMonday);
+      // Si el nombre completo de Monday es diferente al de MongoDB, actualizarlo en MongoDB
+      if (nombreCompletoMonday && nombreCompletoMonday !== user.name) {
+        try {
+          await fetch(`/api/user/profile`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: user.email,
+              name: nombreCompletoMonday,
+            }),
+          });
+        } catch (syncError) {
+          console.warn(
+            "Error al sincronizar nombre completo en MongoDB:",
+            syncError
+          );
+        }
+      }
       // Mostrar en consola el objeto profile final
+      nombreCompleto = nombreCompletoMonday || nombreCompleto;
       const profileObj = {
         ...user,
-        name,
-        fotoPerfil,
-        comunidad,
+        name: nombreCompleto,
+        fotoPerfil: fotoPerfilMonday || user.fotoPerfil,
+        comunidad: comunidadMonday || user.comunidad,
         nombreCompleto,
         nombreCompletoMonday,
+        email: emailMonday || user.email,
       };
       console.log("[Profile FINAL]", profileObj);
       setProfile(profileObj);
