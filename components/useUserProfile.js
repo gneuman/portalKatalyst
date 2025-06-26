@@ -147,29 +147,44 @@ export default function useUserProfile() {
       console.log("[Monday] Apellido Paterno:", apellidoPaternoMonday);
       console.log("[Monday] Apellido Materno:", apellidoMaternoMonday);
       console.log("[Monday] Email:", emailMonday);
-      // Si el nombre completo de Monday es diferente al de MongoDB, actualizarlo en MongoDB
-      if (nombreCompletoMonday && nombreCompletoMonday !== user.name) {
-        try {
-          const response = await fetch(`/api/user/profile`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: user.email,
-              name: nombreCompletoMonday,
-            }),
-          });
-          const data = await response.json();
-          console.log("[MongoDB UPDATE RESPONSE]", data);
-          // Forzar refetch si la actualización fue exitosa
-          if (response.ok) {
-            // Recargar el perfil para obtener el valor actualizado
-            setTimeout(() => fetchProfile(), 500);
-          }
-        } catch (syncError) {
+      // Si el nombre completo de Monday o el email de Monday es diferente al de MongoDB, actualizar ambos en MongoDB
+      const emailParaActualizar = emailMonday || user.email;
+      const debeActualizarEmail = emailMonday && emailMonday !== user.email;
+      if (
+        (nombreCompletoMonday && nombreCompletoMonday !== user.name) ||
+        debeActualizarEmail
+      ) {
+        if (!emailParaActualizar) {
           console.warn(
-            "Error al sincronizar nombre completo en MongoDB:",
-            syncError
+            "[MongoDB UPDATE] Email vacío o undefined, no se puede actualizar."
           );
+        } else {
+          try {
+            const payload = {
+              email: emailParaActualizar,
+              name: nombreCompletoMonday || user.name,
+            };
+            if (debeActualizarEmail) {
+              payload.nuevoEmail = emailMonday;
+            }
+            console.log("[MongoDB UPDATE PAYLOAD]", payload);
+            const response = await fetch(`/api/user/profile`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log("[MongoDB UPDATE RESPONSE]", data);
+            // Forzar refetch si la actualización fue exitosa
+            if (response.ok) {
+              setTimeout(() => fetchProfile(), 500);
+            }
+          } catch (syncError) {
+            console.warn(
+              "Error al sincronizar nombre completo/email en MongoDB:",
+              syncError
+            );
+          }
         }
       }
       // Mostrar en consola el objeto profile final
