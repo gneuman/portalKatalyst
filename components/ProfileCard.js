@@ -43,7 +43,7 @@ export default function ProfileCard() {
     <div className="w-full max-w-[240px] h-[220px] rounded-lg shadow-lg p-4 bg-gradient-to-br from-[#1C384A] via-[#54B8B4aa] to-[#1C384A] flex flex-col items-center justify-center mx-auto">
       <img
         src={profile.fotoPerfil}
-        alt={profile.name}
+        alt={profile.nombreCompleto}
         className="w-[56px] h-[56px] rounded-full object-cover border-4 border-white mb-2"
       />
       <div className="text-xs text-orange-200 font-mono mb-1">
@@ -53,7 +53,7 @@ export default function ProfileCard() {
         {profile.email}
       </div>
       <div className="text-white font-bold text-lg text-center break-words w-full mb-1">
-        {profile.name}
+        {profile.nombreCompleto}
       </div>
       <div className="flex justify-center w-full mt-1">
         <span className="flex items-center px-3 py-1 text-xs font-semibold rounded bg-orange-400 text-white">

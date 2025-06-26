@@ -78,6 +78,10 @@ export default function useUserProfile() {
         name,
         fotoPerfil,
         comunidad,
+        nombreCompleto:
+          `${user.firstName || ""} ${user.lastName || ""} ${
+            user.secondLastName || ""
+          }`.trim() || name,
       });
     } catch (e) {
       setError(e.message || "Error al obtener perfil");
