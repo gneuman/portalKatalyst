@@ -12,12 +12,8 @@ export default function ProfileCard() {
     console.log("Email:", profile.email);
   }
 
-  // Determinar el nombre a mostrar: primero el de Monday, luego el de MongoDB
-  const nombreMostrar =
-    profile?.nombreCompletoMonday ||
-    profile?.nombreCompleto ||
-    profile?.name ||
-    "";
+  // Mostrar siempre el nombre de Monday si existe
+  const nombreMostrar = profile?.nombreCompletoMonday || "";
 
   if (loading) {
     return (
