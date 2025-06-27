@@ -44,8 +44,16 @@ export default function UserProfileForm({
         let ids = {};
         if (board?.columns) {
           setColumns(board.columns);
+          console.log(
+            "[UserProfileForm] Todas las columnas del board:",
+            board.columns
+          );
+
           // Mapea los títulos a IDs
           board.columns.forEach((col) => {
+            console.log(
+              `[UserProfileForm] Procesando columna: ${col.title} (ID: ${col.id}, Tipo: ${col.type})`
+            );
             if (col.title === "Nombre") ids.nombre = col.id;
             if (col.title === "Apellido Paterno") ids.apellidoP = col.id;
             if (col.title === "Apellido Materno") ids.apellidoM = col.id;
@@ -62,6 +70,8 @@ export default function UserProfileForm({
               ids.foto = col.id;
             if (col.type === "color") ids.status = col.id;
           });
+
+          console.log("[UserProfileForm] IDs mapeados:", ids);
         }
 
         // 2. Obtener datos del usuario
@@ -78,6 +88,22 @@ export default function UserProfileForm({
           console.log("[UserProfileForm] Column Values recibidos:", cv);
           console.log("[UserProfileForm] IDs mapeados:", ids);
 
+          // Obtener la URL de la foto
+          let fotoUrl = "";
+          if (cv[ids.foto]) {
+            fotoUrl = cv[ids.foto];
+            console.log(
+              "[UserProfileForm] Foto encontrada en Monday.com:",
+              fotoUrl
+            );
+          } else if (data.fotoPerfil) {
+            fotoUrl = data.fotoPerfil;
+            console.log(
+              "[UserProfileForm] Foto encontrada en MongoDB:",
+              fotoUrl
+            );
+          }
+
           setForm({
             email: data.email,
             nombre: cv[ids.nombre] || data.firstName || "",
@@ -89,9 +115,10 @@ export default function UserProfileForm({
             genero: cv[ids.genero] || data.gender || "",
             comunidad:
               cv[ids.comunidad] || cv[ids.status] || data.community || "",
-            fotoPerfil: cv[ids.foto] || data.fotoPerfil || "",
+            fotoPerfil: fotoUrl,
           });
-          setPreviewUrl(cv[ids.foto] || data.fotoPerfil || null);
+          setPreviewUrl(fotoUrl || null);
+          console.log("[UserProfileForm] Preview URL seteada:", fotoUrl);
         } else if (data) {
           // Fallback si no hay columnValues
           setForm({
@@ -106,6 +133,10 @@ export default function UserProfileForm({
             fotoPerfil: data.fotoPerfil || "",
           });
           setPreviewUrl(data.fotoPerfil || null);
+          console.log(
+            "[UserProfileForm] Preview URL seteada (fallback):",
+            data.fotoPerfil
+          );
         }
 
         if (data && data.personalMondayId) {
@@ -272,6 +303,16 @@ export default function UserProfileForm({
       });
 
       console.log("[UserProfileForm] Column_values final:", column_values);
+      console.log(
+        "[UserProfileForm] Columnas que se van a modificar en Monday.com:"
+      );
+      Object.entries(column_values).forEach(([colId, value]) => {
+        const col = columns.find((c) => c.id === colId);
+        console.log(
+          `  - ${col?.title || "Columna desconocida"} (ID: ${colId}):`,
+          value
+        );
+      });
 
       // Usar el MondayID ya cargado
       let board_id = process.env.NEXT_PUBLIC_MONDAY_BOARD_ID;
@@ -438,6 +479,19 @@ export default function UserProfileForm({
                   alt="Preview"
                   fill
                   className="rounded-full object-cover"
+                  onError={(e) => {
+                    console.error(
+                      "[UserProfileForm] Error cargando imagen:",
+                      previewUrl
+                    );
+                    e.target.style.display = "none";
+                  }}
+                  onLoad={() => {
+                    console.log(
+                      "[UserProfileForm] Imagen cargada exitosamente:",
+                      previewUrl
+                    );
+                  }}
                 />
               ) : (
                 <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
