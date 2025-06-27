@@ -509,6 +509,9 @@ export default function EmpresasDashboard() {
         {empresas.length > 0 && (
           <div className="grid grid-cols-1 gap-6">
             {empresas.map((empresa) => {
+              console.log("Procesando empresa:", empresa.id, empresa.name);
+              console.log("empresa.column_values:", empresa.column_values);
+
               const statusInfo = getStatusInfo(empresa);
               const contactos = empresa.column_values?.find(
                 (col) => col.column?.id === "board_relation_mkrcrrm"
@@ -516,23 +519,30 @@ export default function EmpresasDashboard() {
               const numContactos = contactos?.display_value
                 ? contactos.display_value.split(", ").length
                 : 0;
-              // Filtrar campos a mostrar (ni como etiqueta ni como valor)
-              const camposMostrar = Array.isArray(empresa.column_values)
-                ? empresa.column_values.filter(
-                    (col) =>
-                      !["subitems", "person", "status"].includes(
-                        col.column?.type?.toLowerCase() || ""
-                      ) &&
-                      ![
-                        "Subitems",
-                        "Person",
-                        "Status",
-                        "Contactos - Digitalización:",
-                        "Contactos - Digitalización",
-                      ].includes(col.column?.title?.trim() || "")
-                  )
-                : [];
-              console.log("camposMostrar:", camposMostrar, empresa);
+
+              // Función para obtener campos a mostrar de forma segura
+              const getCamposMostrar = () => {
+                if (!Array.isArray(empresa.column_values)) {
+                  console.log("column_values no es un array, retornando []");
+                  return [];
+                }
+                return empresa.column_values.filter(
+                  (col) =>
+                    !["subitems", "person", "status"].includes(
+                      col.column?.type?.toLowerCase() || ""
+                    ) &&
+                    ![
+                      "Subitems",
+                      "Person",
+                      "Status",
+                      "Contactos - Digitalización:",
+                      "Contactos - Digitalización",
+                    ].includes(col.column?.title?.trim() || "")
+                );
+              };
+
+              const camposMostrar = getCamposMostrar();
+              console.log("camposMostrar definido:", camposMostrar);
               const isEditing = editId === empresa.id;
               return (
                 <div
@@ -566,11 +576,17 @@ export default function EmpresasDashboard() {
                   </div>
                   {isEditing ? (
                     <>
-                      {camposMostrar.length === 0 && (
-                        <div className="text-gray-400 text-sm italic mb-2">
-                          No hay campos editables para esta empresa.
-                        </div>
-                      )}
+                      {(() => {
+                        console.log(
+                          "En modo edición, camposMostrar:",
+                          camposMostrar
+                        );
+                        return camposMostrar.length === 0 ? (
+                          <div className="text-gray-400 text-sm italic mb-2">
+                            No hay campos editables para esta empresa.
+                          </div>
+                        ) : null;
+                      })()}
                       {camposMostrar.map((col) => (
                         <div
                           key={col.id}
@@ -604,11 +620,17 @@ export default function EmpresasDashboard() {
                     </>
                   ) : (
                     <>
-                      {camposMostrar.length === 0 && (
-                        <div className="text-gray-400 text-sm italic mb-2">
-                          No hay información relevante para mostrar.
-                        </div>
-                      )}
+                      {(() => {
+                        console.log(
+                          "En modo visualización, camposMostrar:",
+                          camposMostrar
+                        );
+                        return camposMostrar.length === 0 ? (
+                          <div className="text-gray-400 text-sm italic mb-2">
+                            No hay información relevante para mostrar.
+                          </div>
+                        ) : null;
+                      })()}
                       {camposMostrar.map((col) => (
                         <div
                           key={col.id}
