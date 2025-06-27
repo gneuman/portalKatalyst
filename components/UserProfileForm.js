@@ -451,253 +451,255 @@ export default function UserProfileForm({
     }
   };
 
+  if (!email) return <div>Falta el email</div>;
+  if (loading) return <div>Cargando...</div>;
+
   // Encontrar columnas para comunidad y género
   const colComunidad = columns.find((c) => c.title === "Comunidad");
   const colGenero = columns.find((c) => c.title === "Género");
 
-  if (!email) return <div>Falta el email</div>;
-  if (loading) return <div>Cargando...</div>;
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {mode === "personal" ? "Mi Perfil Personal" : "Actualiza tus datos"}
-          </h2>
-          {personalMondayId && (
-            <div className="text-center text-xs text-gray-400 mt-1">
-              <span className="font-mono">MondayID: {personalMondayId}</span>
-            </div>
-          )}
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {mode === "personal"
-              ? "Gestiona tu información personal"
-              : "Por favor, revisa y actualiza tu información"}
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="w-full">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Correo electrónico
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              value={form.email}
-              disabled
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500"
-            />
+    <div className="w-full">
+      <div className="bg-white rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {mode === "personal" ? "Mi Perfil Personal" : "Actualiza tus datos"}
+            </h2>
+            {personalMondayId && (
+              <div className="text-xs text-gray-400 mb-2">
+                <span className="font-mono">MondayID: {personalMondayId}</span>
+              </div>
+            )}
+            <p className="text-sm text-gray-600">
+              {mode === "personal"
+                ? "Gestiona tu información personal"
+                : "Por favor, revisa y actualiza tu información"}
+            </p>
           </div>
 
-          <div className="flex flex-col items-center">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Foto de perfil
-            </label>
-            <div className="relative w-32 h-32 mb-4">
-              {previewUrl && previewUrl !== "" ? (
-                <div className="relative w-full h-full">
-                  <Image
-                    src={previewUrl}
-                    alt="Preview"
-                    fill
-                    className="rounded-full object-cover"
-                    onError={(e) => {
-                      console.error(
-                        "[UserProfileForm] Error cargando imagen:",
-                        previewUrl
-                      );
-                      // Ocultar la imagen y mostrar placeholder
-                      e.target.style.display = "none";
-                      const parent = e.target.parentElement;
-                      if (parent) {
-                        parent.innerHTML = `
-                          <div class="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
-                            <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                            </svg>
-                          </div>
-                        `;
-                      }
-                    }}
-                    onLoad={() => {
-                      console.log(
-                        "[UserProfileForm] Imagen cargada exitosamente:",
-                        previewUrl
-                      );
-                    }}
-                    unoptimized={true} // Evitar optimización de Next.js para URLs externas
-                  />
-                </div>
-              ) : (
-                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
-                  <svg
-                    className="w-8 h-8 text-gray-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
+          <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
+            <div className="w-full">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Correo electrónico
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={form.email}
+                disabled
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500"
+              />
+            </div>
+
+            <div className="flex flex-col items-center">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Foto de perfil
+              </label>
+              <div className="relative w-32 h-32 mb-4">
+                {previewUrl && previewUrl !== "" ? (
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={previewUrl}
+                      alt="Preview"
+                      fill
+                      className="rounded-full object-cover"
+                      onError={(e) => {
+                        console.error(
+                          "[UserProfileForm] Error cargando imagen:",
+                          previewUrl
+                        );
+                        // Ocultar la imagen y mostrar placeholder
+                        e.target.style.display = "none";
+                        const parent = e.target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `
+                            <div class="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+                              <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                              </svg>
+                            </div>
+                          `;
+                        }
+                      }}
+                      onLoad={() => {
+                        console.log(
+                          "[UserProfileForm] Imagen cargada exitosamente:",
+                          previewUrl
+                        );
+                      }}
+                      unoptimized={true} // Evitar optimización de Next.js para URLs externas
                     />
-                  </svg>
-                </div>
-              )}
-            </div>
-            <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300">
-              <span>Seleccionar foto</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Nombre
+                  </div>
+                ) : (
+                  <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+                    <svg
+                      className="w-8 h-8 text-gray-400"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300">
+                <span>Seleccionar foto</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
               </label>
-              <input
-                type="text"
-                value={form.nombre}
-                onChange={(e) => handleChange("nombre", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Apellido Paterno
-              </label>
-              <input
-                type="text"
-                value={form.apellidoPaterno}
-                onChange={(e) =>
-                  handleChange("apellidoPaterno", e.target.value)
-                }
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Apellido Materno
-              </label>
-              <input
-                type="text"
-                value={form.apellidoMaterno}
-                onChange={(e) =>
-                  handleChange("apellidoMaterno", e.target.value)
-                }
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  value={form.nombre}
+                  onChange={(e) => handleChange("nombre", e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Apellido Paterno
+                </label>
+                <input
+                  type="text"
+                  value={form.apellidoPaterno}
+                  onChange={(e) =>
+                    handleChange("apellidoPaterno", e.target.value)
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Apellido Materno
+                </label>
+                <input
+                  type="text"
+                  value={form.apellidoMaterno}
+                  onChange={(e) =>
+                    handleChange("apellidoMaterno", e.target.value)
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Teléfono
+                </label>
+                <input
+                  type="tel"
+                  value={form.telefono}
+                  onChange={(e) => handleChange("telefono", e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Fecha de Nacimiento
+                </label>
+                <input
+                  type="date"
+                  value={form.fechaNacimiento}
+                  onChange={(e) =>
+                    handleChange("fechaNacimiento", e.target.value)
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Género
+                </label>
+                <select
+                  value={form.genero}
+                  onChange={(e) => handleChange("genero", e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">Selecciona una opción</option>
+                  {colGenero &&
+                    colGenero.settings_str &&
+                    Object.values(
+                      JSON.parse(colGenero.settings_str).labels || {}
+                    ).map((label) => {
+                      const labelStr =
+                        typeof label === "object" ? label.name : label;
+                      return (
+                        <option key={labelStr} value={labelStr}>
+                          {labelStr}
+                        </option>
+                      );
+                    })}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Comunidad
+                </label>
+                <select
+                  value={form.comunidad}
+                  onChange={(e) => handleChange("comunidad", e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">Selecciona una opción</option>
+                  {colComunidad &&
+                    colComunidad.settings_str &&
+                    Object.values(
+                      JSON.parse(colComunidad.settings_str).labels || {}
+                    ).map((label) => {
+                      const labelStr =
+                        typeof label === "object" ? label.name : label;
+                      return (
+                        <option key={labelStr} value={labelStr}>
+                          {labelStr}
+                        </option>
+                      );
+                    })}
+                </select>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Teléfono
-              </label>
-              <input
-                type="tel"
-                value={form.telefono}
-                onChange={(e) => handleChange("telefono", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 rounded p-3">
+                {error}
+              </div>
+            )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Fecha de Nacimiento
-              </label>
-              <input
-                type="date"
-                value={form.fechaNacimiento}
-                onChange={(e) =>
-                  handleChange("fechaNacimiento", e.target.value)
-                }
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Género
-              </label>
-              <select
-                value={form.genero}
-                onChange={(e) => handleChange("genero", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            <div className="flex justify-center">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full md:w-auto px-6 py-3 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
-                <option value="">Selecciona una opción</option>
-                {colGenero &&
-                  colGenero.settings_str &&
-                  Object.values(
-                    JSON.parse(colGenero.settings_str).labels || {}
-                  ).map((label) => {
-                    const labelStr =
-                      typeof label === "object" ? label.name : label;
-                    return (
-                      <option key={labelStr} value={labelStr}>
-                        {labelStr}
-                      </option>
-                    );
-                  })}
-              </select>
+                {loading ? "Guardando..." : "Guardar cambios"}
+              </button>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Comunidad
-              </label>
-              <select
-                value={form.comunidad}
-                onChange={(e) => handleChange("comunidad", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">Selecciona una opción</option>
-                {colComunidad &&
-                  colComunidad.settings_str &&
-                  Object.values(
-                    JSON.parse(colComunidad.settings_str).labels || {}
-                  ).map((label) => {
-                    const labelStr =
-                      typeof label === "object" ? label.name : label;
-                    return (
-                      <option key={labelStr} value={labelStr}>
-                        {labelStr}
-                      </option>
-                    );
-                  })}
-              </select>
-            </div>
-          </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 rounded p-3">
-              {error}
-            </div>
-          )}
-
-          <div className="flex justify-center">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full md:w-auto px-6 py-3 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? "Guardando..." : "Guardar cambios"}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

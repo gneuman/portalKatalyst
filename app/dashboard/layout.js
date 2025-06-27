@@ -30,8 +30,9 @@ export default function DashboardLayout({ children }) {
           fixed left-0 top-0 bottom-0 z-50 transition-transform duration-200 ease-in-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0 lg:static lg:block
+          shadow-lg lg:shadow-none
         `}
-        style={{ minHeight: "100vh", borderRight: "1px solid #eee" }}
+        style={{ minHeight: "100vh" }}
       >
         <button
           className="lg:hidden self-end mb-2 p-2 rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#233746]"
@@ -108,7 +109,7 @@ export default function DashboardLayout({ children }) {
       {/* Contenedor derecho: header sticky + children */}
       <div className="flex-1 flex flex-col lg:ml-60 min-h-screen bg-white">
         {/* Header sticky dentro de la columna derecha */}
-        <div className="sticky top-0 z-30 bg-white border-b border-gray-200 flex items-center h-14 px-4 sm:px-6 pb-[10px]">
+        <div className="sticky top-0 z-30 bg-white shadow-sm flex items-center h-14 px-4 sm:px-6">
           {/* Botón hamburguesa solo en móvil */}
           <button
             className="lg:hidden mr-3 p-2 rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#233746]"
@@ -129,8 +130,8 @@ export default function DashboardLayout({ children }) {
           </div>
         </div>
         {/* Contenido principal plano y alineado */}
-        <main className="flex-1 flex flex-col w-full bg-white p-0">
-          {children}
+        <main className="flex-1 w-full bg-white">
+          <div className="p-4 sm:p-6">{children}</div>
         </main>
       </div>
     </div>

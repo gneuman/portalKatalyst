@@ -553,11 +553,6 @@ export default function EmpresasDashboard() {
             <p className="mt-1 text-sm text-gray-500 mb-2">
               Comienza agregando tu primera empresa.
             </p>
-            <Link href="/dashboard/empresas/nueva">
-              <button className="btn btn-primary btn-sm">
-                <FaPlus className="inline mr-2" /> Agregar mi primera empresa
-              </button>
-            </Link>
           </div>
         )}
 
