@@ -505,21 +505,55 @@ export default function EmpresasDashboard() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-10">
-      <div className="max-w-2xl mx-auto py-10">
-        <h1 className="text-3xl font-bold">Empresas</h1>
+    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">
+          Empresas
+        </h1>
         <Link href="/dashboard/empresas/nueva">
           <button className="btn btn-primary">
             <FaPlus className="inline mr-2" /> Agregar Empresa
           </button>
         </Link>
       </div>
-      <div className="bg-white rounded shadow p-6 mb-6">
-        {loading && <p className="text-center">Cargando...</p>}
-        {error && <p className="text-red-600 text-center">{error}</p>}
+
+      <div className="bg-white rounded-lg shadow">
+        {loading && (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Cargando empresas...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="p-6">
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <FaTimes className="h-5 w-5 text-red-400" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Error al cargar empresas
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <pre className="whitespace-pre-wrap">{error}</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {!loading && empresas.length === 0 && !error && (
-          <div className="text-center py-8">
-            <p className="text-gray-500 mb-4">No tienes empresas asociadas.</p>
+          <div className="p-8 text-center">
+            <FaBuilding className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              No tienes empresas
+            </h3>
+            <p className="mt-1 text-sm text-gray-500 mb-4">
+              Comienza agregando tu primera empresa.
+            </p>
             <Link href="/dashboard/empresas/nueva">
               <button className="btn btn-primary">
                 <FaPlus className="inline mr-2" /> Agregar mi primera empresa
@@ -527,153 +561,330 @@ export default function EmpresasDashboard() {
             </Link>
           </div>
         )}
+
         {empresas.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {empresas.map((empresa) => {
-              const statusInfo = getStatusInfo(empresa);
-              const contactos = empresa.column_values?.find(
-                (col) => col.column?.title === "Contactos - Digitalización"
-              );
-              const numContactos = contactos?.display_value
-                ? contactos.display_value.split(", ").length
-                : 0;
+          <>
+            {/* Vista de tabla para desktop */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Empresa
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Contactos
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Información
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {empresas.map((empresa) => {
+                    const statusInfo = getStatusInfo(empresa);
+                    const contactos = empresa.column_values?.find(
+                      (col) =>
+                        col.column?.title === "Contactos - Digitalización"
+                    );
+                    const numContactos = contactos?.display_value
+                      ? contactos.display_value.split(", ").length
+                      : 0;
+                    const camposMostrar = getCamposMostrar(empresa);
+                    const isEditing = editId === empresa.id;
 
-              const camposMostrar = getCamposMostrar(empresa);
-              console.log("camposMostrar definido:", camposMostrar);
-              const isEditing = editId === empresa.id;
+                    return (
+                      <tr key={empresa.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10">
+                              <FaBuilding className="h-10 w-10 text-yellow-600" />
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {empresa.name}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                ID: {empresa.id}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                            style={{
+                              backgroundColor: `${statusInfo.color}20`,
+                              color: statusInfo.color,
+                            }}
+                          >
+                            {statusInfo.label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex items-center">
+                            <FaUsers className="text-blue-600 mr-2" />
+                            {numContactos} contacto
+                            {numContactos === 1 ? "" : "s"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">
+                            {isEditing ? (
+                              <div className="space-y-2">
+                                {camposMostrar.length === 0 ? (
+                                  <span className="text-gray-400 italic">
+                                    No hay campos editables
+                                  </span>
+                                ) : (
+                                  camposMostrar.map((col) => (
+                                    <div
+                                      key={col.id}
+                                      className="flex items-center space-x-2"
+                                    >
+                                      <span className="font-medium text-gray-700 min-w-[120px]">
+                                        {col.column?.title}:
+                                      </span>
+                                      <div className="flex-1">
+                                        {renderField(col, form[col.id], true)}
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            ) : (
+                              <div className="space-y-1">
+                                {camposMostrar.length === 0 ? (
+                                  <span className="text-gray-400 italic">
+                                    Sin información adicional
+                                  </span>
+                                ) : (
+                                  camposMostrar.slice(0, 3).map((col) => (
+                                    <div
+                                      key={col.id}
+                                      className="flex items-center space-x-2"
+                                    >
+                                      <span className="font-medium text-gray-700 min-w-[120px]">
+                                        {col.column?.title}:
+                                      </span>
+                                      <span className="text-gray-900">
+                                        {col.text || col.value || "-"}
+                                      </span>
+                                    </div>
+                                  ))
+                                )}
+                                {camposMostrar.length > 3 && (
+                                  <button
+                                    onClick={() => {
+                                      setEmpresaDetalle(empresa);
+                                      setShowInfoModal(true);
+                                    }}
+                                    className="text-blue-600 hover:text-blue-800 text-sm"
+                                  >
+                                    Ver {camposMostrar.length - 3} campos más...
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          {isEditing ? (
+                            <div className="flex space-x-2">
+                              <button
+                                className="btn btn-sm btn-success"
+                                onClick={() => handleSave(empresa)}
+                                disabled={saving}
+                              >
+                                <FaCheck className="inline mr-1" /> Guardar
+                              </button>
+                              <button
+                                className="btn btn-sm btn-ghost"
+                                onClick={() => setEditId(null)}
+                                disabled={saving}
+                              >
+                                <FaTimes className="inline mr-1" /> Cancelar
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex space-x-2">
+                              <button
+                                className="btn btn-sm btn-outline"
+                                onClick={() => {
+                                  setEmpresaDetalle(empresa);
+                                  setShowInfoModal(true);
+                                }}
+                              >
+                                Ver info
+                              </button>
+                              <button
+                                className="btn btn-sm btn-primary"
+                                onClick={() => handleEdit(empresa)}
+                              >
+                                <FaEdit className="inline mr-1" /> Editar
+                              </button>
+                              <button
+                                className="btn btn-sm btn-primary"
+                                onClick={() => handleInviteContact(empresa)}
+                              >
+                                <FaUserPlus className="inline mr-1" /> Invitar
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-              return (
-                <div
-                  key={empresa.id}
-                  className="border rounded-xl shadow-lg p-6 bg-white flex flex-col gap-3 hover:shadow-2xl transition-shadow focus-within:ring-2 focus-within:ring-[#233746]"
-                  tabIndex={0}
-                  aria-label={`Tarjeta de empresa ${empresa.name}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-lg flex items-center gap-2">
-                      <FaBuilding className="text-yellow-600" />
-                      {empresa.name}
-                    </span>
-                    <span
-                      className="inline-block px-3 py-1 rounded-full text-xs font-bold"
-                      style={{
-                        backgroundColor: `${statusInfo.color}20`,
-                        color: statusInfo.color,
-                      }}
-                      title={statusInfo.label}
+            {/* Vista de tarjetas para móvil */}
+            <div className="lg:hidden">
+              <div className="grid grid-cols-1 gap-4 p-4">
+                {empresas.map((empresa) => {
+                  const statusInfo = getStatusInfo(empresa);
+                  const contactos = empresa.column_values?.find(
+                    (col) => col.column?.title === "Contactos - Digitalización"
+                  );
+                  const numContactos = contactos?.display_value
+                    ? contactos.display_value.split(", ").length
+                    : 0;
+                  const camposMostrar = getCamposMostrar(empresa);
+                  const isEditing = editId === empresa.id;
+
+                  return (
+                    <div
+                      key={empresa.id}
+                      className="border rounded-xl shadow-lg p-4 bg-white flex flex-col gap-3 hover:shadow-2xl transition-shadow"
                     >
-                      {statusInfo.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
-                    <FaIdBadge /> ID: {empresa.id}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm mb-2">
-                    <FaUsers className="text-blue-600" /> {numContactos}{" "}
-                    contacto{numContactos === 1 ? "" : "s"}
-                  </div>
-                  {isEditing ? (
-                    <>
-                      {camposMostrar.length === 0 ? (
-                        <div className="text-gray-400 text-sm italic mb-2">
-                          No hay campos editables para esta empresa.
-                        </div>
-                      ) : (
-                        camposMostrar.map((col) => (
-                          <div
-                            key={col.id}
-                            className="flex justify-between text-sm mb-2"
-                          >
-                            <span className="font-medium flex items-center gap-2">
-                              {ICONOS_TIPOS[col.column?.type] || (
-                                <FaBuilding className="text-gray-600" />
-                              )}
-                              {col.column?.title}:
-                            </span>
-                            {renderField(col, form[col.id], true)}
-                          </div>
-                        ))
-                      )}
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          className="btn btn-success"
-                          onClick={() => handleSave(empresa)}
-                          disabled={saving}
-                        >
-                          <FaCheck className="inline mr-1" /> Guardar
-                        </button>
-                        <button
-                          className="btn btn-ghost"
-                          onClick={() => setEditId(null)}
-                          disabled={saving}
-                        >
-                          <FaTimes className="inline mr-1" /> Cancelar
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {camposMostrar.length === 0 ? (
-                        <div className="text-gray-400 text-sm italic mb-2">
-                          No hay información relevante para mostrar.
-                        </div>
-                      ) : (
-                        camposMostrar.map((col) => (
-                          <div
-                            key={col.id}
-                            className="flex justify-between text-sm mb-2 border-b pb-1 last:border-b-0 last:pb-0"
-                          >
-                            <span className="font-medium flex items-center gap-2">
-                              {ICONOS_TIPOS[col.column?.type] || (
-                                <FaBuilding className="text-gray-600" />
-                              )}
-                              {col.column?.title}:
-                            </span>
-                            <span>
-                              {col.text || col.value || (
-                                <span className="text-gray-300">-</span>
-                              )}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                      <div className="flex gap-2 mt-2 flex-wrap">
-                        <button
-                          className="btn btn-sm btn-outline min-w-[90px]"
-                          onClick={() => {
-                            setEmpresaDetalle(empresa);
-                            setShowInfoModal(true);
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-lg flex items-center gap-2">
+                          <FaBuilding className="text-yellow-600" />
+                          {empresa.name}
+                        </span>
+                        <span
+                          className="inline-block px-3 py-1 rounded-full text-xs font-bold"
+                          style={{
+                            backgroundColor: `${statusInfo.color}20`,
+                            color: statusInfo.color,
                           }}
-                          aria-label="Ver información de la empresa"
                         >
-                          Ver info
-                        </button>
-                        <button
-                          className="btn btn-sm btn-primary min-w-[90px]"
-                          onClick={() => handleEdit(empresa)}
-                          aria-label="Editar empresa"
-                        >
-                          <FaEdit className="inline mr-1" /> Editar
-                        </button>
-                        <button
-                          className="btn btn-sm btn-primary min-w-[90px]"
-                          onClick={() => handleInviteContact(empresa)}
-                          aria-label="Invitar contacto a empresa"
-                        >
-                          <FaUserPlus className="inline mr-1" /> Invitar
-                        </button>
+                          {statusInfo.label}
+                        </span>
                       </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-100 text-red-800 p-2 rounded mb-4 text-xs">
-            <pre>{error}</pre>
-          </div>
+
+                      <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+                        <FaIdBadge /> ID: {empresa.id}
+                      </div>
+
+                      <div className="flex items-center gap-2 text-sm mb-2">
+                        <FaUsers className="text-blue-600" /> {numContactos}{" "}
+                        contacto{numContactos === 1 ? "" : "s"}
+                      </div>
+
+                      {isEditing ? (
+                        <>
+                          {camposMostrar.length === 0 ? (
+                            <div className="text-gray-400 text-sm italic mb-2">
+                              No hay campos editables para esta empresa.
+                            </div>
+                          ) : (
+                            camposMostrar.map((col) => (
+                              <div
+                                key={col.id}
+                                className="flex justify-between text-sm mb-2"
+                              >
+                                <span className="font-medium flex items-center gap-2">
+                                  {ICONOS_TIPOS[col.column?.type] || (
+                                    <FaBuilding className="text-gray-600" />
+                                  )}
+                                  {col.column?.title}:
+                                </span>
+                                {renderField(col, form[col.id], true)}
+                              </div>
+                            ))
+                          )}
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              className="btn btn-success"
+                              onClick={() => handleSave(empresa)}
+                              disabled={saving}
+                            >
+                              <FaCheck className="inline mr-1" /> Guardar
+                            </button>
+                            <button
+                              className="btn btn-ghost"
+                              onClick={() => setEditId(null)}
+                              disabled={saving}
+                            >
+                              <FaTimes className="inline mr-1" /> Cancelar
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {camposMostrar.length === 0 ? (
+                            <div className="text-gray-400 text-sm italic mb-2">
+                              No hay información relevante para mostrar.
+                            </div>
+                          ) : (
+                            camposMostrar.map((col) => (
+                              <div
+                                key={col.id}
+                                className="flex justify-between text-sm mb-2 border-b pb-1 last:border-b-0 last:pb-0"
+                              >
+                                <span className="font-medium flex items-center gap-2">
+                                  {ICONOS_TIPOS[col.column?.type] || (
+                                    <FaBuilding className="text-gray-600" />
+                                  )}
+                                  {col.column?.title}:
+                                </span>
+                                <span>
+                                  {col.text || col.value || (
+                                    <span className="text-gray-300">-</span>
+                                  )}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                          <div className="flex gap-2 mt-2 flex-wrap">
+                            <button
+                              className="btn btn-sm btn-outline min-w-[90px]"
+                              onClick={() => {
+                                setEmpresaDetalle(empresa);
+                                setShowInfoModal(true);
+                              }}
+                            >
+                              Ver info
+                            </button>
+                            <button
+                              className="btn btn-sm btn-primary min-w-[90px]"
+                              onClick={() => handleEdit(empresa)}
+                            >
+                              <FaEdit className="inline mr-1" /> Editar
+                            </button>
+                            <button
+                              className="btn btn-sm btn-primary min-w-[90px]"
+                              onClick={() => handleInviteContact(empresa)}
+                            >
+                              <FaUserPlus className="inline mr-1" /> Invitar
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
         )}
       </div>
 
