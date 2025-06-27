@@ -199,6 +199,9 @@ export default function NuevaEmpresa() {
       const columnValues = {};
       const camposMostrar = columns.filter(
         (col) =>
+          col &&
+          col.id &&
+          col.title &&
           !["subitems", "person"].includes(col.type?.toLowerCase() || "") &&
           !["Subitems", "Person", "Name", "Name:"].includes(
             col.title?.trim() || ""
@@ -350,33 +353,43 @@ export default function NuevaEmpresa() {
   };
 
   const renderField = (col) => {
-    if (["subitems", "person"].includes(col.type)) return null;
+    if (!col || !col.type || ["subitems", "person"].includes(col.type))
+      return null;
 
     const isRequired =
-      col.title.toLowerCase().includes("nombre") ||
-      col.title.toLowerCase().includes("name") ||
+      col.title?.toLowerCase().includes("nombre") ||
+      col.title?.toLowerCase().includes("name") ||
       col.id === "name";
 
     switch (col.type) {
       case "status":
       case "dropdown":
         if (col.settings_str) {
-          const labels = JSON.parse(col.settings_str).labels || {};
-          return (
-            <select
-              className="input input-bordered w-full max-w-xs"
-              value={form[col.id] || ""}
-              onChange={(e) => handleChange(col, e.target.value)}
-              required={isRequired}
-            >
-              <option value="">Selecciona una opción</option>
-              {Object.values(labels).map((label) => (
-                <option key={label} value={label}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          );
+          try {
+            const labels = JSON.parse(col.settings_str).labels || {};
+            return (
+              <select
+                className="input input-bordered w-full max-w-xs"
+                value={form[col.id] || ""}
+                onChange={(e) => handleChange(col, e.target.value)}
+                required={isRequired}
+              >
+                <option value="">Selecciona una opción</option>
+                {Object.values(labels).map((label, index) => {
+                  const labelStr =
+                    typeof label === "object" ? label.name : String(label);
+                  return (
+                    <option key={`${col.id}-${index}`} value={labelStr}>
+                      {labelStr}
+                    </option>
+                  );
+                })}
+              </select>
+            );
+          } catch (error) {
+            console.error("[NuevaEmpresa] Error parsing settings_str:", error);
+            return null;
+          }
         }
         return null;
       case "date":
@@ -459,6 +472,9 @@ export default function NuevaEmpresa() {
   // Definir camposMostrar ANTES del return para evitar errores
   const camposMostrar = columns.filter(
     (col) =>
+      col &&
+      col.id &&
+      col.title &&
       !["subitems", "person"].includes(col.type?.toLowerCase() || "") &&
       !["Subitems", "Person", "Name", "Name:"].includes(
         col.title?.trim() || ""
@@ -481,25 +497,29 @@ export default function NuevaEmpresa() {
             onSubmit={handleSave}
             className="space-y-4 w-full max-w-lg mx-auto"
           >
-            {camposMostrar.map((col) => (
-              <div
-                key={col.id}
-                className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm mb-4 gap-3 py-2 border-b border-gray-100"
-              >
-                <span className="font-medium flex items-center gap-2 min-w-[140px] text-gray-700">
-                  {ICONOS_TIPOS[col.type] || (
-                    <FaBuilding className="text-gray-600" />
-                  )}
-                  {col.title}
-                  {(col.title.toLowerCase().includes("nombre") ||
-                    col.title.toLowerCase().includes("name") ||
-                    col.id === "name") && (
-                    <span className="text-red-500 text-xs">*</span>
-                  )}
-                </span>
-                <div className="flex-1 max-w-xs">{renderField(col)}</div>
-              </div>
-            ))}
+            {camposMostrar.map((col) => {
+              if (!col || !col.id || !col.title) return null;
+
+              return (
+                <div
+                  key={col.id}
+                  className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm mb-4 gap-3 py-2 border-b border-gray-100"
+                >
+                  <span className="font-medium flex items-center gap-2 min-w-[140px] text-gray-700">
+                    {ICONOS_TIPOS[col.type] || (
+                      <FaBuilding className="text-gray-600" />
+                    )}
+                    {col.title}
+                    {(col.title.toLowerCase().includes("nombre") ||
+                      col.title.toLowerCase().includes("name") ||
+                      col.id === "name") && (
+                      <span className="text-red-500 text-xs">*</span>
+                    )}
+                  </span>
+                  <div className="flex-1 max-w-xs">{renderField(col)}</div>
+                </div>
+              );
+            })}
             <div className="flex flex-col sm:flex-row gap-2 justify-end mt-4">
               <button
                 type="button"
