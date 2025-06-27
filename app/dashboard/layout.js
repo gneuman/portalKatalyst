@@ -86,12 +86,14 @@ export default function DashboardLayout({ children }) {
           Portal Katalyst
         </div>
       </aside>
-      {/* Contenedor derecho: header + children */}
+      {/* Contenedor derecho: header sticky + children */}
       <div className="flex-1 flex flex-col ml-72 min-h-screen bg-white">
-        {/* Header (no sticky) */}
-        <Header />
-        {/* Contenido principal */}
-        <main className="flex-1 flex flex-col w-full bg-white rounded-none shadow-none p-0 sm:p-8">
+        {/* Header sticky dentro de la columna derecha */}
+        <div className="sticky top-0 z-30 bg-white border-b border-gray-100">
+          <Header />
+        </div>
+        {/* Contenido principal con padding-top para no quedar oculto bajo el header sticky */}
+        <main className="flex-1 flex flex-col w-full bg-white rounded-none shadow-none p-0 sm:p-8 pt-6">
           {children}
         </main>
       </div>
