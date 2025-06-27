@@ -504,39 +504,39 @@ export default function EmpresasDashboard() {
   };
 
   return (
-    <div className="w-full py-6 px-4 sm:px-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-3 sm:mb-0">
           Empresas
         </h1>
         <Link href="/dashboard/empresas/nueva">
-          <button className="btn btn-primary">
+          <button className="btn btn-primary btn-sm">
             <FaPlus className="inline mr-2" /> Agregar Empresa
           </button>
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         {loading && (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Cargando empresas...</p>
+          <div className="p-6 text-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-sm text-gray-600">Cargando empresas...</p>
           </div>
         )}
 
         {error && (
-          <div className="p-6">
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="p-4">
+            <div className="bg-red-50 border border-red-200 rounded-md p-3">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <FaTimes className="h-5 w-5 text-red-400" />
+                  <FaTimes className="h-4 w-4 text-red-400" />
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">
                     Error al cargar empresas
                   </h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    <pre className="whitespace-pre-wrap">{error}</pre>
+                  <div className="mt-1 text-sm text-red-700">
+                    <pre className="whitespace-pre-wrap text-xs">{error}</pre>
                   </div>
                 </div>
               </div>
@@ -545,16 +545,16 @@ export default function EmpresasDashboard() {
         )}
 
         {!loading && empresas.length === 0 && !error && (
-          <div className="p-8 text-center">
-            <FaBuilding className="mx-auto h-12 w-12 text-gray-400" />
+          <div className="p-6 text-center">
+            <FaBuilding className="mx-auto h-10 w-10 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
               No tienes empresas
             </h3>
-            <p className="mt-1 text-sm text-gray-500 mb-4">
+            <p className="mt-1 text-sm text-gray-500 mb-3">
               Comienza agregando tu primera empresa.
             </p>
             <Link href="/dashboard/empresas/nueva">
-              <button className="btn btn-primary">
+              <button className="btn btn-primary btn-sm">
                 <FaPlus className="inline mr-2" /> Agregar mi primera empresa
               </button>
             </Link>
@@ -568,19 +568,19 @@ export default function EmpresasDashboard() {
               <table className="w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                       Empresa
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Estado
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/8">
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/8">
                       Contactos
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
                       Información
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Acciones
                     </th>
                   </tr>
@@ -600,7 +600,7 @@ export default function EmpresasDashboard() {
 
                     return (
                       <tr key={empresa.id} className="hover:bg-gray-50">
-                        <td className="px-3 py-4 whitespace-nowrap">
+                        <td className="px-3 py-3 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-8 w-8">
                               <FaBuilding className="h-8 w-8 text-yellow-600" />
@@ -615,7 +615,7 @@ export default function EmpresasDashboard() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-2 py-4 whitespace-nowrap">
+                        <td className="px-2 py-3 whitespace-nowrap">
                           <span
                             className="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
                             style={{
@@ -626,13 +626,13 @@ export default function EmpresasDashboard() {
                             {statusInfo.label}
                           </span>
                         </td>
-                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-2 py-3 whitespace-nowrap text-sm text-gray-900">
                           <div className="flex items-center">
                             <FaUsers className="text-blue-600 mr-1 text-xs" />
                             <span className="text-xs">{numContactos}</span>
                           </div>
                         </td>
-                        <td className="px-3 py-4">
+                        <td className="px-3 py-3">
                           <div className="text-sm text-gray-900">
                             {isEditing ? (
                               <div className="space-y-1">
@@ -692,7 +692,7 @@ export default function EmpresasDashboard() {
                             )}
                           </div>
                         </td>
-                        <td className="px-2 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-2 py-3 whitespace-nowrap text-sm font-medium">
                           {isEditing ? (
                             <div className="flex flex-col space-y-1">
                               <button
@@ -745,7 +745,7 @@ export default function EmpresasDashboard() {
 
             {/* Vista de tarjetas para móvil */}
             <div className="lg:hidden">
-              <div className="grid grid-cols-1 gap-4 p-4">
+              <div className="grid grid-cols-1 gap-3 p-3">
                 {empresas.map((empresa) => {
                   const statusInfo = getStatusInfo(empresa);
                   const contactos = empresa.column_values?.find(
@@ -760,15 +760,15 @@ export default function EmpresasDashboard() {
                   return (
                     <div
                       key={empresa.id}
-                      className="border rounded-xl shadow-lg p-4 bg-white flex flex-col gap-3 hover:shadow-2xl transition-shadow"
+                      className="border rounded-lg shadow-sm p-3 bg-white flex flex-col gap-2 hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-lg flex items-center gap-2">
+                        <span className="font-bold text-base flex items-center gap-2">
                           <FaBuilding className="text-yellow-600" />
                           {empresa.name}
                         </span>
                         <span
-                          className="inline-block px-3 py-1 rounded-full text-xs font-bold"
+                          className="inline-block px-2 py-1 rounded-full text-xs font-bold"
                           style={{
                             backgroundColor: `${statusInfo.color}20`,
                             color: statusInfo.color,
@@ -778,7 +778,7 @@ export default function EmpresasDashboard() {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+                      <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
                         <FaIdBadge /> ID: {empresa.id}
                       </div>
 
@@ -811,14 +811,14 @@ export default function EmpresasDashboard() {
                           )}
                           <div className="flex gap-2 mt-2">
                             <button
-                              className="btn btn-success"
+                              className="btn btn-success btn-sm"
                               onClick={() => handleSave(empresa)}
                               disabled={saving}
                             >
                               <FaCheck className="inline mr-1" /> Guardar
                             </button>
                             <button
-                              className="btn btn-ghost"
+                              className="btn btn-ghost btn-sm"
                               onClick={() => setEditId(null)}
                               disabled={saving}
                             >
@@ -854,7 +854,7 @@ export default function EmpresasDashboard() {
                           )}
                           <div className="flex gap-2 mt-2 flex-wrap">
                             <button
-                              className="btn btn-sm btn-outline min-w-[90px]"
+                              className="btn btn-sm btn-outline min-w-[80px]"
                               onClick={() => {
                                 setEmpresaDetalle(empresa);
                                 setShowInfoModal(true);
@@ -863,13 +863,13 @@ export default function EmpresasDashboard() {
                               Ver info
                             </button>
                             <button
-                              className="btn btn-sm btn-primary min-w-[90px]"
+                              className="btn btn-sm btn-primary min-w-[80px]"
                               onClick={() => handleEdit(empresa)}
                             >
                               <FaEdit className="inline mr-1" /> Editar
                             </button>
                             <button
-                              className="btn btn-sm btn-primary min-w-[90px]"
+                              className="btn btn-sm btn-primary min-w-[80px]"
                               onClick={() => handleInviteContact(empresa)}
                             >
                               <FaUserPlus className="inline mr-1" /> Invitar
