@@ -59,7 +59,7 @@ export async function POST(request) {
     // Generar nombre único para el archivo
     const sanitizedName = file.name.replace(/\s+/g, "-").toLowerCase();
     const fileName = `${Date.now()}-${sanitizedName}`;
-    console.log("Nombre del archivo generado:", fileName);
+    console.log("Nombre del archivo generado :", fileName);
 
     // Subir el archivo a Google Cloud Storage
     console.log("Iniciando subida a Google Cloud Storage...");
