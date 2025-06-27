@@ -532,6 +532,7 @@ export default function EmpresasDashboard() {
                       ].includes(col.column?.title?.trim() || "")
                   )
                 : [];
+              console.log("camposMostrar:", camposMostrar, empresa);
               const isEditing = editId === empresa.id;
               return (
                 <div
