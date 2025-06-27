@@ -87,6 +87,27 @@ function getColumnValue(col, formValue) {
   }
 }
 
+// Función para obtener campos a mostrar de forma segura
+const getCamposMostrar = (empresa) => {
+  if (!Array.isArray(empresa?.column_values)) {
+    console.log("column_values no es un array, retornando []");
+    return [];
+  }
+  return empresa.column_values.filter(
+    (col) =>
+      !["subitems", "person", "status"].includes(
+        col.column?.type?.toLowerCase() || ""
+      ) &&
+      ![
+        "Subitems",
+        "Person",
+        "Status",
+        "Contactos - Digitalización:",
+        "Contactos - Digitalización",
+      ].includes(col.column?.title?.trim() || "")
+  );
+};
+
 export default function EmpresasDashboard() {
   const { data: session } = useSession();
   const [empresas, setEmpresas] = useState([]);
@@ -507,43 +528,20 @@ export default function EmpresasDashboard() {
           </div>
         )}
         {empresas.length > 0 && (
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {empresas.map((empresa) => {
-              console.log("Procesando empresa:", empresa.id, empresa.name);
-              console.log("empresa.column_values:", empresa.column_values);
-
               const statusInfo = getStatusInfo(empresa);
               const contactos = empresa.column_values?.find(
-                (col) => col.column?.id === "board_relation_mkrcrrm"
+                (col) => col.column?.title === "Contactos - Digitalización"
               );
               const numContactos = contactos?.display_value
                 ? contactos.display_value.split(", ").length
                 : 0;
 
-              // Función para obtener campos a mostrar de forma segura
-              const getCamposMostrar = () => {
-                if (!Array.isArray(empresa.column_values)) {
-                  console.log("column_values no es un array, retornando []");
-                  return [];
-                }
-                return empresa.column_values.filter(
-                  (col) =>
-                    !["subitems", "person", "status"].includes(
-                      col.column?.type?.toLowerCase() || ""
-                    ) &&
-                    ![
-                      "Subitems",
-                      "Person",
-                      "Status",
-                      "Contactos - Digitalización:",
-                      "Contactos - Digitalización",
-                    ].includes(col.column?.title?.trim() || "")
-                );
-              };
-
-              const camposMostrar = getCamposMostrar();
+              const camposMostrar = getCamposMostrar(empresa);
               console.log("camposMostrar definido:", camposMostrar);
               const isEditing = editId === empresa.id;
+
               return (
                 <div
                   key={empresa.id}
