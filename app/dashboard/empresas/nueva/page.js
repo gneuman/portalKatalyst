@@ -364,10 +364,20 @@ export default function NuevaEmpresa() {
     }
   };
 
+  // Definir camposMostrar ANTES del return para evitar errores
+  const camposMostrar = columns.filter(
+    (col) =>
+      !["subitems", "person"].includes(col.type?.toLowerCase() || "") &&
+      !["Subitems", "Person", "Name", "Name:"].includes(
+        col.title?.trim() || ""
+      ) &&
+      col.id !== "board_relation_mkrcrrm"
+  );
+
   return (
-    <div className="max-w-2xl mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-8 text-center">Agregar Empresa</h1>
-      <div className="bg-white rounded shadow p-6 mb-6">
+    <div className="w-full">
+      <h1 className="text-2xl font-bold mb-3 text-center">Agregar Empresa</h1>
+      <div>
         {loading && <p className="text-center">Cargando...</p>}
         {error && (
           <div className="bg-red-100 text-red-800 p-2 rounded mb-4 text-xs">
@@ -375,7 +385,10 @@ export default function NuevaEmpresa() {
           </div>
         )}
         {!loading && (
-          <form onSubmit={handleSave} className="space-y-4 max-w-md mx-auto">
+          <form
+            onSubmit={handleSave}
+            className="space-y-4 w-full max-w-lg mx-auto"
+          >
             {camposMostrar.map((col) => (
               <div
                 key={col.id}
@@ -398,34 +411,26 @@ export default function NuevaEmpresa() {
                 disabled={saving}
                 aria-label="Cancelar creación de empresa"
               >
-                <FaTimes className="inline mr-1" /> Cancelar
+                Cancelar
               </button>
               <button
                 type="submit"
-                className="btn btn-primary min-w-[140px]"
+                className="btn btn-primary min-w-[100px]"
                 disabled={saving}
                 aria-label="Guardar empresa"
               >
-                {saving ? (
-                  <span className="flex items-center gap-2">
-                    <FaCheck className="inline" /> Guardando...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <FaCheck className="inline" /> Guardar Empresa
-                  </span>
-                )}
+                {saving ? "Guardando..." : "Guardar"}
               </button>
             </div>
           </form>
         )}
       </div>
-      {/* Modal de invitación */}
-      {showInviteModal && (
+      {/* Modal de Invitar Contacto */}
+      {showInviteModal && newEmpresaId && (
         <InviteModalV2
           onClose={() => setShowInviteModal(false)}
           empresaId={newEmpresaId}
-          empresaNombre={form.name || ""}
+          empresaNombre={form.name || "Nueva Empresa"}
           invitadorNombre={invitadorNombre}
         />
       )}

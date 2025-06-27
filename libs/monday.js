@@ -1,8 +1,8 @@
 const MONDAY_API_URL = "https://api.monday.com/v2";
 
-export async function postMonday(query) {
-  console.log("=== INICIO DE LLAMADA A MONDAY API ===");
-  console.log("Query a ejecutar:", query);
+export async function mondayQuery(query) {
+  // console.log("=== INICIO DE LLAMADA A MONDAY API ===");
+  // console.log("Query a ejecutar:", query);
 
   try {
     const res = await fetch(MONDAY_API_URL, {
@@ -14,20 +14,23 @@ export async function postMonday(query) {
       body: JSON.stringify({ query }),
     });
 
-    console.log("Status de la respuesta:", res.status);
+    // console.log("Status de la respuesta:", res.status);
 
     if (!res.ok) {
-      console.error("Error en la respuesta de Monday:", res.status);
-      throw new Error(`Monday API error: ${res.status}`);
+      throw new Error(`HTTP error! status: ${res.status}`);
     }
 
     const data = await res.json();
-    console.log("Respuesta de Monday:", data);
-    console.log("=== FIN DE LLAMADA A MONDAY API ===");
+
+    // console.log("Respuesta de Monday:", data);
+    // console.log("=== FIN DE LLAMADA A MONDAY API ===");
 
     return data;
   } catch (error) {
-    console.error("Error en la llamada a Monday:", error);
+    console.error("Error en Monday API:", error);
     throw error;
   }
 }
+
+// Alias para mantener compatibilidad con el código existente
+export const postMonday = mondayQuery;

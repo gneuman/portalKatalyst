@@ -29,12 +29,12 @@ function RegisterForm() {
   const [showFullForm, setShowFullForm] = useState(false);
 
   useEffect(() => {
-    console.log("=== INICIO DEL PROCESO DE REGISTRO ===");
-    console.log("Email recibido:", email);
+    // console.log("=== INICIO DEL PROCESO DE REGISTRO ===");
+    // console.log("Email recibido:", email);
 
     if (!email) {
-      console.log("No se encontró email, redirigiendo a signin");
-      router.push("/api/auth/signin");
+      // console.log("No se encontró email, redirigiendo a signin");
+      router.push("/auth/signin");
       return;
     }
 
