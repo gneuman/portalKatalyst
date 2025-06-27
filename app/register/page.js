@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { FaCamera } from "react-icons/fa";
 import Image from "next/image";
+import { uploadImage } from "@/libs/uploadImage";
 
 function RegisterForm() {
   const router = useRouter();
@@ -200,21 +201,8 @@ function RegisterForm() {
       // 1. Subir foto a Google Storage si existe
       let fotoUrl = null;
       if (form.foto) {
-        const photoFormData = new FormData();
-        photoFormData.append("file", form.foto);
-
         try {
-          const photoResponse = await fetch("/api/auth/upload-photo", {
-            method: "POST",
-            body: photoFormData,
-          });
-          const photoData = await photoResponse.json();
-
-          if (!photoResponse.ok) {
-            throw new Error(photoData.error || "Error al subir la foto");
-          }
-
-          fotoUrl = photoData.url;
+          fotoUrl = await uploadImage(form.foto);
           toast.success("Foto subida exitosamente");
           console.log("Foto subida:", fotoUrl);
         } catch (photoError) {

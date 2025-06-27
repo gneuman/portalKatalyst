@@ -14,6 +14,7 @@ import {
 import Image from "next/image";
 import ImageUpload from "@/components/ImageUpload";
 import { toast } from "react-hot-toast";
+import { uploadImage } from "@/libs/uploadImage";
 
 const CAMPOS = [
   { title: "Nombre", icon: <FaUser className="text-blue-600" /> },
@@ -130,28 +131,22 @@ export default function PerfilPersonal() {
       // Primero subir la foto si hay una nueva
       let fotoUrl = null;
       if (selectedFile) {
-        const photoFormData = new FormData();
-        photoFormData.append("file", selectedFile);
-        const photoResponse = await fetch("/api/auth/upload-photo", {
-          method: "POST",
-          body: photoFormData,
-        });
-        const photoData = await photoResponse.json();
-        if (!photoResponse.ok) {
-          throw new Error(photoData.error || "Error al subir la foto");
-        }
-        fotoUrl = photoData.url;
-        toast.success("Foto subida exitosamente");
+        try {
+          fotoUrl = await uploadImage(selectedFile);
+          toast.success("Foto subida exitosamente");
 
-        // Actualizar también en MongoDB
-        await fetch(`/api/user/profile`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: session.user.email,
-            fotoPerfil: fotoUrl,
-          }),
-        });
+          // Actualizar también en MongoDB
+          await fetch(`/api/user/profile`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: session.user.email,
+              fotoPerfil: fotoUrl,
+            }),
+          });
+        } catch (error) {
+          throw new Error(error.message || "Error al subir la foto");
+        }
       }
 
       // Mapear a column_values para Monday

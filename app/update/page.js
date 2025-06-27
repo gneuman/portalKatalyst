@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { uploadImage } from "@/libs/uploadImage";
 
 function UpdateUser() {
   const searchParams = useSearchParams();
@@ -144,17 +145,11 @@ function UpdateUser() {
     try {
       let fotoUrl = form.fotoPerfil;
       if (form.foto) {
-        const photoFormData = new FormData();
-        photoFormData.append("file", form.foto);
-        const photoResponse = await fetch("/api/auth/upload-photo", {
-          method: "POST",
-          body: photoFormData,
-        });
-        const photoData = await photoResponse.json();
-        if (!photoResponse.ok) {
-          throw new Error(photoData.error || "Error al subir la foto");
+        try {
+          fotoUrl = await uploadImage(form.foto);
+        } catch (error) {
+          throw new Error(error.message || "Error al subir la foto");
         }
-        fotoUrl = photoData.url;
       }
       // Construir column_values dinámicamente
       const column_values = {};
