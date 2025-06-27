@@ -86,6 +86,7 @@ export default function NuevaEmpresa() {
   const [inviteError, setInviteError] = useState(null);
   const emailInputRef = useRef(null);
   const [invitadorNombre, setInvitadorNombre] = useState("");
+  const [nombreEmpresa, setNombreEmpresa] = useState("Nueva Empresa");
 
   useEffect(() => {
     const fetchBoard = async () => {
@@ -202,9 +203,7 @@ export default function NuevaEmpresa() {
           col.id &&
           col.title &&
           !["subitems", "person"].includes(col.type?.toLowerCase() || "") &&
-          !["Subitems", "Person", "Name", "Name:"].includes(
-            col.title?.trim() || ""
-          ) &&
+          !["Subitems", "Person"].includes(col.title?.trim() || "") &&
           col.id !== "board_relation_mkrcrrm"
       );
 
@@ -220,11 +219,27 @@ export default function NuevaEmpresa() {
 
       console.log("[NuevaEmpresa] Column values final:", columnValues);
 
+      // Obtener el nombre de la empresa del formulario
+      let nombreEmpresaValue = "Nueva Empresa";
+
+      // Buscar el campo de nombre en las columnas
+      const nombreCol = columns.find(
+        (col) =>
+          col.title?.toLowerCase().includes("nombre") ||
+          col.title?.toLowerCase().includes("name") ||
+          col.id === "name"
+      );
+
+      if (nombreCol && form[nombreCol.id]) {
+        nombreEmpresaValue = form[nombreCol.id];
+        setNombreEmpresa(nombreEmpresaValue);
+      }
+
       // Crear empresa en Monday
       const mutation = `mutation { 
         create_item (
           board_id: ${boardId}, 
-          item_name: "${form.name || "Nueva Empresa"}", 
+          item_name: "${nombreEmpresaValue}", 
           column_values: "${JSON.stringify(columnValues).replace(/"/g, '\\"')}"
         ) { 
           id 
@@ -475,9 +490,7 @@ export default function NuevaEmpresa() {
       col.id &&
       col.title &&
       !["subitems", "person"].includes(col.type?.toLowerCase() || "") &&
-      !["Subitems", "Person", "Name", "Name:"].includes(
-        col.title?.trim() || ""
-      ) &&
+      !["Subitems", "Person"].includes(col.title?.trim() || "") &&
       col.id !== "board_relation_mkrcrrm"
   );
 
@@ -546,7 +559,7 @@ export default function NuevaEmpresa() {
         <InviteModalV2
           onClose={() => setShowInviteModal(false)}
           empresaId={newEmpresaId}
-          empresaNombre={form.name || "Nueva Empresa"}
+          empresaNombre={nombreEmpresa || "Nueva Empresa"}
           invitadorNombre={invitadorNombre}
         />
       )}
