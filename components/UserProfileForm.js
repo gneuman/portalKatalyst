@@ -168,6 +168,15 @@ export default function UserProfileForm({
         `${form.nombre} ${form.apellidoPaterno} ${form.apellidoMaterno}`.trim();
 
       columns.forEach((col) => {
+        // Saltar columnas que no se pueden actualizar (auto calculated)
+        if (
+          col.type === "formula" ||
+          col.type === "auto_number" ||
+          col.type === "world_clock"
+        ) {
+          return;
+        }
+
         if (col.title === "Nombre") column_values[col.id] = form.nombre;
         if (col.title === "Apellido Paterno")
           column_values[col.id] = form.apellidoPaterno;
@@ -324,29 +333,32 @@ export default function UserProfileForm({
   if (loading) return <div>Cargando...</div>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 rounded-t-lg">
+          <h2 className="text-xl font-semibold text-gray-900">
             {mode === "personal" ? "Mi Perfil Personal" : "Actualiza tus datos"}
           </h2>
           {personalMondayId && (
-            <div className="text-center text-xs text-gray-400 mt-1">
+            <div className="text-xs text-gray-500 mt-1">
               <span className="font-mono">MondayID: {personalMondayId}</span>
             </div>
           )}
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="text-sm text-gray-600 mt-1">
             {mode === "personal"
               ? "Gestiona tu información personal"
               : "Por favor, revisa y actualiza tu información"}
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {/* Form Content */}
+        <form className="p-6 space-y-6" onSubmit={handleSubmit}>
+          {/* Email Section */}
           <div className="w-full">
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
               Correo electrónico
             </label>
@@ -357,26 +369,27 @@ export default function UserProfileForm({
               required
               value={form.email}
               disabled
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500"
             />
           </div>
 
-          <div className="flex flex-col items-center">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          {/* Photo Section */}
+          <div className="flex flex-col items-center space-y-4">
+            <label className="block text-sm font-medium text-gray-700">
               Foto de perfil
             </label>
-            <div className="relative w-32 h-32 mb-4">
+            <div className="relative w-32 h-32">
               {previewUrl && previewUrl !== "" ? (
                 <Image
                   src={previewUrl}
                   alt="Preview"
                   fill
-                  className="rounded-full object-cover"
+                  className="rounded-full object-cover border-4 border-white shadow-lg"
                 />
               ) : (
-                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center border-4 border-white shadow-lg">
                   <svg
-                    className="w-8 h-8 text-gray-400"
+                    className="w-12 h-12 text-gray-400"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -389,8 +402,21 @@ export default function UserProfileForm({
                 </div>
               )}
             </div>
-            <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300">
-              <span>Seleccionar foto</span>
+            <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              Seleccionar foto
               <input
                 type="file"
                 accept="image/*"
@@ -400,21 +426,23 @@ export default function UserProfileForm({
             </label>
           </div>
 
+          {/* Personal Information Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nombre
               </label>
               <input
                 type="text"
                 value={form.nombre}
                 onChange={(e) => handleChange("nombre", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Tu nombre"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Apellido Paterno
               </label>
               <input
@@ -423,12 +451,13 @@ export default function UserProfileForm({
                 onChange={(e) =>
                   handleChange("apellidoPaterno", e.target.value)
                 }
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Tu apellido paterno"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Apellido Materno
               </label>
               <input
@@ -437,24 +466,26 @@ export default function UserProfileForm({
                 onChange={(e) =>
                   handleChange("apellidoMaterno", e.target.value)
                 }
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Tu apellido materno"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Teléfono
               </label>
               <input
                 type="tel"
                 value={form.telefono}
                 onChange={(e) => handleChange("telefono", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Tu número de teléfono"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Fecha de Nacimiento
               </label>
               <input
@@ -463,76 +494,111 @@ export default function UserProfileForm({
                 onChange={(e) =>
                   handleChange("fechaNacimiento", e.target.value)
                 }
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Género
               </label>
               <select
                 value={form.genero}
                 onChange={(e) => handleChange("genero", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               >
-                <option value="">Selecciona una opción</option>
-                {colGenero &&
-                  colGenero.settings_str &&
-                  Object.values(
-                    JSON.parse(colGenero.settings_str).labels || {}
-                  ).map((label) => {
-                    const labelStr =
-                      typeof label === "object" ? label.name : label;
-                    return (
-                      <option key={labelStr} value={labelStr}>
-                        {labelStr}
-                      </option>
-                    );
-                  })}
+                <option value="">Seleccionar género</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Femenino">Femenino</option>
+                <option value="No binario">No binario</option>
+                <option value="Prefiero no decir">Prefiero no decir</option>
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Comunidad
               </label>
               <select
                 value={form.comunidad}
                 onChange={(e) => handleChange("comunidad", e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               >
-                <option value="">Selecciona una opción</option>
-                {colComunidad &&
-                  colComunidad.settings_str &&
-                  Object.values(
-                    JSON.parse(colComunidad.settings_str).labels || {}
-                  ).map((label) => {
-                    const labelStr =
-                      typeof label === "object" ? label.name : label;
-                    return (
-                      <option key={labelStr} value={labelStr}>
-                        {labelStr}
-                      </option>
-                    );
-                  })}
+                <option value="">Seleccionar comunidad</option>
+                {colComunidad?.settings_str &&
+                  JSON.parse(colComunidad.settings_str).labels &&
+                  Object.entries(
+                    JSON.parse(colComunidad.settings_str).labels
+                  ).map(([key, value]) => (
+                    <option
+                      key={key}
+                      value={typeof value === "object" ? value.name : value}
+                    >
+                      {typeof value === "object" ? value.name : value}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>
 
+          {/* Error Display */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 rounded p-3">
-              {error}
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-800">{error}</p>
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="flex justify-center">
+          {/* Submit Button */}
+          <div className="flex justify-end pt-4 border-t border-gray-200">
             <button
               type="submit"
               disabled={loading}
-              className="w-full md:w-auto px-6 py-3 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Guardando..." : "Guardar cambios"}
+              {loading ? (
+                <>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Actualizando...
+                </>
+              ) : (
+                "Guardar cambios"
+              )}
             </button>
           </div>
         </form>
