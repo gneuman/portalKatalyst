@@ -17,15 +17,30 @@ export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
     <div className="min-h-screen bg-white flex flex-row">
-      {/* Sidebar sticky/fijo a la izquierda */}
+      {/* Sidebar drawer en móvil, fijo en desktop */}
+      {/* Overlay para móvil */}
+      <div
+        className={`fixed inset-0 z-40 bg-black bg-opacity-40 transition-opacity lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
+        onClick={() => setSidebarOpen(false)}
+      />
       <aside
         className={`
           w-72 max-w-full bg-white shadow-lg flex flex-col py-8 px-4 gap-4 h-screen
-          fixed left-0 top-0 bottom-0 z-40
-          lg:sticky lg:top-0
+          fixed left-0 top-0 bottom-0 z-50 transition-transform duration-200 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0 lg:static lg:block
         `}
-        style={{ minHeight: "100vh" }}
+        style={{ minHeight: '100vh' }}
       >
+        <button
+          className="lg:hidden self-end mb-4 p-2 rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#233746]"
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Cerrar menú"
+        >
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path d="M6 6l12 12M6 18L18 6" stroke="#233746" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
         <PerfilConLogo />
         <nav className="flex flex-col gap-2 mt-8">
           <Link
@@ -87,13 +102,25 @@ export default function DashboardLayout({ children }) {
         </div>
       </aside>
       {/* Contenedor derecho: header sticky + children */}
-      <div className="flex-1 flex flex-col ml-72 min-h-screen bg-white">
+      <div className="flex-1 flex flex-col lg:ml-72 min-h-screen bg-white">
         {/* Header sticky dentro de la columna derecha */}
-        <div className="sticky top-0 z-30 bg-white border-b border-gray-100">
-          <Header />
+        <div className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center h-16 px-4 sm:px-8">
+          {/* Botón hamburguesa solo en móvil */}
+          <button
+            className="lg:hidden mr-4 p-2 rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#233746]"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Abrir menú"
+          >
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+              <path d="M4 6h16M4 12h16M4 18h16" stroke="#233746" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+          <div className="flex-1">
+            <Header />
+          </div>
         </div>
         {/* Contenido principal con padding-top para no quedar oculto bajo el header sticky */}
-        <main className="flex-1 flex flex-col w-full bg-white rounded-none shadow-none p-0 sm:p-8 pt-6">
+        <main className="flex-1 flex flex-col w-full bg-white rounded-none shadow-none p-2 sm:p-8 pt-4 sm:pt-6">
           {children}
         </main>
       </div>
