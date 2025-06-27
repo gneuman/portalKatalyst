@@ -146,10 +146,11 @@ export async function POST(request) {
       });
       console.log("✅ Archivo subido exitosamente");
 
-      // Hacer el archivo público
-      console.log("Haciendo archivo público...");
-      await blob.makePublic();
-      console.log("✅ Archivo hecho público");
+      // Nota: No se puede usar makePublic() cuando Uniform Bucket-Level Access está habilitado
+      // Los permisos se manejan a nivel de bucket, no de objeto individual
+      console.log(
+        "ℹ️ Uniform Bucket-Level Access está habilitado - los permisos se manejan a nivel de bucket"
+      );
 
       const url = `https://storage.googleapis.com/${bucketName}/${fileName}`;
       console.log("URL generada:", url);
