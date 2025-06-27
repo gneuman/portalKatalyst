@@ -75,15 +75,20 @@ export default function UserProfileForm({
         if (data && data.columnValues) {
           // Si tenemos los valores de columna, mapearlos dinámicamente
           const cv = data.columnValues;
+          console.log("[UserProfileForm] Column Values recibidos:", cv);
+          console.log("[UserProfileForm] IDs mapeados:", ids);
+
           setForm({
             email: data.email,
             nombre: cv[ids.nombre] || data.firstName || "",
             apellidoPaterno: cv[ids.apellidoP] || data.lastName || "",
             apellidoMaterno: cv[ids.apellidoM] || data.secondLastName || "",
-            telefono: cv[ids.telefono] || data.phone || "",
+            telefono:
+              cv[ids.telefono]?.phone || cv[ids.telefono] || data.phone || "",
             fechaNacimiento: cv[ids.fechaNacimiento] || data.dateOfBirth || "",
             genero: cv[ids.genero] || data.gender || "",
-            comunidad: cv[ids.status] || data.community || "",
+            comunidad:
+              cv[ids.comunidad] || cv[ids.status] || data.community || "",
             fotoPerfil: cv[ids.foto] || data.fotoPerfil || "",
           });
           setPreviewUrl(cv[ids.foto] || data.fotoPerfil || null);
@@ -167,6 +172,12 @@ export default function UserProfileForm({
       const nombreCompleto =
         `${form.nombre} ${form.apellidoPaterno} ${form.apellidoMaterno}`.trim();
 
+      console.log(
+        "[UserProfileForm] Construyendo column_values para Monday.com"
+      );
+      console.log("[UserProfileForm] Form data:", form);
+      console.log("[UserProfileForm] Columns:", columns);
+
       columns.forEach((col) => {
         // Saltar columnas que no se pueden actualizar (auto calculated)
         if (
@@ -174,47 +185,93 @@ export default function UserProfileForm({
           col.type === "auto_number" ||
           col.type === "world_clock"
         ) {
+          console.log(
+            `[UserProfileForm] Saltando columna ${col.title} (tipo: ${col.type})`
+          );
           return;
         }
 
-        if (col.title === "Nombre") column_values[col.id] = form.nombre;
-        if (col.title === "Apellido Paterno")
+        console.log(
+          `[UserProfileForm] Procesando columna: ${col.title} (ID: ${col.id}, Tipo: ${col.type})`
+        );
+
+        if (col.title === "Nombre" && form.nombre) {
+          column_values[col.id] = form.nombre;
+          console.log(`[UserProfileForm] Agregando Nombre: ${form.nombre}`);
+        }
+        if (col.title === "Apellido Paterno" && form.apellidoPaterno) {
           column_values[col.id] = form.apellidoPaterno;
-        if (col.title === "Apellido Materno")
+          console.log(
+            `[UserProfileForm] Agregando Apellido Paterno: ${form.apellidoPaterno}`
+          );
+        }
+        if (col.title === "Apellido Materno" && form.apellidoMaterno) {
           column_values[col.id] = form.apellidoMaterno;
-        if (col.title === "Nombre Completo")
+          console.log(
+            `[UserProfileForm] Agregando Apellido Materno: ${form.apellidoMaterno}`
+          );
+        }
+        if (col.title === "Nombre Completo" && nombreCompleto) {
           column_values[col.id] = nombreCompleto;
-        if (col.title === "Email") column_values[col.id] = form.email;
-        if (col.title === "Teléfono")
+          console.log(
+            `[UserProfileForm] Agregando Nombre Completo: ${nombreCompleto}`
+          );
+        }
+        if (col.title === "Email" && form.email) {
+          column_values[col.id] = form.email;
+          console.log(`[UserProfileForm] Agregando Email: ${form.email}`);
+        }
+        if (col.title === "Teléfono" && form.telefono) {
           column_values[col.id] = {
             phone: form.telefono,
             countryShortName: "MX",
           };
+          console.log(`[UserProfileForm] Agregando Teléfono: ${form.telefono}`);
+        }
         if (
-          col.title === "Fecha Nacimiento" ||
-          col.title === "Fecha de Nacimiento"
-        )
+          (col.title === "Fecha Nacimiento" ||
+            col.title === "Fecha de Nacimiento") &&
+          form.fechaNacimiento
+        ) {
           column_values[col.id] = { date: form.fechaNacimiento };
-        if (col.title === "Género" && col.type === "dropdown")
+          console.log(
+            `[UserProfileForm] Agregando Fecha Nacimiento: ${form.fechaNacimiento}`
+          );
+        }
+        if (col.title === "Género" && col.type === "dropdown" && form.genero) {
           column_values[col.id] = { labels: [form.genero] };
-        if (col.title === "Comunidad" && col.type === "status") {
+          console.log(`[UserProfileForm] Agregando Género: ${form.genero}`);
+        }
+        if (
+          col.title === "Comunidad" &&
+          col.type === "status" &&
+          form.comunidad
+        ) {
           const labels = col.settings_str
             ? JSON.parse(col.settings_str).labels
             : {};
           const index = Object.entries(labels).find(
             ([, v]) => (typeof v === "object" ? v.name : v) === form.comunidad
           )?.[0];
-          if (index !== undefined)
+          if (index !== undefined) {
             column_values[col.id] = { index: parseInt(index) };
+            console.log(
+              `[UserProfileForm] Agregando Comunidad: ${form.comunidad} (index: ${index})`
+            );
+          }
         }
         if (
           (col.title === "Foto Perfil" ||
             col.title === "Foto De Perfil" ||
             col.title === "Foto de perfil") &&
           fotoUrl
-        )
+        ) {
           column_values[col.id] = fotoUrl;
+          console.log(`[UserProfileForm] Agregando Foto Perfil: ${fotoUrl}`);
+        }
       });
+
+      console.log("[UserProfileForm] Column_values final:", column_values);
 
       // Usar el MondayID ya cargado
       let board_id = process.env.NEXT_PUBLIC_MONDAY_BOARD_ID;
@@ -333,32 +390,29 @@ export default function UserProfileForm({
   if (loading) return <div>Cargando...</div>;
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-          <h2 className="text-xl font-semibold text-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             {mode === "personal" ? "Mi Perfil Personal" : "Actualiza tus datos"}
           </h2>
           {personalMondayId && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-center text-xs text-gray-400 mt-1">
               <span className="font-mono">MondayID: {personalMondayId}</span>
             </div>
           )}
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="mt-2 text-center text-sm text-gray-600">
             {mode === "personal"
               ? "Gestiona tu información personal"
               : "Por favor, revisa y actualiza tu información"}
           </p>
         </div>
 
-        {/* Form Content */}
-        <form className="p-6 space-y-6" onSubmit={handleSubmit}>
-          {/* Email Section */}
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="w-full">
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700"
             >
               Correo electrónico
             </label>
@@ -369,27 +423,26 @@ export default function UserProfileForm({
               required
               value={form.email}
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500"
             />
           </div>
 
-          {/* Photo Section */}
-          <div className="flex flex-col items-center space-y-4">
-            <label className="block text-sm font-medium text-gray-700">
+          <div className="flex flex-col items-center">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Foto de perfil
             </label>
-            <div className="relative w-32 h-32">
+            <div className="relative w-32 h-32 mb-4">
               {previewUrl && previewUrl !== "" ? (
                 <Image
                   src={previewUrl}
                   alt="Preview"
                   fill
-                  className="rounded-full object-cover border-4 border-white shadow-lg"
+                  className="rounded-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center border-4 border-white shadow-lg">
+                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
                   <svg
-                    className="w-12 h-12 text-gray-400"
+                    className="w-8 h-8 text-gray-400"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -402,21 +455,8 @@ export default function UserProfileForm({
                 </div>
               )}
             </div>
-            <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              Seleccionar foto
+            <label className="cursor-pointer bg-white px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300">
+              <span>Seleccionar foto</span>
               <input
                 type="file"
                 accept="image/*"
@@ -426,23 +466,21 @@ export default function UserProfileForm({
             </label>
           </div>
 
-          {/* Personal Information Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Nombre
               </label>
               <input
                 type="text"
                 value={form.nombre}
                 onChange={(e) => handleChange("nombre", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Tu nombre"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Apellido Paterno
               </label>
               <input
@@ -451,13 +489,12 @@ export default function UserProfileForm({
                 onChange={(e) =>
                   handleChange("apellidoPaterno", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Tu apellido paterno"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Apellido Materno
               </label>
               <input
@@ -466,26 +503,24 @@ export default function UserProfileForm({
                 onChange={(e) =>
                   handleChange("apellidoMaterno", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Tu apellido materno"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Teléfono
               </label>
               <input
                 type="tel"
                 value={form.telefono}
                 onChange={(e) => handleChange("telefono", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Tu número de teléfono"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Fecha de Nacimiento
               </label>
               <input
@@ -494,111 +529,76 @@ export default function UserProfileForm({
                 onChange={(e) =>
                   handleChange("fechaNacimiento", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Género
               </label>
               <select
                 value={form.genero}
                 onChange={(e) => handleChange("genero", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
-                <option value="">Seleccionar género</option>
-                <option value="Masculino">Masculino</option>
-                <option value="Femenino">Femenino</option>
-                <option value="No binario">No binario</option>
-                <option value="Prefiero no decir">Prefiero no decir</option>
+                <option value="">Selecciona una opción</option>
+                {colGenero &&
+                  colGenero.settings_str &&
+                  Object.values(
+                    JSON.parse(colGenero.settings_str).labels || {}
+                  ).map((label) => {
+                    const labelStr =
+                      typeof label === "object" ? label.name : label;
+                    return (
+                      <option key={labelStr} value={labelStr}>
+                        {labelStr}
+                      </option>
+                    );
+                  })}
               </select>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
                 Comunidad
               </label>
               <select
                 value={form.comunidad}
                 onChange={(e) => handleChange("comunidad", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
-                <option value="">Seleccionar comunidad</option>
-                {colComunidad?.settings_str &&
-                  JSON.parse(colComunidad.settings_str).labels &&
-                  Object.entries(
-                    JSON.parse(colComunidad.settings_str).labels
-                  ).map(([key, value]) => (
-                    <option
-                      key={key}
-                      value={typeof value === "object" ? value.name : value}
-                    >
-                      {typeof value === "object" ? value.name : value}
-                    </option>
-                  ))}
+                <option value="">Selecciona una opción</option>
+                {colComunidad &&
+                  colComunidad.settings_str &&
+                  Object.values(
+                    JSON.parse(colComunidad.settings_str).labels || {}
+                  ).map((label) => {
+                    const labelStr =
+                      typeof label === "object" ? label.name : label;
+                    return (
+                      <option key={labelStr} value={labelStr}>
+                        {labelStr}
+                      </option>
+                    );
+                  })}
               </select>
             </div>
           </div>
 
-          {/* Error Display */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-800">{error}</p>
-                </div>
-              </div>
+            <div className="bg-red-50 border border-red-200 text-red-600 rounded p-3">
+              {error}
             </div>
           )}
 
-          {/* Submit Button */}
-          <div className="flex justify-end pt-4 border-t border-gray-200">
+          <div className="flex justify-center">
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full md:w-auto px-6 py-3 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {loading ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Actualizando...
-                </>
-              ) : (
-                "Guardar cambios"
-              )}
+              {loading ? "Guardando..." : "Guardar cambios"}
             </button>
           </div>
         </form>

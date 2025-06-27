@@ -42,7 +42,16 @@ export async function GET(req) {
           if (item && item.column_values) {
             columnValues = {};
             item.column_values.forEach((col) => {
-              columnValues[col.id] = col.text || col.value || "";
+              // Para campos de teléfono, mantener el objeto completo
+              if (col.column?.title === "Teléfono" && col.value) {
+                try {
+                  columnValues[col.id] = JSON.parse(col.value);
+                } catch {
+                  columnValues[col.id] = col.text || col.value || "";
+                }
+              } else {
+                columnValues[col.id] = col.text || col.value || "";
+              }
             });
           }
         }
