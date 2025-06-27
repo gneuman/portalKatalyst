@@ -1,4 +1,4 @@
-# PRD: Sistema de Registro con Foto de Perfil
+# PRD: Sistema de Registro con Foto de Perfil.
 
 ## Introducción/Descripción General
 
