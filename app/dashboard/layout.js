@@ -20,17 +20,19 @@ export default function DashboardLayout({ children }) {
       {/* Sidebar drawer en móvil, fijo en desktop */}
       {/* Overlay para móvil */}
       <div
-        className={`fixed inset-0 z-40 bg-black bg-opacity-40 transition-opacity lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
+        className={`fixed inset-0 z-40 bg-black bg-opacity-40 transition-opacity lg:hidden ${
+          sidebarOpen ? "block" : "hidden"
+        }`}
         onClick={() => setSidebarOpen(false)}
       />
       <aside
         className={`
           w-72 max-w-full bg-white shadow-lg flex flex-col py-8 px-4 gap-4 h-screen
           fixed left-0 top-0 bottom-0 z-50 transition-transform duration-200 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0 lg:static lg:block
         `}
-        style={{ minHeight: '100vh' }}
+        style={{ minHeight: "100vh" }}
       >
         <button
           className="lg:hidden self-end mb-4 p-2 rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#233746]"
@@ -38,7 +40,12 @@ export default function DashboardLayout({ children }) {
           aria-label="Cerrar menú"
         >
           <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-            <path d="M6 6l12 12M6 18L18 6" stroke="#233746" strokeWidth="2" strokeLinecap="round" />
+            <path
+              d="M6 6l12 12M6 18L18 6"
+              stroke="#233746"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
         <PerfilConLogo />
@@ -112,15 +119,20 @@ export default function DashboardLayout({ children }) {
             aria-label="Abrir menú"
           >
             <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-              <path d="M4 6h16M4 12h16M4 18h16" stroke="#233746" strokeWidth="2" strokeLinecap="round" />
+              <path
+                d="M4 6h16M4 12h16M4 18h16"
+                stroke="#233746"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
           <div className="flex-1">
             <Header />
           </div>
         </div>
-        {/* Contenido principal con padding-top para no quedar oculto bajo el header sticky */}
-        <main className="flex-1 flex flex-col w-full bg-white rounded-none shadow-none p-2 sm:p-8 pt-4 sm:pt-6">
+        {/* Contenido principal alineado al sidebar, sin padding horizontal en desktop */}
+        <main className="flex-1 flex flex-col w-full bg-white rounded-none shadow-none pt-4 sm:pt-6 px-2 sm:px-2 lg:px-0">
           {children}
         </main>
       </div>

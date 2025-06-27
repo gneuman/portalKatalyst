@@ -144,24 +144,24 @@ export default function useUserProfile() {
       }
       // Mostrar en consola el resultado crudo de Monday
       if (mondayRaw) {
-        console.log("[Monday RAW]", mondayRaw);
+        // console.log("[Monday RAW]", mondayRaw);
       }
       // Mostrar en consola los valores obtenidos
-      console.log(
-        `[Monday] Nombre Completo: ${nombreCompletoMonday} (origen: ${origenNombreCompleto})`
-      );
-      console.log("[Monday] Nombre:", nombreMonday);
-      console.log("[Monday] Apellido Paterno:", apellidoPaternoMonday);
-      console.log("[Monday] Apellido Materno:", apellidoMaternoMonday);
-      console.log("[Monday] Email:", emailMonday);
+      // console.log(
+      //   `[Monday] Nombre Completo: ${nombreCompletoMonday} (origen: ${origenNombreCompleto})`
+      // );
+      // console.log("[Monday] Nombre:", nombreMonday);
+      // console.log("[Monday] Apellido Paterno:", apellidoPaternoMonday);
+      // console.log("[Monday] Apellido Materno:", apellidoMaternoMonday);
+      // console.log("[Monday] Email:", emailMonday);
 
       // Agregar logs detallados para la comparación
-      console.log("Nombre (MongoDB):", user.name);
-      console.log("Origen del nombre completo:", origenNombreCompleto);
-      console.log("Nombre Completo Monday:", nombreCompletoMonday);
-      console.log("Nombre (MongoDB):", user.name);
-      console.log("¿Son diferentes?", nombreCompletoMonday !== user.name);
-      console.log("¿yaActualizadoRef.current?", yaActualizadoRef.current);
+      // console.log("Nombre (MongoDB):", user.name);
+      // console.log("Origen del nombre completo:", origenNombreCompleto);
+      // console.log("Nombre Completo Monday:", nombreCompletoMonday);
+      // console.log("Nombre (MongoDB):", user.name);
+      // console.log("¿Son diferentes?", nombreCompletoMonday !== user.name);
+      // console.log("¿yaActualizadoRef.current?", yaActualizadoRef.current);
 
       // Si el nombre completo de Monday o el email de Monday es diferente al de MongoDB, actualizar ambos en MongoDB
       const emailParaActualizar = emailMonday || user.email;
@@ -169,10 +169,10 @@ export default function useUserProfile() {
       const debeActualizarNombre =
         nombreCompletoMonday && nombreCompletoMonday !== user.name;
 
-      console.log("¿Debe actualizar email?", debeActualizarEmail);
-      console.log("¿Debe actualizar nombre?", debeActualizarNombre);
-      console.log("Email Monday:", emailMonday);
-      console.log("Email MongoDB:", user.email);
+      // console.log("¿Debe actualizar email?", debeActualizarEmail);
+      // console.log("¿Debe actualizar nombre?", debeActualizarNombre);
+      // console.log("Email Monday:", emailMonday);
+      // console.log("Email MongoDB:", user.email);
 
       // Siempre sincronizar el email si hay uno disponible de Monday
       if (
@@ -193,27 +193,27 @@ export default function useUserProfile() {
             // Si el email de Monday es diferente, actualizarlo
             if (emailMonday && emailMonday !== user.email) {
               payload.nuevoEmail = emailMonday;
-              console.log(
-                "[MongoDB UPDATE] Actualizando email de",
-                user.email,
-                "a",
-                emailMonday
-              );
+              // console.log(
+              //   "[MongoDB UPDATE] Actualizando email de",
+              //   user.email,
+              //   "a",
+              //   emailMonday
+              // );
             }
 
-            console.log("[MongoDB UPDATE PAYLOAD]", payload);
+            // console.log("[MongoDB UPDATE PAYLOAD]", payload);
             const response = await fetch(`/api/user/profile`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload),
             });
             const data = await response.json();
-            console.log("[MongoDB UPDATE RESPONSE]", data);
+            // console.log("[MongoDB UPDATE RESPONSE]", data);
             // Marcar como actualizado para evitar ciclo infinito durante esta ejecución
             yaActualizadoRef.current = true;
-            console.log(
-              "[SYNC] Actualización completada, yaActualizadoRef establecido en true"
-            );
+            // console.log(
+            //   "[SYNC] Actualización completada, yaActualizadoRef establecido en true"
+            // );
 
             // Forzar refetch si la actualización fue exitosa
             if (response.ok) {
@@ -257,10 +257,10 @@ export default function useUserProfile() {
                       body: JSON.stringify(mutation),
                     });
                     const mondayUpdateData = await mondayUpdateRes.json();
-                    console.log(
-                      "[Monday UPDATE NAME RESPONSE]",
-                      mondayUpdateData
-                    );
+                    // console.log(
+                    //   "[Monday UPDATE NAME RESPONSE]",
+                    //   mondayUpdateData
+                    // );
                   }
                 } catch (err) {
                   console.warn(
@@ -271,9 +271,9 @@ export default function useUserProfile() {
               }
 
               // En lugar de hacer refetch, actualizar el estado local directamente
-              console.log(
-                "[SYNC] Actualización exitosa, actualizando estado local"
-              );
+              // console.log(
+              //   "[SYNC] Actualización exitosa, actualizando estado local"
+              // );
               const updatedUser = {
                 ...user,
                 name: nombreCompletoMonday || user.name,
@@ -292,7 +292,7 @@ export default function useUserProfile() {
                 origenNombreCompleto,
                 email: emailMonday || user.email,
               };
-              console.log("[Profile ACTUALIZADO]", profileObj);
+              // console.log("[Profile ACTUALIZADO]", profileObj);
               setProfile(profileObj);
               setLoading(false);
               return;
@@ -317,7 +317,7 @@ export default function useUserProfile() {
         origenNombreCompleto,
         email: emailMonday || user.email,
       };
-      console.log("[Profile FINAL]", profileObj);
+      // console.log("[Profile FINAL]", profileObj);
       setProfile(profileObj);
 
       // 2. Si falta algún dato, obtener de Monday

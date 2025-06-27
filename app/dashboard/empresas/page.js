@@ -90,7 +90,6 @@ function getColumnValue(col, formValue) {
 // Función para obtener campos a mostrar de forma segura
 const getCamposMostrar = (empresa) => {
   if (!Array.isArray(empresa?.column_values)) {
-    console.log("column_values no es un array, retornando []");
     return [];
   }
   return empresa.column_values.filter(
@@ -565,23 +564,23 @@ export default function EmpresasDashboard() {
         {empresas.length > 0 && (
           <>
             {/* Vista de tabla para desktop */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="hidden lg:block">
+              <table className="w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
                       Empresa
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Estado
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Contactos
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">
                       Información
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Acciones
                     </th>
                   </tr>
@@ -601,22 +600,22 @@ export default function EmpresasDashboard() {
 
                     return (
                       <tr key={empresa.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10">
-                              <FaBuilding className="h-10 w-10 text-yellow-600" />
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <FaBuilding className="h-8 w-8 text-yellow-600" />
                             </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
+                            <div className="ml-3">
+                              <div className="text-sm font-medium text-gray-900 truncate max-w-[150px]">
                                 {empresa.name}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-xs text-gray-500">
                                 ID: {empresa.id}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           <span
                             className="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
                             style={{
@@ -627,28 +626,27 @@ export default function EmpresasDashboard() {
                             {statusInfo.label}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="flex items-center">
-                            <FaUsers className="text-blue-600 mr-2" />
-                            {numContactos} contacto
-                            {numContactos === 1 ? "" : "s"}
+                            <FaUsers className="text-blue-600 mr-1 text-xs" />
+                            <span className="text-xs">{numContactos}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           <div className="text-sm text-gray-900">
                             {isEditing ? (
-                              <div className="space-y-2">
+                              <div className="space-y-1">
                                 {camposMostrar.length === 0 ? (
-                                  <span className="text-gray-400 italic">
+                                  <span className="text-gray-400 italic text-xs">
                                     No hay campos editables
                                   </span>
                                 ) : (
-                                  camposMostrar.map((col) => (
+                                  camposMostrar.slice(0, 2).map((col) => (
                                     <div
                                       key={col.id}
                                       className="flex items-center space-x-2"
                                     >
-                                      <span className="font-medium text-gray-700 min-w-[120px]">
+                                      <span className="font-medium text-gray-700 text-xs min-w-[80px] truncate">
                                         {col.column?.title}:
                                       </span>
                                       <div className="flex-1">
@@ -661,51 +659,51 @@ export default function EmpresasDashboard() {
                             ) : (
                               <div className="space-y-1">
                                 {camposMostrar.length === 0 ? (
-                                  <span className="text-gray-400 italic">
+                                  <span className="text-gray-400 italic text-xs">
                                     Sin información adicional
                                   </span>
                                 ) : (
-                                  camposMostrar.slice(0, 3).map((col) => (
+                                  camposMostrar.slice(0, 2).map((col) => (
                                     <div
                                       key={col.id}
-                                      className="flex items-center space-x-2"
+                                      className="flex items-center space-x-1"
                                     >
-                                      <span className="font-medium text-gray-700 min-w-[120px]">
+                                      <span className="font-medium text-gray-700 text-xs min-w-[80px] truncate">
                                         {col.column?.title}:
                                       </span>
-                                      <span className="text-gray-900">
+                                      <span className="text-gray-900 text-xs truncate max-w-[120px]">
                                         {col.text || col.value || "-"}
                                       </span>
                                     </div>
                                   ))
                                 )}
-                                {camposMostrar.length > 3 && (
+                                {camposMostrar.length > 2 && (
                                   <button
                                     onClick={() => {
                                       setEmpresaDetalle(empresa);
                                       setShowInfoModal(true);
                                     }}
-                                    className="text-blue-600 hover:text-blue-800 text-sm"
+                                    className="text-blue-600 hover:text-blue-800 text-xs"
                                   >
-                                    Ver {camposMostrar.length - 3} campos más...
+                                    Ver {camposMostrar.length - 2} campos más...
                                   </button>
                                 )}
                               </div>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
                           {isEditing ? (
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col space-y-1">
                               <button
-                                className="btn btn-sm btn-success"
+                                className="btn btn-xs btn-success"
                                 onClick={() => handleSave(empresa)}
                                 disabled={saving}
                               >
                                 <FaCheck className="inline mr-1" /> Guardar
                               </button>
                               <button
-                                className="btn btn-sm btn-ghost"
+                                className="btn btn-xs btn-ghost"
                                 onClick={() => setEditId(null)}
                                 disabled={saving}
                               >
@@ -713,9 +711,9 @@ export default function EmpresasDashboard() {
                               </button>
                             </div>
                           ) : (
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col space-y-1">
                               <button
-                                className="btn btn-sm btn-outline"
+                                className="btn btn-xs btn-outline"
                                 onClick={() => {
                                   setEmpresaDetalle(empresa);
                                   setShowInfoModal(true);
@@ -724,13 +722,13 @@ export default function EmpresasDashboard() {
                                 Ver info
                               </button>
                               <button
-                                className="btn btn-sm btn-primary"
+                                className="btn btn-xs btn-primary"
                                 onClick={() => handleEdit(empresa)}
                               >
                                 <FaEdit className="inline mr-1" /> Editar
                               </button>
                               <button
-                                className="btn btn-sm btn-primary"
+                                className="btn btn-xs btn-primary"
                                 onClick={() => handleInviteContact(empresa)}
                               >
                                 <FaUserPlus className="inline mr-1" /> Invitar
