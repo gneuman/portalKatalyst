@@ -31,3 +31,6 @@ export async function mondayQuery(query) {
     throw error;
   }
 }
+
+// Alias para mantener compatibilidad con el código existente
+export const postMonday = mondayQuery;
