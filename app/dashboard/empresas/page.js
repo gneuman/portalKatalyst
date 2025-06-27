@@ -574,31 +574,26 @@ export default function EmpresasDashboard() {
                   </div>
                   {isEditing ? (
                     <>
-                      {(() => {
-                        console.log(
-                          "En modo edición, camposMostrar:",
-                          camposMostrar
-                        );
-                        return camposMostrar.length === 0 ? (
-                          <div className="text-gray-400 text-sm italic mb-2">
-                            No hay campos editables para esta empresa.
-                          </div>
-                        ) : null;
-                      })()}
-                      {camposMostrar.map((col) => (
-                        <div
-                          key={col.id}
-                          className="flex justify-between text-sm mb-2"
-                        >
-                          <span className="font-medium flex items-center gap-2">
-                            {ICONOS_TIPOS[col.column?.type] || (
-                              <FaBuilding className="text-gray-600" />
-                            )}
-                            {col.column?.title}:
-                          </span>
-                          {renderField(col, form[col.id], true)}
+                      {camposMostrar.length === 0 ? (
+                        <div className="text-gray-400 text-sm italic mb-2">
+                          No hay campos editables para esta empresa.
                         </div>
-                      ))}
+                      ) : (
+                        camposMostrar.map((col) => (
+                          <div
+                            key={col.id}
+                            className="flex justify-between text-sm mb-2"
+                          >
+                            <span className="font-medium flex items-center gap-2">
+                              {ICONOS_TIPOS[col.column?.type] || (
+                                <FaBuilding className="text-gray-600" />
+                              )}
+                              {col.column?.title}:
+                            </span>
+                            {renderField(col, form[col.id], true)}
+                          </div>
+                        ))
+                      )}
                       <div className="flex gap-2 mt-2">
                         <button
                           className="btn btn-success"
@@ -618,35 +613,30 @@ export default function EmpresasDashboard() {
                     </>
                   ) : (
                     <>
-                      {(() => {
-                        console.log(
-                          "En modo visualización, camposMostrar:",
-                          camposMostrar
-                        );
-                        return camposMostrar.length === 0 ? (
-                          <div className="text-gray-400 text-sm italic mb-2">
-                            No hay información relevante para mostrar.
-                          </div>
-                        ) : null;
-                      })()}
-                      {camposMostrar.map((col) => (
-                        <div
-                          key={col.id}
-                          className="flex justify-between text-sm mb-2 border-b pb-1 last:border-b-0 last:pb-0"
-                        >
-                          <span className="font-medium flex items-center gap-2">
-                            {ICONOS_TIPOS[col.column?.type] || (
-                              <FaBuilding className="text-gray-600" />
-                            )}
-                            {col.column?.title}:
-                          </span>
-                          <span>
-                            {col.text || col.value || (
-                              <span className="text-gray-300">-</span>
-                            )}
-                          </span>
+                      {camposMostrar.length === 0 ? (
+                        <div className="text-gray-400 text-sm italic mb-2">
+                          No hay información relevante para mostrar.
                         </div>
-                      ))}
+                      ) : (
+                        camposMostrar.map((col) => (
+                          <div
+                            key={col.id}
+                            className="flex justify-between text-sm mb-2 border-b pb-1 last:border-b-0 last:pb-0"
+                          >
+                            <span className="font-medium flex items-center gap-2">
+                              {ICONOS_TIPOS[col.column?.type] || (
+                                <FaBuilding className="text-gray-600" />
+                              )}
+                              {col.column?.title}:
+                            </span>
+                            <span>
+                              {col.text || col.value || (
+                                <span className="text-gray-300">-</span>
+                              )}
+                            </span>
+                          </div>
+                        ))
+                      )}
                       <div className="flex gap-2 mt-2 flex-wrap">
                         <button
                           className="btn btn-sm btn-outline min-w-[90px]"
