@@ -504,7 +504,7 @@ export default function EmpresasDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div className="w-full py-6 px-4 sm:px-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">
           Empresas
@@ -568,19 +568,19 @@ export default function EmpresasDashboard() {
               <table className="w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                       Empresa
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Estado
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/8">
                       Contactos
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
                       Información
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Acciones
                     </th>
                   </tr>
@@ -600,13 +600,13 @@ export default function EmpresasDashboard() {
 
                     return (
                       <tr key={empresa.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-4 whitespace-nowrap">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-8 w-8">
                               <FaBuilding className="h-8 w-8 text-yellow-600" />
                             </div>
                             <div className="ml-3">
-                              <div className="text-sm font-medium text-gray-900 truncate max-w-[150px]">
+                              <div className="text-sm font-medium text-gray-900 truncate max-w-[120px]">
                                 {empresa.name}
                               </div>
                               <div className="text-xs text-gray-500">
@@ -615,7 +615,7 @@ export default function EmpresasDashboard() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 py-4 whitespace-nowrap">
+                        <td className="px-2 py-4 whitespace-nowrap">
                           <span
                             className="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
                             style={{
@@ -626,13 +626,13 @@ export default function EmpresasDashboard() {
                             {statusInfo.label}
                           </span>
                         </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="flex items-center">
                             <FaUsers className="text-blue-600 mr-1 text-xs" />
                             <span className="text-xs">{numContactos}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="px-3 py-4">
                           <div className="text-sm text-gray-900">
                             {isEditing ? (
                               <div className="space-y-1">
@@ -646,7 +646,7 @@ export default function EmpresasDashboard() {
                                       key={col.id}
                                       className="flex items-center space-x-2"
                                     >
-                                      <span className="font-medium text-gray-700 text-xs min-w-[80px] truncate">
+                                      <span className="font-medium text-gray-700 text-xs min-w-[70px] truncate">
                                         {col.column?.title}:
                                       </span>
                                       <div className="flex-1">
@@ -668,10 +668,10 @@ export default function EmpresasDashboard() {
                                       key={col.id}
                                       className="flex items-center space-x-1"
                                     >
-                                      <span className="font-medium text-gray-700 text-xs min-w-[80px] truncate">
+                                      <span className="font-medium text-gray-700 text-xs min-w-[70px] truncate">
                                         {col.column?.title}:
                                       </span>
-                                      <span className="text-gray-900 text-xs truncate max-w-[120px]">
+                                      <span className="text-gray-900 text-xs truncate max-w-[100px]">
                                         {col.text || col.value || "-"}
                                       </span>
                                     </div>
@@ -692,7 +692,7 @@ export default function EmpresasDashboard() {
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-2 py-4 whitespace-nowrap text-sm font-medium">
                           {isEditing ? (
                             <div className="flex flex-col space-y-1">
                               <button
