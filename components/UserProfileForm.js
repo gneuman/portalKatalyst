@@ -164,12 +164,18 @@ export default function UserProfileForm({
 
       // Construir column_values dinámicamente
       const column_values = {};
+      const nombreCompleto =
+        `${form.nombre} ${form.apellidoPaterno} ${form.apellidoMaterno}`.trim();
+
       columns.forEach((col) => {
         if (col.title === "Nombre") column_values[col.id] = form.nombre;
         if (col.title === "Apellido Paterno")
           column_values[col.id] = form.apellidoPaterno;
         if (col.title === "Apellido Materno")
           column_values[col.id] = form.apellidoMaterno;
+        if (col.title === "Nombre Completo")
+          column_values[col.id] = nombreCompleto;
+        if (col.title === "Email") column_values[col.id] = form.email;
         if (col.title === "Teléfono")
           column_values[col.id] = {
             phone: form.telefono,
@@ -252,7 +258,7 @@ export default function UserProfileForm({
       // Actualizar MongoDB
       const userData = {
         email: form.email,
-        name: `${form.nombre} ${form.apellidoPaterno} ${form.apellidoMaterno}`.trim(),
+        name: nombreCompleto,
         firstName: form.nombre,
         lastName: form.apellidoPaterno,
         secondLastName: form.apellidoMaterno,

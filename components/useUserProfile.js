@@ -188,6 +188,7 @@ export default function useUserProfile() {
             const payload = {
               email: emailParaActualizar,
               name: nombreCompletoMonday || user.name,
+              fotoPerfil: fotoPerfilMonday || user.fotoPerfil,
             };
 
             // Si el email de Monday es diferente, actualizarlo
