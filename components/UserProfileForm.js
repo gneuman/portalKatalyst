@@ -38,6 +38,8 @@ export default function UserProfileForm({
         // 1. Obtener estructura del board de Monday.com
         const schemaRes = await fetch("/api/monday/board/structure", {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ boardId: "9010881028" }), // Board de Contactos
         });
         const schemaData = await schemaRes.json();
         const board = schemaData?.data?.boards?.[0];
@@ -464,7 +466,9 @@ export default function UserProfileForm({
         <div className="px-4 py-5 sm:p-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {mode === "personal" ? "Mi Perfil Personal" : "Actualiza tus datos"}
+              {mode === "personal"
+                ? "Mi Perfil Personal"
+                : "Actualiza tus datos"}
             </h2>
             {personalMondayId && (
               <div className="text-xs text-gray-400 mb-2">

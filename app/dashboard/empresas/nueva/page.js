@@ -94,9 +94,8 @@ export default function NuevaEmpresa() {
       try {
         console.log("[NuevaEmpresa] Obteniendo board de empresas");
 
-        // Usar el board ID de empresas directamente
-        const boardIdToUse =
-          process.env.NEXT_PUBLIC_MONDAY_BOARD_ID || "9010881028";
+        // Usar el board ID de empresas correcto
+        const boardIdToUse = "9254006168"; // Board de Empresas
         console.log("[NuevaEmpresa] Board ID a usar:", boardIdToUse);
 
         setBoardId(boardIdToUse);
