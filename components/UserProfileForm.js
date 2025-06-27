@@ -65,50 +65,49 @@ export default function UserProfileForm({
         }
 
         // 2. Obtener datos del usuario
-        const res = await fetch(`/api/auth/register`, {
-          method: "POST",
+        const res = await fetch(`/api/user/profile?email=${email}`, {
+          method: "GET",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
         });
         const data = await res.json();
         console.log("[UserProfileForm] Respuesta de backend:", data);
 
-        if (data.userData && data.userData.columnValues) {
+        if (data && data.columnValues) {
           // Si tenemos los valores de columna, mapearlos dinámicamente
-          const cv = data.userData.columnValues;
+          const cv = data.columnValues;
           setForm({
-            email: data.userData.email,
-            nombre: cv[ids.nombre] || "",
-            apellidoPaterno: cv[ids.apellidoP] || "",
-            apellidoMaterno: cv[ids.apellidoM] || "",
-            telefono: cv[ids.telefono] || "",
-            fechaNacimiento: cv[ids.fechaNacimiento] || "",
-            genero: cv[ids.genero] || "",
-            comunidad: cv[ids.status] || data.userData.community || "",
-            fotoPerfil: cv[ids.foto] || "",
+            email: data.email,
+            nombre: cv[ids.nombre] || data.firstName || "",
+            apellidoPaterno: cv[ids.apellidoP] || data.lastName || "",
+            apellidoMaterno: cv[ids.apellidoM] || data.secondLastName || "",
+            telefono: cv[ids.telefono] || data.phone || "",
+            fechaNacimiento: cv[ids.fechaNacimiento] || data.dateOfBirth || "",
+            genero: cv[ids.genero] || data.gender || "",
+            comunidad: cv[ids.status] || data.community || "",
+            fotoPerfil: cv[ids.foto] || data.fotoPerfil || "",
           });
-          setPreviewUrl(cv[ids.foto] || null);
-        } else if (data.userData) {
+          setPreviewUrl(cv[ids.foto] || data.fotoPerfil || null);
+        } else if (data) {
           // Fallback si no hay columnValues
           setForm({
-            email: data.userData.email,
-            nombre: data.userData.firstName || "",
-            apellidoPaterno: data.userData.lastName || "",
-            apellidoMaterno: data.userData.secondLastName || "",
-            telefono: data.userData.phone || "",
-            fechaNacimiento: data.userData.dateOfBirth || "",
-            genero: data.userData.gender || "",
-            comunidad: data.userData.community || "",
-            fotoPerfil: data.userData.fotoPerfil || "",
+            email: data.email,
+            nombre: data.firstName || "",
+            apellidoPaterno: data.lastName || "",
+            apellidoMaterno: data.secondLastName || "",
+            telefono: data.phone || "",
+            fechaNacimiento: data.dateOfBirth || "",
+            genero: data.gender || "",
+            comunidad: data.community || "",
+            fotoPerfil: data.fotoPerfil || "",
           });
-          setPreviewUrl(data.userData.fotoPerfil || null);
+          setPreviewUrl(data.fotoPerfil || null);
         }
 
-        if (data.userData && data.userData.personalMondayId) {
-          setPersonalMondayId(data.userData.personalMondayId);
+        if (data && data.personalMondayId) {
+          setPersonalMondayId(data.personalMondayId);
           console.log(
             "[UserProfileForm] MondayID seteado en estado:",
-            data.userData.personalMondayId
+            data.personalMondayId
           );
         } else {
           console.warn(
@@ -253,6 +252,7 @@ export default function UserProfileForm({
       // Actualizar MongoDB
       const userData = {
         email: form.email,
+        name: `${form.nombre} ${form.apellidoPaterno} ${form.apellidoMaterno}`.trim(),
         firstName: form.nombre,
         lastName: form.apellidoPaterno,
         secondLastName: form.apellidoMaterno,
@@ -266,8 +266,8 @@ export default function UserProfileForm({
       };
 
       console.log("[UserProfileForm] Datos enviados a MongoDB:", userData);
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
+      const response = await fetch("/api/user/profile", {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });

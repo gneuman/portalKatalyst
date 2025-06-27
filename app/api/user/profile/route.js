@@ -10,19 +10,67 @@ export async function GET(req) {
       status: 400,
     });
   }
-  const user = await User.findOne({ email });
-  if (!user) {
-    return new Response(JSON.stringify({ error: "Usuario no encontrado" }), {
-      status: 404,
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Usuario no encontrado" }), {
+        status: 404,
+      });
+    }
+
+    // Log para consola del servidor
+    console.log("Usuario encontrado en DB:", user);
+
+    // Si el usuario tiene personalMondayId, obtener datos de Monday.com
+    let columnValues = null;
+    if (user.personalMondayId) {
+      try {
+        const query = `query { items (ids: [${user.personalMondayId}]) { id name board { id } column_values { id text value column { id title id } } } }`;
+        const mondayRes = await fetch(
+          `${process.env.NEXTAUTH_URL}/api/monday/item`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query }),
+          }
+        );
+
+        if (mondayRes.ok) {
+          const mondayData = await mondayRes.json();
+          const item = mondayData?.data?.items?.[0];
+          if (item && item.column_values) {
+            columnValues = {};
+            item.column_values.forEach((col) => {
+              columnValues[col.id] = col.text || col.value || "";
+            });
+          }
+        }
+      } catch (mondayError) {
+        console.error("Error al obtener datos de Monday.com:", mondayError);
+        // No fallar si Monday no responde
+      }
+    }
+
+    // Respuesta para el frontend incluyendo columnValues si están disponibles
+    const response = {
+      ...user.toObject(),
+      columnValues,
+    };
+
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
     });
+  } catch (error) {
+    console.error("Error al obtener usuario:", error);
+    return new Response(
+      JSON.stringify({ error: "Error interno del servidor" }),
+      {
+        status: 500,
+      }
+    );
   }
-  // Log para consola del servidor
-  console.log("Usuario encontrado en DB:", user);
-  // Respuesta para el frontend
-  return new Response(JSON.stringify(user), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
 }
 
 export async function PUT(req) {
