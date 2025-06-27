@@ -171,10 +171,13 @@ export default function useUserProfile() {
 
       console.log("¿Debe actualizar email?", debeActualizarEmail);
       console.log("¿Debe actualizar nombre?", debeActualizarNombre);
+      console.log("Email Monday:", emailMonday);
+      console.log("Email MongoDB:", user.email);
 
+      // Siempre sincronizar el email si hay uno disponible de Monday
       if (
         !yaActualizadoRef.current &&
-        (debeActualizarNombre || debeActualizarEmail)
+        (debeActualizarNombre || debeActualizarEmail || emailMonday)
       ) {
         if (!emailParaActualizar) {
           console.warn(
@@ -186,9 +189,18 @@ export default function useUserProfile() {
               email: emailParaActualizar,
               name: nombreCompletoMonday || user.name,
             };
-            if (debeActualizarEmail) {
+
+            // Si el email de Monday es diferente, actualizarlo
+            if (emailMonday && emailMonday !== user.email) {
               payload.nuevoEmail = emailMonday;
+              console.log(
+                "[MongoDB UPDATE] Actualizando email de",
+                user.email,
+                "a",
+                emailMonday
+              );
             }
+
             console.log("[MongoDB UPDATE PAYLOAD]", payload);
             const response = await fetch(`/api/user/profile`, {
               method: "PUT",
