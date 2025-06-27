@@ -198,13 +198,13 @@ export default function UserProfileForm({
         fotoUrl = photoData.url;
       }
 
-      // Construir column_values dinámicamente
+      // Construir column_values dinámicamente - SOLO CAMPOS BÁSICOS
       const column_values = {};
       const nombreCompleto =
         `${form.nombre} ${form.apellidoPaterno} ${form.apellidoMaterno}`.trim();
 
       console.log(
-        "[UserProfileForm] Construyendo column_values para Monday.com"
+        "[UserProfileForm] Construyendo column_values para Monday.com (SOLO CAMPOS BÁSICOS)"
       );
       console.log("[UserProfileForm] Form data:", form);
       console.log("[UserProfileForm] Columns:", columns);
@@ -226,7 +226,7 @@ export default function UserProfileForm({
           `[UserProfileForm] Procesando columna: ${col.title} (ID: ${col.id}, Tipo: ${col.type})`
         );
 
-        // Solo enviar campos que tienen valor y son actualizables
+        // SOLO campos básicos de texto para evitar errores de formato
         if (col.title === "Nombre" && form.nombre && form.nombre.trim()) {
           column_values[col.id] = form.nombre.trim();
           console.log(`[UserProfileForm] Agregando Nombre: ${form.nombre}`);
@@ -257,56 +257,6 @@ export default function UserProfileForm({
             `[UserProfileForm] Agregando Nombre Completo: ${nombreCompleto}`
           );
         }
-        if (col.title === "Email" && form.email && form.email.trim()) {
-          column_values[col.id] = form.email.trim();
-          console.log(`[UserProfileForm] Agregando Email: ${form.email}`);
-        }
-        if (col.title === "Teléfono" && form.telefono && form.telefono.trim()) {
-          column_values[col.id] = {
-            phone: form.telefono.trim(),
-            countryShortName: "MX",
-          };
-          console.log(`[UserProfileForm] Agregando Teléfono: ${form.telefono}`);
-        }
-        if (
-          (col.title === "Fecha Nacimiento" ||
-            col.title === "Fecha de Nacimiento") &&
-          form.fechaNacimiento
-        ) {
-          column_values[col.id] = { date: form.fechaNacimiento };
-          console.log(
-            `[UserProfileForm] Agregando Fecha Nacimiento: ${form.fechaNacimiento}`
-          );
-        }
-        if (
-          col.title === "Género" &&
-          col.type === "dropdown" &&
-          form.genero &&
-          form.genero.trim()
-        ) {
-          column_values[col.id] = { labels: [form.genero.trim()] };
-          console.log(`[UserProfileForm] Agregando Género: ${form.genero}`);
-        }
-        if (
-          col.title === "Comunidad" &&
-          col.type === "status" &&
-          form.comunidad &&
-          form.comunidad.trim()
-        ) {
-          const labels = col.settings_str
-            ? JSON.parse(col.settings_str).labels
-            : {};
-          const index = Object.entries(labels).find(
-            ([, v]) =>
-              (typeof v === "object" ? v.name : v) === form.comunidad.trim()
-          )?.[0];
-          if (index !== undefined) {
-            column_values[col.id] = { index: parseInt(index) };
-            console.log(
-              `[UserProfileForm] Agregando Comunidad: ${form.comunidad} (index: ${index})`
-            );
-          }
-        }
         if (
           (col.title === "Foto Perfil" ||
             col.title === "Foto De Perfil" ||
@@ -317,6 +267,35 @@ export default function UserProfileForm({
           column_values[col.id] = fotoUrl.trim();
           console.log(`[UserProfileForm] Agregando Foto Perfil: ${fotoUrl}`);
         }
+
+        // TEMPORALMENTE COMENTADOS - campos complejos que pueden causar errores
+        // if (col.title === "Teléfono" && form.telefono && form.telefono.trim()) {
+        //   column_values[col.id] = {
+        //     phone: form.telefono.trim(),
+        //     countryShortName: "MX",
+        //   };
+        //   console.log(`[UserProfileForm] Agregando Teléfono: ${form.telefono}`);
+        // }
+        // if ((col.title === "Fecha Nacimiento" || col.title === "Fecha de Nacimiento") && form.fechaNacimiento) {
+        //   column_values[col.id] = { date: form.fechaNacimiento };
+        //   console.log(`[UserProfileForm] Agregando Fecha Nacimiento: ${form.fechaNacimiento}`);
+        // }
+        // if (col.title === "Género" && col.type === "dropdown" && form.genero && form.genero.trim()) {
+        //   column_values[col.id] = { labels: [form.genero.trim()] };
+        //   console.log(`[UserProfileForm] Agregando Género: ${form.genero}`);
+        // }
+        // if (col.title === "Comunidad" && col.type === "status" && form.comunidad && form.comunidad.trim()) {
+        //   const labels = col.settings_str
+        //     ? JSON.parse(col.settings_str).labels
+        //     : {};
+        //   const index = Object.entries(labels).find(
+        //     ([, v]) => (typeof v === "object" ? v.name : v) === form.comunidad.trim()
+        //   )?.[0];
+        //   if (index !== undefined) {
+        //     column_values[col.id] = { ids: [parseInt(index)] };
+        //     console.log(`[UserProfileForm] Agregando Comunidad: ${form.comunidad} (index: ${index})`);
+        //   }
+        // }
       });
 
       console.log("[UserProfileForm] Column_values final:", column_values);
