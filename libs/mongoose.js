@@ -19,9 +19,14 @@ const connectMongo = async () => {
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      bufferCommands: true,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      bufferMaxEntries: 0,
     });
     isConnected = true;
-    console.log("[MONGODB] Conexión exitosa");
+    console.log("[MONGODB] Conexión exitosa con connectMongo");
     return mongoose;
   } catch (e) {
     console.error("[MONGODB] Error de conexión:", e.message);
