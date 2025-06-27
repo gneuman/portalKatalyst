@@ -1,9 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import UserProfileForm from "@/components/UserProfileForm";
 
-export default function Page() {
+function UpdatePageContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
 
@@ -12,4 +13,12 @@ export default function Page() {
   }
 
   return <UserProfileForm email={email} mode="update" />;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <UpdatePageContent />
+    </Suspense>
+  );
 }
