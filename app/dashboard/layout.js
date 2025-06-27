@@ -108,7 +108,7 @@ export default function DashboardLayout({ children }) {
       {/* Contenedor derecho: header sticky + children */}
       <div className="flex-1 flex flex-col lg:ml-60 min-h-screen bg-white">
         {/* Header sticky dentro de la columna derecha */}
-        <div className="sticky top-0 z-30 bg-white border-b border-gray-200 flex items-center h-14 px-4 sm:px-6">
+        <div className="sticky top-0 z-30 bg-white border-b border-gray-200 flex items-center h-14 px-4 sm:px-6 pb-[10px]">
           {/* Botón hamburguesa solo en móvil */}
           <button
             className="lg:hidden mr-3 p-2 rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#233746]"

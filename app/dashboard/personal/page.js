@@ -229,18 +229,18 @@ export default function PerfilPersonal() {
       <Suspense fallback={null}>
         <PerfilPersonalToast />
       </Suspense>
-      <div className="w-full min-h-[80vh] flex flex-col items-center justify-center bg-white px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8 text-center text-[#233746] flex items-center justify-center gap-4">
+      <div className="w-full min-h-[80vh] flex flex-col items-center justify-center bg-white px-0 sm:px-0 lg:px-0">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center text-[#233746] flex items-center justify-center gap-4">
           Perfil Personal
         </h1>
-        <div className="w-full max-w-3xl bg-white rounded-xl shadow-lg p-4 sm:p-8 md:p-12 mb-6 border border-gray-100">
+        <div className="w-full p-0 mb-4">
           {loading && (
             <div className="flex justify-center items-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#233746]"></div>
             </div>
           )}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-4 mb-4">
+            <div className="bg-red-50 border border-red-200 text-red-600 rounded p-2 mb-4">
               {error}
             </div>
           )}
@@ -297,7 +297,7 @@ export default function PerfilPersonal() {
                             <div className="font-medium mb-2 text-gray-700">
                               Email
                             </div>
-                            <div className="text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                            <div className="text-gray-600 bg-gray-50 px-3 py-2 rounded">
                               {form["Email"]}
                             </div>
                           </div>
@@ -362,7 +362,7 @@ export default function PerfilPersonal() {
                         {title}
                       </div>
                       {!editMode ? (
-                        <div className="text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                        <div className="text-gray-600 bg-gray-50 px-3 py-2 rounded">
                           {form[title] || (
                             <span className="text-gray-400">-</span>
                           )}
@@ -399,81 +399,17 @@ export default function PerfilPersonal() {
                     form["foto"] ||
                     ""
                   }
-                  onUpload={async (url) => {
-                    try {
-                      console.log(
-                        "Actualizando foto en Monday.com y MongoDB..."
-                      );
-
-                      // 1. Actualizar fotoPerfil en MongoDB
-                      const mongoResponse = await fetch(`/api/user/profile`, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          email: session.user.email,
-                          fotoPerfil: url,
-                        }),
-                      });
-
-                      if (!mongoResponse.ok) {
-                        throw new Error("Error al actualizar en MongoDB");
-                      }
-
-                      // 2. Actualizar foto en Monday.com
-                      const fotoColumn = columns.find((col) =>
-                        col.title.toLowerCase().includes("foto")
-                      );
-
-                      if (fotoColumn && profile) {
-                        const columnValues = {
-                          [fotoColumn.id]: url,
-                        };
-
-                        const mutation = `mutation { 
-                          change_multiple_column_values (
-                            item_id: ${profile.id}, 
-                            board_id: ${profile.board.id}, 
-                            column_values: "${JSON.stringify(
-                              columnValues
-                            ).replace(/"/g, '\\"')}"
-                          ) { 
-                            id 
-                          } 
-                        }`;
-
-                        const mondayResponse = await fetch("/api/monday/item", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ query: mutation }),
-                        });
-
-                        if (!mondayResponse.ok) {
-                          throw new Error("Error al actualizar en Monday.com");
-                        }
-
-                        console.log(
-                          "Foto actualizada exitosamente en ambos sistemas"
-                        );
-                        toast.success("Foto actualizada correctamente");
-                      }
-
-                      // 3. Refrescar perfil
-                      profileCache.current = null;
-                      window.location.reload();
-                    } catch (error) {
-                      console.error("Error al actualizar foto:", error);
-                      toast.error(
-                        "Error al actualizar la foto: " + error.message
-                      );
-                    }
-                  }}
+                  onFileChange={setSelectedFile}
+                  previewUrl={previewUrl}
+                  setPreviewUrl={setPreviewUrl}
+                  disabled={!editMode}
                 />
               </div>
-              <div className="col-span-2 flex gap-2 mt-6 justify-end flex-wrap">
+              <div className="col-span-2 flex justify-center gap-4 mt-2">
                 {!editMode ? (
                   <button
                     type="button"
-                    className="btn btn-primary bg-[#233746] border-[#233746] hover:bg-[#f99d25] hover:border-[#f99d25] text-white w-full sm:w-auto"
+                    className="btn btn-primary btn-sm"
                     onClick={() => setEditMode(true)}
                   >
                     Editar Perfil
@@ -482,29 +418,24 @@ export default function PerfilPersonal() {
                   <>
                     <button
                       type="button"
-                      className="btn btn-success bg-[#f99d25] border-[#f99d25] text-white w-full sm:w-auto"
-                      onClick={handleSave}
-                      disabled={saving}
-                    >
-                      {saving ? "Guardando..." : "Guardar Cambios"}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost w-full sm:w-auto"
+                      className="btn btn-ghost btn-sm"
                       onClick={() => setEditMode(false)}
                       disabled={saving}
                     >
                       Cancelar
                     </button>
+                    <button
+                      type="button"
+                      className="btn btn-success btn-sm"
+                      onClick={handleSave}
+                      disabled={saving}
+                    >
+                      Guardar
+                    </button>
                   </>
                 )}
               </div>
             </form>
-          )}
-          {!loading && !profile && !error && (
-            <div className="text-center py-8 text-gray-500">
-              No se encontró información de perfil.
-            </div>
           )}
         </div>
       </div>
