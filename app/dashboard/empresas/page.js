@@ -517,19 +517,21 @@ export default function EmpresasDashboard() {
                 ? contactos.display_value.split(", ").length
                 : 0;
               // Filtrar campos a mostrar (ni como etiqueta ni como valor)
-              const camposMostrar = empresa.column_values?.filter(
-                (col) =>
-                  !["subitems", "person", "status"].includes(
-                    col.column?.type?.toLowerCase() || ""
-                  ) &&
-                  ![
-                    "Subitems",
-                    "Person",
-                    "Status",
-                    "Contactos - Digitalización:",
-                    "Contactos - Digitalización",
-                  ].includes(col.column?.title?.trim() || "")
-              );
+              const camposMostrar = Array.isArray(empresa.column_values)
+                ? empresa.column_values.filter(
+                    (col) =>
+                      !["subitems", "person", "status"].includes(
+                        col.column?.type?.toLowerCase() || ""
+                      ) &&
+                      ![
+                        "Subitems",
+                        "Person",
+                        "Status",
+                        "Contactos - Digitalización:",
+                        "Contactos - Digitalización",
+                      ].includes(col.column?.title?.trim() || "")
+                  )
+                : [];
               const isEditing = editId === empresa.id;
               return (
                 <div
