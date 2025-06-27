@@ -685,8 +685,42 @@ export default function EmpresasDashboard() {
               Detalles de {empresaDetalle.name}
             </h3>
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {empresaDetalle.column_values
-                ?.filter(
+              {Array.isArray(empresaDetalle.column_values)
+                ? empresaDetalle.column_values
+                    .filter(
+                      (col) =>
+                        !["subitems", "person", "status"].includes(
+                          col.column?.type?.toLowerCase() || ""
+                        ) &&
+                        ![
+                          "Subitems",
+                          "Person",
+                          "Status",
+                          "Contactos - Digitalización:",
+                          "Contactos - Digitalización",
+                        ].includes(col.column?.title?.trim() || "")
+                    )
+                    .map((col) => (
+                      <div
+                        key={col.id}
+                        className="flex justify-between text-sm border-b pb-1"
+                      >
+                        <span className="font-medium flex items-center gap-2">
+                          {ICONOS_TIPOS[col.column?.type] || (
+                            <FaBuilding className="text-gray-600" />
+                          )}
+                          {col.column?.title}:
+                        </span>
+                        <span>
+                          {col.text || col.value || (
+                            <span className="text-gray-300">-</span>
+                          )}
+                        </span>
+                      </div>
+                    ))
+                : []}
+              {(!Array.isArray(empresaDetalle.column_values) ||
+                empresaDetalle.column_values.filter(
                   (col) =>
                     !["subitems", "person", "status"].includes(
                       col.column?.type?.toLowerCase() || ""
@@ -698,38 +732,7 @@ export default function EmpresasDashboard() {
                       "Contactos - Digitalización:",
                       "Contactos - Digitalización",
                     ].includes(col.column?.title?.trim() || "")
-                )
-                .map((col) => (
-                  <div
-                    key={col.id}
-                    className="flex justify-between text-sm border-b pb-1"
-                  >
-                    <span className="font-medium flex items-center gap-2">
-                      {ICONOS_TIPOS[col.column?.type] || (
-                        <FaBuilding className="text-gray-600" />
-                      )}
-                      {col.column?.title}:
-                    </span>
-                    <span>
-                      {col.text || col.value || (
-                        <span className="text-gray-300">-</span>
-                      )}
-                    </span>
-                  </div>
-                ))}
-              {empresaDetalle.column_values?.filter(
-                (col) =>
-                  !["subitems", "person", "status"].includes(
-                    col.column?.type?.toLowerCase() || ""
-                  ) &&
-                  ![
-                    "Subitems",
-                    "Person",
-                    "Status",
-                    "Contactos - Digitalización:",
-                    "Contactos - Digitalización",
-                  ].includes(col.column?.title?.trim() || "")
-              ).length === 0 && (
+                ).length === 0) && (
                 <div className="text-gray-400 text-sm italic">
                   No hay información relevante para mostrar.
                 </div>
