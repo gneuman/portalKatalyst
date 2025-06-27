@@ -41,10 +41,10 @@ function getColumnValue(col, formValue) {
     case "dropdown": {
       if (col.settings_str) {
         const labels = JSON.parse(col.settings_str).labels || {};
-        const index = Object.values(labels).findIndex(
-          (label) => label === formValue
-        );
-        return index !== -1 ? { index } : null;
+        const index = Object.entries(labels).find(
+          ([, v]) => (typeof v === "object" ? v.name : v) === formValue
+        )?.[0];
+        return index !== undefined ? { index: parseInt(index) } : null;
       }
       return null;
     }
@@ -56,9 +56,13 @@ function getColumnValue(col, formValue) {
       return { number: parseFloat(formValue) };
     case "checkbox":
       return { checked: formValue === "true" };
+    case "phone":
+      return {
+        phone: formValue,
+        countryShortName: "MX",
+      };
     case "text":
     case "long_text":
-    case "phone":
     case "link":
       return String(formValue);
     default:
@@ -88,38 +92,61 @@ export default function NuevaEmpresa() {
       setLoading(true);
       setError(null);
       try {
-        // Obtener el boardId de una empresa existente del usuario
-        const res = await fetch(
-          `/api/user/profile?email=${session.user.email}`
-        );
-        const user = await res.json();
-        const ids = user.businessMondayId || [];
-        let boardIdToUse = null;
-        if (ids.length > 0) {
-          // Obtener el boardId de la primera empresa
-          const firstQuery = `query { items (ids: [${ids[0]}]) { board { id } } }`;
-          const firstRes = await fetch("/api/monday/item", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query: firstQuery }),
-          });
-          const firstData = await firstRes.json();
-          boardIdToUse = firstData?.data?.items?.[0]?.board?.id;
-        } else {
-          // Si no hay empresas, pide el board principal (ajusta el ID si es necesario)
-          boardIdToUse = process.env.NEXT_PUBLIC_DEFAULT_BOARD_ID || "";
-        }
+        console.log("[NuevaEmpresa] Obteniendo board de empresas");
+
+        // Usar el board ID de empresas directamente
+        const boardIdToUse =
+          process.env.NEXT_PUBLIC_MONDAY_BOARD_ID || "9010881028";
+        console.log("[NuevaEmpresa] Board ID a usar:", boardIdToUse);
+
         setBoardId(boardIdToUse);
+
         // Obtener columnas del board
-        const query = `query { boards(ids: [${boardIdToUse}]) { columns { id title type settings_str } } }`;
+        const query = `query { 
+          boards(ids: [${boardIdToUse}]) { 
+            id
+            name
+            columns { 
+              id 
+              title 
+              type 
+              settings_str 
+            } 
+          } 
+        }`;
+
+        console.log("[NuevaEmpresa] Query para obtener columnas:", query);
+
         const response = await fetch("/api/monday/item", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query }),
         });
+
         const data = await response.json();
-        setColumns(data?.data?.boards?.[0]?.columns || []);
+        console.log("[NuevaEmpresa] Respuesta de Monday:", data);
+
+        if (!response.ok || data.errors) {
+          throw new Error(
+            "Error al obtener estructura del board: " +
+              (data.errors?.[0]?.message || "Error desconocido")
+          );
+        }
+
+        const board = data?.data?.boards?.[0];
+        if (!board) {
+          throw new Error("No se encontró el board de empresas");
+        }
+
+        console.log("[NuevaEmpresa] Board encontrado:", board.name);
+        console.log(
+          "[NuevaEmpresa] Columnas encontradas:",
+          board.columns?.length || 0
+        );
+
+        setColumns(board.columns || []);
       } catch (e) {
+        console.error("[NuevaEmpresa] Error al obtener board:", e);
         setError(e.message);
       }
       setLoading(false);
@@ -159,6 +186,15 @@ export default function NuevaEmpresa() {
     setSaving(true);
     setError(null);
     try {
+      console.log("[NuevaEmpresa] Iniciando creación de empresa");
+      console.log("[NuevaEmpresa] Board ID:", boardId);
+      console.log("[NuevaEmpresa] Form data:", form);
+
+      // Validar que tenemos un boardId
+      if (!boardId) {
+        throw new Error("No se pudo obtener el ID del board de empresas");
+      }
+
       // Validar y construir column_values
       const columnValues = {};
       const camposMostrar = columns.filter(
@@ -169,46 +205,67 @@ export default function NuevaEmpresa() {
           ) &&
           col.id !== "board_relation_mkrcrrm"
       );
+
+      console.log("[NuevaEmpresa] Campos a procesar:", camposMostrar);
+
       camposMostrar.forEach((col) => {
-        if (["status", "dropdown"].includes(col.type)) {
-          if (col.settings_str) {
-            const labels = Object.values(
-              JSON.parse(col.settings_str).labels || {}
-            );
-            if (!labels.includes(form[col.id])) {
-              throw new Error(
-                `El valor '${form[col.id]}' no es válido para la columna '${
-                  col.title
-                }'. Opciones válidas: ${labels.join(", ")}`
-              );
-            }
-          }
-        }
         const value = getColumnValue(col, form[col.id]);
         if (value !== null) {
           columnValues[col.id] = value;
+          console.log(`[NuevaEmpresa] Agregando campo ${col.title}:`, value);
         }
       });
+
+      console.log("[NuevaEmpresa] Column values final:", columnValues);
+
       // Crear empresa en Monday
-      const mutation = `mutation { create_item (board_id: ${boardId}, item_name: "${
-        form.name || "Nueva Empresa"
-      }", column_values: ${JSON.stringify(
-        JSON.stringify(columnValues)
-      )}) { id } }`;
+      const mutation = `mutation { 
+        create_item (
+          board_id: ${boardId}, 
+          item_name: "${form.name || "Nueva Empresa"}", 
+          column_values: "${JSON.stringify(columnValues).replace(/"/g, '\\"')}"
+        ) { 
+          id 
+        } 
+      }`;
+
+      console.log("[NuevaEmpresa] Mutation:", mutation);
+
       const response = await fetch("/api/monday/item", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: mutation }),
       });
+
       const data = await response.json();
+      console.log("[NuevaEmpresa] Respuesta de Monday:", data);
+
+      if (!response.ok || data.errors) {
+        throw new Error(
+          "Error al crear empresa en Monday.com: " +
+            (data.errors?.[0]?.message || data.error || "Error desconocido")
+        );
+      }
+
       const newId = data?.data?.create_item?.id;
-      if (!newId) throw new Error("No se pudo crear la empresa en Monday");
+      if (!newId) {
+        throw new Error("No se pudo crear la empresa en Monday.com");
+      }
+
+      console.log("[NuevaEmpresa] Empresa creada con ID:", newId);
+
       // 1. Actualizar MongoDB
       const userRes = await fetch(
         `/api/user/profile?email=${session.user.email}`
       );
       const user = await userRes.json();
       const newBusinessIds = [...(user.businessMondayId || []), newId];
+
+      console.log(
+        "[NuevaEmpresa] Actualizando MongoDB con business IDs:",
+        newBusinessIds
+      );
+
       const mongoRes = await fetch(`/api/user/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -217,36 +274,57 @@ export default function NuevaEmpresa() {
           businessMondayId: newBusinessIds,
         }),
       });
+
       if (!mongoRes.ok) {
         const mongoError = await mongoRes.text();
-        console.error("MongoDB update failed:", mongoError);
-        setError(`MongoDB update failed: ${mongoError}`);
-        toast.error("No se pudo asociar la empresa al usuario en MongoDB");
-        throw new Error("MongoDB update failed: " + mongoError);
+        console.error("[NuevaEmpresa] MongoDB update failed:", mongoError);
+        throw new Error(`Error al actualizar MongoDB: ${mongoError}`);
       }
+
+      console.log("[NuevaEmpresa] MongoDB actualizado correctamente");
+
       // 2. Asociar usuario en Monday (contactos - digitalización)
       if (newId && user.personalMondayId && boardId) {
-        const mutation = `mutation { change_multiple_column_values (board_id: ${boardId}, item_id: ${newId}, column_values: "{ \\\"board_relation_mkrcrrm\\\": {\\\"item_ids\\\":[${user.personalMondayId}]} }", create_labels_if_missing: false) { id } }`;
+        console.log("[NuevaEmpresa] Asociando usuario como contacto en Monday");
+
+        const contactMutation = `mutation { 
+          change_multiple_column_values (
+            board_id: ${boardId}, 
+            item_id: ${newId}, 
+            column_values: "{ \\\"board_relation_mkrcrrm\\\": {\\\"item_ids\\\":[${user.personalMondayId}]} }", 
+            create_labels_if_missing: true
+          ) { 
+            id 
+          } 
+        }`;
+
         const mondayRes = await fetch("/api/monday/item", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: mutation }),
+          body: JSON.stringify({ query: contactMutation }),
         });
+
         if (!mondayRes.ok) {
           const mondayError = await mondayRes.text();
-          console.error("Monday contact update failed:", mondayError);
-          setError(`Monday contact update failed: ${mondayError}`);
-          toast.error("No se pudo asociar el usuario como contacto en Monday");
-          throw new Error("Monday contact update failed: " + mondayError);
+          console.error(
+            "[NuevaEmpresa] Monday contact update failed:",
+            mondayError
+          );
+          // No fallar si esto falla, solo log
+        } else {
+          console.log(
+            "[NuevaEmpresa] Usuario asociado como contacto correctamente"
+          );
         }
       }
+
       setNewEmpresaId(newId);
       setShowInviteModal(true);
-      // No redirigir aún
+      toast.success("Empresa creada correctamente");
     } catch (e) {
+      console.error("[NuevaEmpresa] Error en creación de empresa:", e);
       setError(e.message);
       toast.error(e.message);
-      console.error("Error en creación de empresa:", e);
     }
     setSaving(false);
   };
@@ -273,6 +351,12 @@ export default function NuevaEmpresa() {
 
   const renderField = (col) => {
     if (["subitems", "person"].includes(col.type)) return null;
+
+    const isRequired =
+      col.title.toLowerCase().includes("nombre") ||
+      col.title.toLowerCase().includes("name") ||
+      col.id === "name";
+
     switch (col.type) {
       case "status":
       case "dropdown":
@@ -283,6 +367,7 @@ export default function NuevaEmpresa() {
               className="input input-bordered w-full max-w-xs"
               value={form[col.id] || ""}
               onChange={(e) => handleChange(col, e.target.value)}
+              required={isRequired}
             >
               <option value="">Selecciona una opción</option>
               {Object.values(labels).map((label) => (
@@ -301,6 +386,7 @@ export default function NuevaEmpresa() {
             className="input input-bordered w-full max-w-xs"
             value={form[col.id] || ""}
             onChange={(e) => handleChange(col, e.target.value)}
+            required={isRequired}
           />
         );
       case "checkbox":
@@ -319,6 +405,8 @@ export default function NuevaEmpresa() {
             className="input input-bordered w-full max-w-xs"
             value={form[col.id] || ""}
             onChange={(e) => handleChange(col, e.target.value)}
+            required={isRequired}
+            placeholder={`Ingresa ${col.title.toLowerCase()}`}
           />
         );
       case "phone":
@@ -328,6 +416,7 @@ export default function NuevaEmpresa() {
             className="input input-bordered w-full max-w-xs"
             value={form[col.id] || ""}
             onChange={(e) => handleChange(col, e.target.value)}
+            required={isRequired}
             placeholder="Ingresa el teléfono"
           />
         );
@@ -338,6 +427,7 @@ export default function NuevaEmpresa() {
             className="input input-bordered w-full max-w-xs"
             value={form[col.id] || ""}
             onChange={(e) => handleChange(col, e.target.value)}
+            required={isRequired}
             placeholder="Ingresa la dirección"
           />
         );
@@ -348,6 +438,7 @@ export default function NuevaEmpresa() {
             className="input input-bordered w-full max-w-xs"
             value={form[col.id] || ""}
             onChange={(e) => handleChange(col, e.target.value)}
+            required={isRequired}
             placeholder="Ingresa la URL"
           />
         );
@@ -358,6 +449,7 @@ export default function NuevaEmpresa() {
             className="input input-bordered w-full max-w-xs"
             value={form[col.id] || ""}
             onChange={(e) => handleChange(col, e.target.value)}
+            required={isRequired}
             placeholder={`Ingresa ${col.title.toLowerCase()}`}
           />
         );
@@ -392,15 +484,20 @@ export default function NuevaEmpresa() {
             {camposMostrar.map((col) => (
               <div
                 key={col.id}
-                className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm mb-2 gap-2 py-1"
+                className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm mb-4 gap-3 py-2 border-b border-gray-100"
               >
-                <span className="font-medium flex items-center gap-2 min-w-[120px]">
+                <span className="font-medium flex items-center gap-2 min-w-[140px] text-gray-700">
                   {ICONOS_TIPOS[col.type] || (
                     <FaBuilding className="text-gray-600" />
                   )}
-                  {col.title}:
+                  {col.title}
+                  {(col.title.toLowerCase().includes("nombre") ||
+                    col.title.toLowerCase().includes("name") ||
+                    col.id === "name") && (
+                    <span className="text-red-500 text-xs">*</span>
+                  )}
                 </span>
-                {renderField(col)}
+                <div className="flex-1 max-w-xs">{renderField(col)}</div>
               </div>
             ))}
             <div className="flex flex-col sm:flex-row gap-2 justify-end mt-4">
