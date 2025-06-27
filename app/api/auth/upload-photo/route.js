@@ -10,6 +10,13 @@ export async function POST(request) {
     const storage = new Storage({
       projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
       credentials: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS),
+      // Configuración para evitar problemas en Vercel
+      retryOptions: {
+        retryDelayMultiplier: 1,
+        maxRetryDelay: 2000,
+        totalTimeout: 60000,
+        maxRetries: 3,
+      },
     });
 
     console.log("Obteniendo bucket...");
@@ -59,7 +66,7 @@ export async function POST(request) {
     // Generar nombre único para el archivo
     const sanitizedName = file.name.replace(/\s+/g, "-").toLowerCase();
     const fileName = `${Date.now()}-${sanitizedName}`;
-    console.log("Nombre del archivo generado :", fileName);
+    console.log("Nombre del archivo generado:", fileName);
 
     // Subir el archivo a Google Cloud Storage
     console.log("Iniciando subida a Google Cloud Storage...");
@@ -71,6 +78,9 @@ export async function POST(request) {
         metadata: {
           contentType: file.type,
         },
+        // Configuración para evitar problemas de AbortSignal
+        resumable: false,
+        timeout: 60000,
       });
 
       console.log("Archivo guardado exitosamente");
