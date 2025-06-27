@@ -1,9 +1,22 @@
 import { NextResponse } from "next/server";
+import { Storage } from "@google-cloud/storage";
 
 export async function POST(request) {
   console.log("=== INICIO DE UPLOAD PHOTO ===");
 
   try {
+    // Inicializar el cliente de Google Cloud Storage
+    console.log("Inicializando Storage...");
+    const storage = new Storage({
+      projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+      credentials: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS),
+    });
+
+    console.log("Obteniendo bucket...");
+    const bucket = storage.bucket(
+      process.env.GOOGLE_CLOUD_BUCKET_PROFILE_PHOTOS
+    );
+
     console.log("Procesando formData...");
     const formData = await request.formData();
     const file = formData.get("file");
@@ -48,59 +61,36 @@ export async function POST(request) {
     const fileName = `${Date.now()}-${sanitizedName}`;
     console.log("Nombre del archivo generado:", fileName);
 
-    // Verificar variables de entorno
-    const bucketName = process.env.GOOGLE_CLOUD_BUCKET_PROFILE_PHOTOS;
-    const credentials = JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS);
+    // Subir el archivo a Google Cloud Storage
+    console.log("Iniciando subida a Google Cloud Storage...");
+    const blob = bucket.file(fileName);
 
-    if (!bucketName) {
-      throw new Error(
-        "GOOGLE_CLOUD_BUCKET_PROFILE_PHOTOS no está definida en las variables de entorno"
+    try {
+      console.log("Guardando archivo...");
+      await blob.save(buffer, {
+        metadata: {
+          contentType: file.type,
+        },
+      });
+
+      console.log("Archivo guardado exitosamente");
+      const url = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+      console.log("URL generada:", url);
+
+      return NextResponse.json({
+        success: true,
+        url: url,
+      });
+    } catch (uploadError) {
+      console.error("Error al subir archivo:", uploadError);
+      return NextResponse.json(
+        {
+          error: "Error al subir el archivo",
+          details: uploadError.message,
+        },
+        { status: 500 }
       );
     }
-    if (!credentials) {
-      throw new Error(
-        "GOOGLE_CLOUD_CREDENTIALS no está definida o es inválida"
-      );
-    }
-
-    // NOTA: Necesitas un access_token válido. Si tus credenciales son de tipo service_account, deberás generar el token OAuth2 antes de usar este método en producción.
-    // Aquí asumimos que tienes un access_token válido en las credenciales.
-    const accessToken = credentials.access_token || credentials.token;
-    if (!accessToken) {
-      throw new Error(
-        "No se encontró access_token en las credenciales. Debes generar un access_token válido para Google Cloud Storage."
-      );
-    }
-
-    // Subida directa usando fetch
-    const uploadUrl = `https://storage.googleapis.com/upload/storage/v1/b/${bucketName}/o?name=${fileName}&uploadType=media`;
-    console.log("Subiendo archivo usando fetch directo a:", uploadUrl);
-
-    const response = await fetch(uploadUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": file.type,
-        "Content-Length": buffer.length.toString(),
-      },
-      body: buffer,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Error en respuesta de Google Storage:", errorText);
-      throw new Error(
-        `Error de Google Storage: ${response.status} ${errorText}`
-      );
-    }
-
-    const url = `https://storage.googleapis.com/${bucketName}/${fileName}`;
-    console.log("URL generada:", url);
-
-    return NextResponse.json({
-      success: true,
-      url: url,
-    });
   } catch (error) {
     console.error("Error general en upload-photo:", error);
     return NextResponse.json(
