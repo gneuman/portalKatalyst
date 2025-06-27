@@ -49,170 +49,60 @@ export async function POST(request) {
     console.log("Nombre del archivo generado:", fileName);
 
     // Verificar variables de entorno
-    console.log("=== VERIFICACIÓN DE VARIABLES DE ENTORNO ===");
-    console.log(
-      "GOOGLE_CLOUD_BUCKET_PROFILE_PHOTOS:",
-      process.env.GOOGLE_CLOUD_BUCKET_PROFILE_PHOTOS
-        ? "✅ Definida"
-        : "❌ No definida"
-    );
-    console.log(
-      "GOOGLE_CLOUD_PROJECT_ID:",
-      process.env.GOOGLE_CLOUD_PROJECT_ID ? "✅ Definida" : "❌ No definida"
-    );
-    console.log(
-      "GOOGLE_CLOUD_CREDENTIALS:",
-      process.env.GOOGLE_CLOUD_CREDENTIALS ? "✅ Definida" : "❌ No definida"
-    );
+    const bucketName = process.env.GOOGLE_CLOUD_BUCKET_PROFILE_PHOTOS;
+    const credentials = JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS);
 
-    if (!process.env.GOOGLE_CLOUD_BUCKET_PROFILE_PHOTOS) {
+    if (!bucketName) {
       throw new Error(
         "GOOGLE_CLOUD_BUCKET_PROFILE_PHOTOS no está definida en las variables de entorno"
       );
     }
-
-    if (!process.env.GOOGLE_CLOUD_PROJECT_ID) {
+    if (!credentials) {
       throw new Error(
-        "GOOGLE_CLOUD_PROJECT_ID no está definida en las variables de entorno"
+        "GOOGLE_CLOUD_CREDENTIALS no está definida o es inválida"
       );
     }
 
-    if (!process.env.GOOGLE_CLOUD_CREDENTIALS) {
+    // NOTA: Necesitas un access_token válido. Si tus credenciales son de tipo service_account, deberás generar el token OAuth2 antes de usar este método en producción.
+    // Aquí asumimos que tienes un access_token válido en las credenciales.
+    const accessToken = credentials.access_token || credentials.token;
+    if (!accessToken) {
       throw new Error(
-        "GOOGLE_CLOUD_CREDENTIALS no está definida en las variables de entorno"
+        "No se encontró access_token en las credenciales. Debes generar un access_token válido para Google Cloud Storage."
       );
     }
 
-    // Verificar formato de credenciales
-    console.log("=== VERIFICACIÓN DE CREDENCIALES ===");
-    let credentials;
-    try {
-      credentials = JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS);
-      console.log("✅ Credenciales parseadas correctamente");
-      console.log("Tipo de credencial:", credentials.type);
-      console.log("Project ID en credenciales:", credentials.project_id);
-      console.log("Client email:", credentials.client_email);
-      console.log(
-        "¿Tiene private_key?:",
-        credentials.private_key ? "✅ Sí" : "❌ No"
-      );
-    } catch (parseError) {
-      console.error("❌ Error al parsear credenciales:", parseError.message);
+    // Subida directa usando fetch
+    const uploadUrl = `https://storage.googleapis.com/upload/storage/v1/b/${bucketName}/o?name=${fileName}&uploadType=media`;
+    console.log("Subiendo archivo usando fetch directo a:", uploadUrl);
+
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": file.type,
+        "Content-Length": buffer.length.toString(),
+      },
+      body: buffer,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Error en respuesta de Google Storage:", errorText);
       throw new Error(
-        "Las credenciales de Google Cloud no tienen un formato JSON válido"
+        `Error de Google Storage: ${response.status} ${errorText}`
       );
     }
 
-    // Usar la librería oficial de Google Cloud Storage
-    console.log("=== INICIANDO GOOGLE CLOUD STORAGE ===");
-    console.log("Iniciando subida con Google Cloud Storage...");
+    const url = `https://storage.googleapis.com/${bucketName}/${fileName}`;
+    console.log("URL generada:", url);
 
-    const bucketName = process.env.GOOGLE_CLOUD_BUCKET_PROFILE_PHOTOS;
-
-    try {
-      console.log("Importando librería de Google Cloud Storage...");
-      const { Storage } = await import("@google-cloud/storage");
-
-      console.log("Creando instancia de Storage...");
-      const storage = new Storage({
-        projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-        credentials: credentials,
-      });
-
-      console.log("✅ Instancia de Storage creada exitosamente");
-      console.log("Verificando bucket:", bucketName);
-
-      console.log("Creando bucket y blob...");
-      const bucket = storage.bucket(bucketName);
-
-      // Verificar si el bucket existe
-      const [exists] = await bucket.exists();
-      if (!exists) {
-        throw new Error(
-          `El bucket '${bucketName}' no existe o no tienes permisos para acceder a él`
-        );
-      }
-      console.log("✅ Bucket existe y es accesible");
-
-      const blob = bucket.file(fileName);
-      console.log("✅ Blob creado:", fileName);
-
-      console.log("Subiendo archivo...");
-      await blob.save(buffer, {
-        metadata: {
-          contentType: file.type,
-        },
-        resumable: false,
-      });
-      console.log("✅ Archivo subido exitosamente");
-
-      // Nota: No se puede usar makePublic() cuando Uniform Bucket-Level Access está habilitado
-      // Los permisos se manejan a nivel de bucket, no de objeto individual
-      console.log(
-        "ℹ️ Uniform Bucket-Level Access está habilitado - los permisos se manejan a nivel de bucket"
-      );
-
-      const url = `https://storage.googleapis.com/${bucketName}/${fileName}`;
-      console.log("URL generada:", url);
-
-      return NextResponse.json({
-        success: true,
-        url: url,
-      });
-    } catch (uploadError) {
-      console.error("=== ERROR DETALLADO DE UPLOAD ===");
-      console.error("Tipo de error:", uploadError.constructor.name);
-      console.error("Mensaje de error:", uploadError.message);
-      console.error("Stack trace:", uploadError.stack);
-
-      // Verificar si es un error de autenticación
-      if (
-        uploadError.message.includes("401") ||
-        uploadError.message.includes("Unauthorized")
-      ) {
-        console.error(
-          "❌ ERROR DE AUTENTICACIÓN: Las credenciales no son válidas o han expirado"
-        );
-        console.error(
-          "Verifica que las credenciales de servicio tengan los permisos correctos"
-        );
-      }
-
-      if (
-        uploadError.message.includes("403") ||
-        uploadError.message.includes("Forbidden")
-      ) {
-        console.error(
-          "❌ ERROR DE PERMISOS: No tienes permisos para acceder al bucket o subir archivos"
-        );
-        console.error(
-          "Verifica que la cuenta de servicio tenga el rol 'Storage Object Admin'"
-        );
-      }
-
-      if (
-        uploadError.message.includes("404") ||
-        uploadError.message.includes("Not Found")
-      ) {
-        console.error(
-          "❌ ERROR DE BUCKET: El bucket no existe o no es accesible"
-        );
-      }
-
-      return NextResponse.json(
-        {
-          error: "Error al subir el archivo",
-          details: uploadError.message,
-        },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json({
+      success: true,
+      url: url,
+    });
   } catch (error) {
-    console.error("=== ERROR GENERAL ===");
-    console.error("Tipo de error:", error.constructor.name);
-    console.error("Mensaje de error:", error.message);
-    console.error("Stack trace:", error.stack);
-
+    console.error("Error general en upload-photo:", error);
     return NextResponse.json(
       {
         error: "Error al procesar la solicitud",
