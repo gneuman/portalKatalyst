@@ -226,18 +226,27 @@ export default function UserProfileForm({
           `[UserProfileForm] Procesando columna: ${col.title} (ID: ${col.id}, Tipo: ${col.type})`
         );
 
-        if (col.title === "Nombre" && form.nombre) {
-          column_values[col.id] = form.nombre;
+        // Solo enviar campos que tienen valor y son actualizables
+        if (col.title === "Nombre" && form.nombre && form.nombre.trim()) {
+          column_values[col.id] = form.nombre.trim();
           console.log(`[UserProfileForm] Agregando Nombre: ${form.nombre}`);
         }
-        if (col.title === "Apellido Paterno" && form.apellidoPaterno) {
-          column_values[col.id] = form.apellidoPaterno;
+        if (
+          col.title === "Apellido Paterno" &&
+          form.apellidoPaterno &&
+          form.apellidoPaterno.trim()
+        ) {
+          column_values[col.id] = form.apellidoPaterno.trim();
           console.log(
             `[UserProfileForm] Agregando Apellido Paterno: ${form.apellidoPaterno}`
           );
         }
-        if (col.title === "Apellido Materno" && form.apellidoMaterno) {
-          column_values[col.id] = form.apellidoMaterno;
+        if (
+          col.title === "Apellido Materno" &&
+          form.apellidoMaterno &&
+          form.apellidoMaterno.trim()
+        ) {
+          column_values[col.id] = form.apellidoMaterno.trim();
           console.log(
             `[UserProfileForm] Agregando Apellido Materno: ${form.apellidoMaterno}`
           );
@@ -248,13 +257,13 @@ export default function UserProfileForm({
             `[UserProfileForm] Agregando Nombre Completo: ${nombreCompleto}`
           );
         }
-        if (col.title === "Email" && form.email) {
-          column_values[col.id] = form.email;
+        if (col.title === "Email" && form.email && form.email.trim()) {
+          column_values[col.id] = form.email.trim();
           console.log(`[UserProfileForm] Agregando Email: ${form.email}`);
         }
-        if (col.title === "Teléfono" && form.telefono) {
+        if (col.title === "Teléfono" && form.telefono && form.telefono.trim()) {
           column_values[col.id] = {
-            phone: form.telefono,
+            phone: form.telefono.trim(),
             countryShortName: "MX",
           };
           console.log(`[UserProfileForm] Agregando Teléfono: ${form.telefono}`);
@@ -269,20 +278,27 @@ export default function UserProfileForm({
             `[UserProfileForm] Agregando Fecha Nacimiento: ${form.fechaNacimiento}`
           );
         }
-        if (col.title === "Género" && col.type === "dropdown" && form.genero) {
-          column_values[col.id] = { labels: [form.genero] };
+        if (
+          col.title === "Género" &&
+          col.type === "dropdown" &&
+          form.genero &&
+          form.genero.trim()
+        ) {
+          column_values[col.id] = { labels: [form.genero.trim()] };
           console.log(`[UserProfileForm] Agregando Género: ${form.genero}`);
         }
         if (
           col.title === "Comunidad" &&
           col.type === "status" &&
-          form.comunidad
+          form.comunidad &&
+          form.comunidad.trim()
         ) {
           const labels = col.settings_str
             ? JSON.parse(col.settings_str).labels
             : {};
           const index = Object.entries(labels).find(
-            ([, v]) => (typeof v === "object" ? v.name : v) === form.comunidad
+            ([, v]) =>
+              (typeof v === "object" ? v.name : v) === form.comunidad.trim()
           )?.[0];
           if (index !== undefined) {
             column_values[col.id] = { index: parseInt(index) };
@@ -295,9 +311,10 @@ export default function UserProfileForm({
           (col.title === "Foto Perfil" ||
             col.title === "Foto De Perfil" ||
             col.title === "Foto de perfil") &&
-          fotoUrl
+          fotoUrl &&
+          fotoUrl.trim()
         ) {
-          column_values[col.id] = fotoUrl;
+          column_values[col.id] = fotoUrl.trim();
           console.log(`[UserProfileForm] Agregando Foto Perfil: ${fotoUrl}`);
         }
       });
@@ -314,52 +331,56 @@ export default function UserProfileForm({
         );
       });
 
-      // Usar el MondayID ya cargado
-      let board_id = process.env.NEXT_PUBLIC_MONDAY_BOARD_ID;
-      console.log(
-        "[UserProfileForm] MondayID usado para update:",
-        personalMondayId
-      );
-      console.log("[UserProfileForm] board_id usado para update:", board_id);
-      console.log(
-        "[UserProfileForm] column_values enviados a Monday:",
-        column_values
-      );
-
-      if (!personalMondayId || !board_id)
-        throw new Error("No se encontró el ID de Monday.com para actualizar");
-
-      // Mutation a Monday.com
-      const mutation = {
-        query: `mutation { 
-          change_multiple_column_values (
-            board_id: ${board_id}, 
-            item_id: ${personalMondayId}, 
-            column_values: "${JSON.stringify(column_values).replace(
-              /"/g,
-              '\\"'
-            )}",
-            create_labels_if_missing: false
-          ) { 
-            id 
-          } 
-        }`,
-      };
-
-      console.log("[UserProfileForm] Mutation a enviar:", mutation.query);
-
-      const mondayRes = await fetch("/api/monday/item", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mutation),
-      });
-      const mondayData = await mondayRes.json();
-      console.log("[UserProfileForm] Respuesta de Monday.com:", mondayData);
-      if (!mondayRes.ok || mondayData.errors) {
-        throw new Error(
-          "Error al actualizar datos en Monday.com: " +
-            (mondayData.errors?.[0]?.message || "")
+      // Verificar que hay columnas para actualizar
+      if (Object.keys(column_values).length === 0) {
+        console.log(
+          "[UserProfileForm] No hay columnas para actualizar en Monday.com"
         );
+        // Continuar solo con la actualización de MongoDB
+      } else {
+        // Usar el MondayID ya cargado
+        let board_id = process.env.NEXT_PUBLIC_MONDAY_BOARD_ID;
+        console.log(
+          "[UserProfileForm] MondayID usado para update:",
+          personalMondayId
+        );
+        console.log("[UserProfileForm] board_id usado para update:", board_id);
+
+        if (!personalMondayId || !board_id)
+          throw new Error("No se encontró el ID de Monday.com para actualizar");
+
+        // Mutation a Monday.com
+        const mutation = {
+          query: `mutation { 
+            change_multiple_column_values (
+              board_id: ${board_id}, 
+              item_id: ${personalMondayId}, 
+              column_values: "${JSON.stringify(column_values).replace(
+                /"/g,
+                '\\"'
+              )}",
+              create_labels_if_missing: false
+            ) { 
+              id 
+            } 
+          }`,
+        };
+
+        console.log("[UserProfileForm] Mutation a enviar:", mutation.query);
+
+        const mondayRes = await fetch("/api/monday/item", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(mutation),
+        });
+        const mondayData = await mondayRes.json();
+        console.log("[UserProfileForm] Respuesta de Monday.com:", mondayData);
+        if (!mondayRes.ok || mondayData.errors) {
+          throw new Error(
+            "Error al actualizar datos en Monday.com: " +
+              (mondayData.errors?.[0]?.message || "")
+          );
+        }
       }
 
       // Actualizar MongoDB
@@ -474,25 +495,39 @@ export default function UserProfileForm({
             </label>
             <div className="relative w-32 h-32 mb-4">
               {previewUrl && previewUrl !== "" ? (
-                <Image
-                  src={previewUrl}
-                  alt="Preview"
-                  fill
-                  className="rounded-full object-cover"
-                  onError={(e) => {
-                    console.error(
-                      "[UserProfileForm] Error cargando imagen:",
-                      previewUrl
-                    );
-                    e.target.style.display = "none";
-                  }}
-                  onLoad={() => {
-                    console.log(
-                      "[UserProfileForm] Imagen cargada exitosamente:",
-                      previewUrl
-                    );
-                  }}
-                />
+                <div className="relative w-full h-full">
+                  <Image
+                    src={previewUrl}
+                    alt="Preview"
+                    fill
+                    className="rounded-full object-cover"
+                    onError={(e) => {
+                      console.error(
+                        "[UserProfileForm] Error cargando imagen:",
+                        previewUrl
+                      );
+                      // Ocultar la imagen y mostrar placeholder
+                      e.target.style.display = "none";
+                      const parent = e.target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div class="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                            </svg>
+                          </div>
+                        `;
+                      }
+                    }}
+                    onLoad={() => {
+                      console.log(
+                        "[UserProfileForm] Imagen cargada exitosamente:",
+                        previewUrl
+                      );
+                    }}
+                    unoptimized={true} // Evitar optimización de Next.js para URLs externas
+                  />
+                </div>
               ) : (
                 <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
                   <svg
