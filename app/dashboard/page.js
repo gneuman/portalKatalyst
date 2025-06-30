@@ -2,8 +2,22 @@
 import { FaBuilding, FaUser, FaBook, FaClock } from "react-icons/fa";
 import CardGrid from "@/components/dashboard/CardGrid";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Dashboard() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/api/auth/signin");
+    }
+  }, [status, router]);
+
+  if (status === "loading") return <div>Cargando...</div>;
+
   // KPIs de ejemplo (puedes conectar estos valores a tu backend o lógica real)
   const kpis = [
     {
