@@ -213,7 +213,7 @@ function RegisterForm() {
         throw new Error("La foto de perfil es obligatoria");
       }
 
-      // 2. Crear payload para el registro (que incluye creación en Monday.com)
+      // 2. Crear payload para el registro
       const userPayload = {
         name: form.nombreCompleto,
         firstName: form.nombre,
@@ -230,35 +230,68 @@ function RegisterForm() {
 
       console.log("Datos a enviar:", JSON.stringify(userPayload, null, 2));
 
-      // 3. Llamar al endpoint de registro que maneja Monday.com y MongoDB
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userPayload),
-      });
+      // 3. Verificar si ya existe un record básico en MongoDB
+      const checkResponse = await fetch(
+        `/api/user/profile?email=${encodeURIComponent(form.email)}`
+      );
 
-      const data = await response.json();
+      if (checkResponse.ok) {
+        // Si existe, usar el endpoint de completar registro
+        console.log("Usuario existe en MongoDB, completando registro...");
+        const response = await fetch("/api/auth/complete-registration", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(userPayload),
+        });
 
-      if (!response.ok) {
-        throw new Error(data.error || "Error al registrar usuario");
-      }
+        const data = await response.json();
 
-      if (data.redirect) {
-        // Si la actualización fue exitosa, redirigir a verificación
-        window.location.href = data.redirect;
-        return;
-      }
-
-      if (data.success) {
-        toast.success(data.message || "Usuario registrado exitosamente");
-        if (data.personalMondayId) {
-          console.log("Usuario creado con Monday ID:", data.personalMondayId);
+        if (!response.ok) {
+          throw new Error(data.error || "Error al completar registro");
         }
-        // Redirigir a la página de verificación
-        window.location.href = `/auth/verify-request?email=${encodeURIComponent(
-          form.email
-        )}`;
-        return;
+
+        if (data.success) {
+          toast.success(data.message || "Registro completado exitosamente");
+          // Redirigir a la página de verificación
+          window.location.href = `/auth/verify-request?email=${encodeURIComponent(
+            form.email
+          )}`;
+          return;
+        }
+      } else {
+        // Si no existe, usar el endpoint de registro inicial
+        console.log(
+          "Usuario no existe en MongoDB, creando registro inicial..."
+        );
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(userPayload),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Error al registrar usuario");
+        }
+
+        if (data.redirect) {
+          // Si la actualización fue exitosa, redirigir a verificación
+          window.location.href = data.redirect;
+          return;
+        }
+
+        if (data.success) {
+          toast.success(data.message || "Usuario registrado exitosamente");
+          if (data.personalMondayId) {
+            console.log("Usuario creado con Monday ID:", data.personalMondayId);
+          }
+          // Redirigir a la página de verificación
+          window.location.href = `/auth/verify-request?email=${encodeURIComponent(
+            form.email
+          )}`;
+          return;
+        }
       }
 
       setShowFullForm(false);
