@@ -1,10 +1,8 @@
 const MONDAY_API_URL = "https://api.monday.com/v2";
 
 export async function mondayQuery(query) {
-  console.log("=== INICIO DE LLAMADA A MONDAY API ===");
-  console.log("Query a ejecutar:", query);
-  console.log("MONDAY_API_KEY configurado:", !!process.env.MONDAY_API_KEY);
-  console.log("MONDAY_API_KEY length:", process.env.MONDAY_API_KEY?.length);
+  // console.log("=== INICIO DE LLAMADA A MONDAY API ===");
+  // console.log("Query a ejecutar:", query);
 
   try {
     const res = await fetch(MONDAY_API_URL, {
@@ -16,33 +14,16 @@ export async function mondayQuery(query) {
       body: JSON.stringify({ query }),
     });
 
-    console.log("Status de la respuesta:", res.status);
-    console.log(
-      "Headers de la respuesta:",
-      Object.fromEntries(res.headers.entries())
-    );
+    // console.log("Status de la respuesta:", res.status);
 
     if (!res.ok) {
-      const errorText = await res.text();
-      console.error("Error response text:", errorText);
-      throw new Error(`HTTP error! status: ${res.status}, body: ${errorText}`);
+      throw new Error(`HTTP error! status: ${res.status}`);
     }
 
-    // Intentar leer la respuesta como texto primero
-    const responseText = await res.text();
-    console.log("Respuesta raw de Monday:", responseText);
+    const data = await res.json();
 
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error("Error al parsear JSON:", parseError);
-      console.error("Respuesta que causó el error:", responseText);
-      throw new Error(`Error al parsear JSON: ${parseError.message}`);
-    }
-
-    console.log("Respuesta parseada de Monday:", data);
-    console.log("=== FIN DE LLAMADA A MONDAY API ===");
+    // console.log("Respuesta de Monday:", data);
+    // console.log("=== FIN DE LLAMADA A MONDAY API ===");
 
     return data;
   } catch (error) {

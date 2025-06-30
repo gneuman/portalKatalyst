@@ -90,43 +90,43 @@ function RegisterForm() {
 
     checkUser();
 
-    // Ya no necesitamos obtener la estructura del board aquí porque el backend lo maneja
-    // const fetchBoardSchema = async () => {
-    //   try {
-    //     const res = await fetch("/api/monday/board/structure", {
-    //       method: "POST",
-    //     });
-    //     const data = await res.json();
-    //     const board = data?.data?.boards?.[0];
-    //     if (board?.columns) {
-    //       setColumns(board.columns);
-    //       // Mapea los títulos a IDs
-    //       const ids = {};
-    //       board.columns.forEach((col) => {
-    //         if (col.title === "Nombre") ids.nombre = col.id;
-    //         if (col.title === "Apellido Paterno") ids.apellidoP = col.id;
-    //         if (col.title === "Apellido Materno") ids.apellidoM = col.id;
-    //         if (
-    //           col.title === "Fecha Nacimiento" ||
-    //           col.title === "Fecha de Nacimiento"
-    //         )
-    //           ids.fechaNacimiento = col.id;
-    //         if (col.title === "Género") ids.genero = col.id;
-    //         if (col.title === "Comunidad") ids.comunidad = col.id;
-    //         if (col.title === "Teléfono") ids.telefono = col.id;
-    //         if (col.title === "Email") ids.email = col.id;
-    //         if (col.title === "Foto Perfil" || col.title === "Foto de perfil")
-    //           ids.foto = col.id;
-    //         if (col.type === "color") ids.status = col.id;
-    //       });
-    //       setColIds(ids);
-    //     }
-    //   } catch (error) {
-    //     console.error("Error al obtener estructura:", error);
-    //     setError("Error al cargar la estructura del formulario");
-    //   }
-    // };
-    // fetchBoardSchema();
+    // Obtener estructura del board de Monday.com
+    const fetchBoardSchema = async () => {
+      try {
+        const res = await fetch("/api/monday/board/structure", {
+          method: "POST",
+        });
+        const data = await res.json();
+        const board = data?.data?.boards?.[0];
+        if (board?.columns) {
+          setColumns(board.columns);
+          // Mapea los títulos a IDs
+          const ids = {};
+          board.columns.forEach((col) => {
+            if (col.title === "Nombre") ids.nombre = col.id;
+            if (col.title === "Apellido Paterno") ids.apellidoP = col.id;
+            if (col.title === "Apellido Materno") ids.apellidoM = col.id;
+            if (
+              col.title === "Fecha Nacimiento" ||
+              col.title === "Fecha de Nacimiento"
+            )
+              ids.fechaNacimiento = col.id;
+            if (col.title === "Género") ids.genero = col.id;
+            if (col.title === "Comunidad") ids.comunidad = col.id;
+            if (col.title === "Teléfono") ids.telefono = col.id;
+            if (col.title === "Email") ids.email = col.id;
+            if (col.title === "Foto Perfil" || col.title === "Foto de perfil")
+              ids.foto = col.id;
+            if (col.type === "color") ids.status = col.id;
+          });
+          setColIds(ids);
+        }
+      } catch (error) {
+        console.error("Error al obtener estructura:", error);
+        setError("Error al cargar la estructura del formulario");
+      }
+    };
+    fetchBoardSchema();
   }, [email, router]);
 
   useEffect(() => {
