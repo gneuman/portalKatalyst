@@ -1,38 +1,29 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/libs/mongodb";
-import User from "@/models/User";
+import User from "@/app/models/User";
 
-export async function GET(request, { searchParams }) {
+export async function GET(request) {
   try {
+    await connectDB();
+    const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
-
     if (!email) {
+      return NextResponse.json({ error: "Email requerido" }, { status: 400 });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
       return NextResponse.json(
-        { error: "Email es requerido" },
-        { status: 400 }
+        { error: "Usuario no encontrado" },
+        { status: 404 }
       );
     }
-
-    await connectDB();
-
-    const user = await User.findOne({ email });
-
+    // Bypass: devolver usuario y redirigir a dashboard
     return NextResponse.json({
-      exists: !!user,
-      user: user
-        ? {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            emailVerified: user.emailVerified,
-          }
-        : null,
+      success: true,
+      user,
+      redirect: "/dashboard",
     });
   } catch (error) {
-    console.error("Error al verificar usuario:", error);
-    return NextResponse.json(
-      { error: "Error al verificar usuario" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
