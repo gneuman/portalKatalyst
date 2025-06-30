@@ -24,32 +24,7 @@ export async function POST(request) {
     await connectDB();
     const existingUser = await User.findOne({ email });
 
-    if (existingUser) {
-      console.log("Usuario encontrado en MongoDB:", existingUser._id);
-
-      // Si existe en MongoDB, enviar correo de verificación
-      await resend.contacts.create({
-        email: email,
-        firstName:
-          existingUser.firstName || existingUser.name?.split(" ")[0] || "",
-        lastName:
-          existingUser.lastName ||
-          existingUser.name?.split(" ").slice(1).join(" ") ||
-          "",
-        unsubscribed: false,
-        audienceId: RESEND_AUDIENCE_ID,
-      });
-      console.log("[Resend] Contacto agregado a la audiencia Katalyst:", email);
-
-      return NextResponse.json({
-        redirect: `/auth/verify-request?email=${encodeURIComponent(email)}`,
-        message: "Usuario ya existe, redirigiendo a verificación",
-      });
-    }
-
-    console.log("Usuario no encontrado en MongoDB, buscando en Monday.com");
-
-    // 2. SI NO EXISTE EN MONGODB, BUSCAR EN MONDAY.COM
+    // 2. SIEMPRE BUSCAR EN MONDAY.COM PARA OBTENER/ACTUALIZAR MONDAY ID
     const boardId = process.env.MONDAY_BOARD_ID;
     console.log("=== BUSCANDO EN MONDAY.COM ===");
     console.log("Board ID:", boardId);
@@ -206,8 +181,18 @@ export async function POST(request) {
         (key) => columnValues[key] && key.toLowerCase().includes("foto")
       );
 
-      // Crear usuario en MongoDB con datos de Monday
-      const mongoUser = {
+      // Verificar si tiene nombre completo
+      const tieneNombre =
+        nombreCol &&
+        columnValues[nombreCol] &&
+        columnValues[nombreCol].trim() !== "";
+      const tieneApellido =
+        apellidoPCol &&
+        columnValues[apellidoPCol] &&
+        columnValues[apellidoPCol].trim() !== "";
+
+      // Preparar datos para MongoDB
+      const mongoData = {
         email,
         name: mondayUser.name,
         firstName: nombreCol
@@ -229,21 +214,71 @@ export async function POST(request) {
         updatedAt: new Date(),
       };
 
-      await User.create(mongoUser);
-      console.log(
-        "[MongoDB] Usuario creado con datos de Monday:",
-        mongoUser._id
-      );
+      if (existingUser) {
+        // 3.1 SI EXISTE EN MONGODB, ACTUALIZAR CON DATOS DE MONDAY
+        console.log(
+          "Usuario existe en MongoDB, actualizando con datos de Monday"
+        );
+
+        // Actualizar solo los campos que vienen de Monday
+        const updateFields = {
+          personalMondayId: mongoData.personalMondayId,
+          name: mongoData.name,
+          firstName: mongoData.firstName,
+          lastName: mongoData.lastName,
+          secondLastName: mongoData.secondLastName,
+          phone: mongoData.phone,
+          dateOfBirth: mongoData.dateOfBirth,
+          gender: mongoData.gender,
+          community: mongoData.community,
+          fotoPerfil: mongoData.fotoPerfil,
+          updatedAt: new Date(),
+        };
+
+        // Solo incluir campos que no sean undefined o vacíos
+        Object.keys(updateFields).forEach((key) => {
+          if (updateFields[key] === undefined || updateFields[key] === "") {
+            delete updateFields[key];
+          }
+        });
+
+        await User.findOneAndUpdate(
+          { email },
+          { $set: updateFields },
+          { new: true }
+        );
+        console.log(
+          "[MongoDB] Usuario actualizado con datos de Monday:",
+          existingUser._id
+        );
+      } else {
+        // 3.2 SI NO EXISTE EN MONGODB, CREAR NUEVO USUARIO
+        console.log("Usuario no existe en MongoDB, creando nuevo");
+        await User.create(mongoData);
+        console.log(
+          "[MongoDB] Usuario creado con datos de Monday:",
+          mongoData._id
+        );
+      }
 
       // Enviar correo
       await resend.contacts.create({
         email: email,
-        firstName: mongoUser.firstName,
-        lastName: mongoUser.lastName,
+        firstName: mongoData.firstName,
+        lastName: mongoData.lastName,
         unsubscribed: false,
         audienceId: RESEND_AUDIENCE_ID,
       });
       console.log("[Resend] Contacto agregado a la audiencia Katalyst:", email);
+
+      // Si no tiene nombre completo, redirigir a dashboard/profile
+      if (!tieneNombre || !tieneApellido) {
+        return NextResponse.json({
+          redirect: `/dashboard/profile?email=${encodeURIComponent(email)}`,
+          message:
+            "Usuario encontrado en Monday pero necesita completar perfil",
+        });
+      }
 
       return NextResponse.json({
         redirect: `/auth/verify-request?email=${encodeURIComponent(email)}`,
@@ -275,8 +310,8 @@ export async function POST(request) {
         const mondayId = createResponse.data.create_item.id;
         console.log("Record básico creado en Monday.com:", mondayId);
 
-        // Crear usuario básico en MongoDB
-        const basicUser = {
+        // Preparar datos básicos para MongoDB
+        const basicData = {
           email,
           name: email,
           personalMondayId: mondayId,
@@ -286,8 +321,29 @@ export async function POST(request) {
           updatedAt: new Date(),
         };
 
-        await User.create(basicUser);
-        console.log("[MongoDB] Usuario básico creado:", basicUser._id);
+        if (existingUser) {
+          // 3.3 SI EXISTE EN MONGODB, ACTUALIZAR SOLO EL MONDAY ID
+          console.log("Usuario existe en MongoDB, actualizando Monday ID");
+          await User.findOneAndUpdate(
+            { email },
+            {
+              $set: {
+                personalMondayId: mondayId,
+                updatedAt: new Date(),
+              },
+            },
+            { new: true }
+          );
+          console.log(
+            "[MongoDB] Usuario actualizado con Monday ID:",
+            existingUser._id
+          );
+        } else {
+          // 3.4 SI NO EXISTE EN MONGODB, CREAR USUARIO BÁSICO
+          console.log("Usuario no existe en MongoDB, creando básico");
+          await User.create(basicData);
+          console.log("[MongoDB] Usuario básico creado:", basicData._id);
+        }
 
         // Enviar correo también cuando se crea un record básico
         await resend.contacts.create({
@@ -305,7 +361,7 @@ export async function POST(request) {
         return NextResponse.json({
           success: true,
           message: "Record básico creado en Monday.com y MongoDB",
-          needsValidation: true,
+          redirect: `/dashboard/profile?email=${encodeURIComponent(email)}`,
           userData: {
             email: email,
             personalMondayId: mondayId,
