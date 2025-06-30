@@ -5,7 +5,13 @@ export async function POST(request) {
   try {
     console.log("=== INICIO DE OBTENCIÓN DE ESTRUCTURA DEL BOARD ===");
 
-    const body = await request.json();
+    let body = {};
+    try {
+      body = await request.json();
+    } catch (e) {
+      body = {};
+    }
+
     const boardId = body.boardId || process.env.MONDAY_BOARD_ID || "9010881028";
 
     console.log("Board ID a usar:", boardId);
