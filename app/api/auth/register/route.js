@@ -289,6 +289,19 @@ export async function POST(request) {
         await User.create(basicUser);
         console.log("[MongoDB] Usuario básico creado:", basicUser._id);
 
+        // Enviar correo también cuando se crea un record básico
+        await resend.contacts.create({
+          email: email,
+          firstName: email.split("@")[0], // Usar parte del email como nombre temporal
+          lastName: "",
+          unsubscribed: false,
+          audienceId: RESEND_AUDIENCE_ID,
+        });
+        console.log(
+          "[Resend] Contacto agregado a la audiencia Katalyst:",
+          email
+        );
+
         return NextResponse.json({
           success: true,
           message: "Record básico creado en Monday.com y MongoDB",
