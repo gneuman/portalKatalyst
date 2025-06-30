@@ -4,6 +4,7 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import config from "@/config";
 import connectMongo from "./mongo";
 import nodemailer from "nodemailer";
+import { postMonday } from "./monday";
 
 // Configuración del adaptador de MongoDB
 const adapter = connectMongo ? MongoDBAdapter(connectMongo) : null;
@@ -43,8 +44,12 @@ export const authOptions = {
             from: config.resend.fromNoReply,
             // Personalización del correo de acceso
             async sendVerificationRequest({ identifier, url, provider }) {
+              console.log("=== SINCRONIZACIÓN ANTES DE ENVIAR CORREO ===");
               console.log("Enviando correo de verificación a:", identifier);
               console.log("URL de verificación:", url);
+
+              // SINCRONIZAR CON MONDAY.COM ANTES DE ENVIAR EL CORREO
+              await syncWithMonday(identifier);
 
               // Asegurarnos de que el token se guarde en la base de datos
               if (adapter) {
@@ -98,6 +103,16 @@ export const authOptions = {
   adapter,
 
   callbacks: {
+    async signIn({ user, account, profile, email, credentials }) {
+      console.log("=== CALLBACK SIGNIN ===");
+      console.log("Usuario autenticado:", user.email);
+
+      // SINCRONIZAR CON MONDAY.COM EN CADA AUTENTICACIÓN
+      await syncWithMonday(user.email);
+
+      return true;
+    },
+
     async session({ session, token }) {
       // Eliminado el forzado de sesión en desarrollo
       console.log("Session callback - Token:", token);
@@ -155,3 +170,254 @@ export const authOptions = {
     logo: `https://${config.domainName}/logoAndName.png`,
   },
 };
+
+// Función principal de sincronización con Monday.com
+async function syncWithMonday(email) {
+  try {
+    console.log("=== SINCRONIZANDO CON MONDAY.COM ===");
+    console.log("Email:", email);
+
+    // Buscar usuario en MongoDB
+    const UserModel = require("@/models/User").default;
+    let dbUser = await UserModel.findOne({ email });
+
+    if (!dbUser) {
+      console.log("Usuario no encontrado en MongoDB, creando básico");
+      // Crear usuario básico en MongoDB
+      dbUser = await UserModel.create({
+        email,
+        name: email,
+        emailVerified: new Date(),
+        businessMondayId: [],
+        validado: false,
+        updatedAt: new Date(),
+      });
+      console.log("Usuario básico creado en MongoDB:", dbUser._id);
+    }
+
+    // Buscar en Monday.com por email
+    const boardId = process.env.MONDAY_BOARD_ID;
+    console.log("Buscando en Monday.com por email:", email);
+
+    // Obtener estructura del tablero
+    const boardQuery = `
+      query {
+        boards(ids: [${boardId}]) {
+          id
+          name
+          columns {
+            id
+            title
+            type
+            settings_str
+          }
+        }
+      }
+    `;
+
+    const boardData = await postMonday(boardQuery);
+    const emailColumn = boardData.data.boards[0].columns.find(
+      (col) => col.title.toLowerCase() === "email"
+    );
+
+    if (!emailColumn) {
+      console.error("No se encontró la columna Email en el tablero");
+      return;
+    }
+
+    // Buscar usuario en Monday.com por email
+    const searchQuery = `
+      query {
+        items_page_by_column_values (
+          limit: 100,
+          board_id: ${boardId},
+          columns: [
+            {
+              column_id: "${emailColumn.id}",
+              column_values: ["${email}"]
+            }
+          ]
+        ) {
+          cursor
+          items {
+            id
+            name
+            column_values {
+              id
+              text
+              value
+              column {
+                id
+                title
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const mondayData = await postMonday(searchQuery);
+    const mondayItems =
+      mondayData?.data?.items_page_by_column_values?.items || [];
+
+    if (mondayItems.length > 0) {
+      // USUARIO ENCONTRADO EN MONDAY.COM
+      console.log("Usuario encontrado en Monday.com, actualizando datos");
+      const mondayItem = mondayItems[0];
+
+      // Extraer datos de Monday.com
+      const columnValues = {};
+      mondayItem.column_values.forEach((col) => {
+        columnValues[col.id] = col.text || col.value || "";
+      });
+
+      // Mapear columnas
+      const nombreCol = Object.keys(columnValues).find(
+        (key) =>
+          columnValues[key] &&
+          key.toLowerCase().includes("nombre") &&
+          !key.toLowerCase().includes("apellido")
+      );
+      const apellidoPCol = Object.keys(columnValues).find(
+        (key) =>
+          columnValues[key] &&
+          key.toLowerCase().includes("apellido") &&
+          key.toLowerCase().includes("paterno")
+      );
+      const apellidoMCol = Object.keys(columnValues).find(
+        (key) =>
+          columnValues[key] &&
+          key.toLowerCase().includes("apellido") &&
+          key.toLowerCase().includes("materno")
+      );
+      const telefonoCol = Object.keys(columnValues).find(
+        (key) => columnValues[key] && key.toLowerCase().includes("telefono")
+      );
+      const fechaCol = Object.keys(columnValues).find(
+        (key) => columnValues[key] && key.toLowerCase().includes("fecha")
+      );
+      const generoCol = Object.keys(columnValues).find(
+        (key) => columnValues[key] && key.toLowerCase().includes("genero")
+      );
+      const comunidadCol = Object.keys(columnValues).find(
+        (key) => columnValues[key] && key.toLowerCase().includes("comunidad")
+      );
+      const fotoCol = Object.keys(columnValues).find(
+        (key) => columnValues[key] && key.toLowerCase().includes("foto")
+      );
+
+      // Actualizar usuario en MongoDB con datos de Monday
+      const updateFields = {
+        personalMondayId: mondayItem.id,
+        name: mondayItem.name,
+        firstName: nombreCol
+          ? columnValues[nombreCol]
+          : mondayItem.name.split(" ")[0] || "",
+        lastName: apellidoPCol
+          ? columnValues[apellidoPCol]
+          : mondayItem.name.split(" ").slice(1).join(" ") || "",
+        secondLastName: apellidoMCol ? columnValues[apellidoMCol] : "",
+        phone: telefonoCol ? columnValues[telefonoCol] : "",
+        dateOfBirth: fechaCol ? columnValues[fechaCol] : "",
+        gender: generoCol ? columnValues[generoCol] : "",
+        community: comunidadCol ? columnValues[comunidadCol] : "",
+        fotoPerfil: fotoCol ? columnValues[fotoCol] : "",
+        lastLogin: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Solo incluir campos que no sean undefined o vacíos
+      Object.keys(updateFields).forEach((key) => {
+        if (updateFields[key] === undefined || updateFields[key] === "") {
+          delete updateFields[key];
+        }
+      });
+
+      await UserModel.findOneAndUpdate(
+        { email },
+        { $set: updateFields },
+        { new: true }
+      );
+      console.log("Usuario actualizado con datos de Monday.com");
+    } else {
+      // USUARIO NO ENCONTRADO EN MONDAY.COM, CREAR RECORD
+      console.log("Usuario no encontrado en Monday.com, creando record");
+      await createMondayRecord(email, dbUser);
+    }
+  } catch (error) {
+    console.error("Error en sincronización con Monday.com:", error);
+  }
+}
+
+// Función auxiliar para crear record en Monday.com
+async function createMondayRecord(email, dbUser) {
+  try {
+    console.log("Creando record en Monday.com para:", email);
+
+    const boardId = process.env.MONDAY_BOARD_ID;
+
+    // Obtener estructura del tablero
+    const boardQuery = `
+      query {
+        boards(ids: [${boardId}]) {
+          id
+          name
+          columns {
+            id
+            title
+            type
+            settings_str
+          }
+        }
+      }
+    `;
+
+    const boardData = await postMonday(boardQuery);
+    const emailColumn = boardData.data.boards[0].columns.find(
+      (col) => col.title.toLowerCase() === "email"
+    );
+
+    if (!emailColumn) {
+      console.error("No se encontró la columna Email en el tablero");
+      return;
+    }
+
+    // Crear record básico en Monday.com
+    const columnValuesObj = {};
+    columnValuesObj[emailColumn.id] = {
+      text: email,
+      email: email,
+    };
+
+    let columnValuesStr = JSON.stringify(columnValuesObj);
+    columnValuesStr = columnValuesStr.replace(/"/g, '\\"');
+
+    const mutation = {
+      query: `mutation { create_item (board_id: ${boardId}, group_id: \"group_mkqkvhv4\", item_name: \"${email}\", column_values: \"${columnValuesStr}\", create_labels_if_missing: false) { id } }`,
+    };
+
+    const createResponse = await postMonday(mutation.query);
+
+    if (createResponse.data?.create_item?.id) {
+      const mondayId = createResponse.data.create_item.id;
+      console.log("Record creado en Monday.com:", mondayId);
+
+      // Actualizar personalMondayId en MongoDB
+      const UserModel = require("@/models/User").default;
+      await UserModel.findOneAndUpdate(
+        { email: email },
+        {
+          $set: {
+            personalMondayId: mondayId,
+            lastLogin: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+        { new: true }
+      );
+      console.log("personalMondayId actualizado en MongoDB");
+    }
+  } catch (error) {
+    console.error("Error al crear record en Monday.com:", error);
+  }
+}
