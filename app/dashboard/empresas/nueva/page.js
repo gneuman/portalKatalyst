@@ -87,6 +87,8 @@ export default function NuevaEmpresa() {
   const emailInputRef = useRef(null);
   const [invitadorNombre, setInvitadorNombre] = useState("");
   const [nombreEmpresa, setNombreEmpresa] = useState("Nueva Empresa");
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
 
   useEffect(() => {
     const fetchBoard = async () => {
@@ -181,6 +183,18 @@ export default function NuevaEmpresa() {
     setForm((f) => ({ ...f, [col.id]: value }));
   };
 
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -195,6 +209,24 @@ export default function NuevaEmpresa() {
         throw new Error("No se pudo obtener el ID del board de empresas");
       }
 
+      // Subir logo si existe
+      let logoUrl = "";
+      if (logoFile) {
+        console.log("[NuevaEmpresa] Subiendo logo...");
+        const logoFormData = new FormData();
+        logoFormData.append("file", logoFile);
+        const logoResponse = await fetch("/api/auth/upload-photo", {
+          method: "POST",
+          body: logoFormData,
+        });
+        const logoData = await logoResponse.json();
+        if (!logoResponse.ok) {
+          throw new Error(logoData.error || "Error al subir el logo");
+        }
+        logoUrl = logoData.url;
+        console.log("[NuevaEmpresa] Logo subido:", logoUrl);
+      }
+
       // Validar y construir column_values
       const columnValues = {};
       const camposMostrar = columns.filter(
@@ -202,8 +234,10 @@ export default function NuevaEmpresa() {
           col &&
           col.id &&
           col.title &&
-          !["subitems", "person"].includes(col.type?.toLowerCase() || "") &&
-          !["Subitems", "Person"].includes(col.title?.trim() || "") &&
+          !["subitems", "person", "status"].includes(
+            col.type?.toLowerCase() || ""
+          ) &&
+          !["Subitems", "Person", "Status"].includes(col.title?.trim() || "") &&
           col.id !== "board_relation_mkrcrrm"
       );
 
@@ -214,6 +248,16 @@ export default function NuevaEmpresa() {
         if (value !== null) {
           columnValues[col.id] = value;
           console.log(`[NuevaEmpresa] Agregando campo ${col.title}:`, value);
+        }
+
+        // Agregar logo si existe y es el campo de logo
+        if (
+          logoUrl &&
+          (col.title?.toLowerCase().includes("logo") ||
+            col.title?.toLowerCase().includes("imagen"))
+        ) {
+          columnValues[col.id] = logoUrl;
+          console.log(`[NuevaEmpresa] Agregando logo:`, logoUrl);
         }
       });
 
@@ -367,13 +411,60 @@ export default function NuevaEmpresa() {
   };
 
   const renderField = (col) => {
-    if (!col || !col.type || ["subitems", "person"].includes(col.type))
+    if (
+      !col ||
+      !col.type ||
+      ["subitems", "person", "status"].includes(col.type)
+    )
       return null;
 
     const isRequired =
       col.title?.toLowerCase().includes("nombre") ||
       col.title?.toLowerCase().includes("name") ||
       col.id === "name";
+
+    // Campo especial para logo
+    if (
+      col.title?.toLowerCase().includes("logo") ||
+      col.title?.toLowerCase().includes("imagen")
+    ) {
+      return (
+        <div className="flex flex-col items-center gap-2">
+          {logoPreview ? (
+            <div className="relative w-20 h-20">
+              <img
+                src={logoPreview}
+                alt="Logo preview"
+                className="w-full h-full object-contain rounded-lg border"
+              />
+            </div>
+          ) : (
+            <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+          )}
+          <label className="cursor-pointer bg-white px-3 py-1 rounded-md shadow-sm text-xs font-medium text-gray-700 hover:bg-gray-50 border border-gray-300">
+            <span>Seleccionar logo</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoChange}
+              className="hidden"
+            />
+          </label>
+        </div>
+      );
+    }
 
     switch (col.type) {
       case "status":
@@ -469,6 +560,17 @@ export default function NuevaEmpresa() {
             placeholder="Ingresa la URL"
           />
         );
+      case "long_text":
+        return (
+          <textarea
+            className="textarea textarea-bordered w-full max-w-xs"
+            value={form[col.id] || ""}
+            onChange={(e) => handleChange(col, e.target.value)}
+            required={isRequired}
+            placeholder={`Ingresa ${col.title.toLowerCase()}`}
+            rows={4}
+          />
+        );
       default:
         return (
           <input
@@ -489,8 +591,10 @@ export default function NuevaEmpresa() {
       col &&
       col.id &&
       col.title &&
-      !["subitems", "person"].includes(col.type?.toLowerCase() || "") &&
-      !["Subitems", "Person"].includes(col.title?.trim() || "") &&
+      !["subitems", "person", "status"].includes(
+        col.type?.toLowerCase() || ""
+      ) &&
+      !["Subitems", "Person", "Status"].includes(col.title?.trim() || "") &&
       col.id !== "board_relation_mkrcrrm"
   );
 
@@ -521,7 +625,7 @@ export default function NuevaEmpresa() {
                     {ICONOS_TIPOS[col.type] || (
                       <FaBuilding className="text-gray-600" />
                     )}
-                    {col.title}
+                    {col.title === "Name" ? "Nombre" : col.title}
                     {(col.title.toLowerCase().includes("nombre") ||
                       col.title.toLowerCase().includes("name") ||
                       col.id === "name") && (

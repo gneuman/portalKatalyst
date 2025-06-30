@@ -212,55 +212,8 @@ function RegisterForm() {
       } else if (CAMPOS_REQUERIDOS.foto) {
         throw new Error("La foto de perfil es obligatoria");
       }
-      // Construir payload programático para Monday.com usando los IDs y tipos del schema
-      console.log("Valor de form.fechaNacimiento:", form.fechaNacimiento);
-      console.log("colIds.fechaNacimiento:", colIds.fechaNacimiento);
-      const mondayPayload = {
-        name: form.nombreCompleto,
-        ...(colIds.nombre && { [colIds.nombre]: form.nombre }),
-        ...(colIds.apellidoP && { [colIds.apellidoP]: form.apellidoPaterno }),
-        ...(colIds.apellidoM && { [colIds.apellidoM]: form.apellidoMaterno }),
-        ...(colIds.fechaNacimiento &&
-          form.fechaNacimiento && {
-            [colIds.fechaNacimiento]: { date: form.fechaNacimiento },
-          }),
-        ...(colIds.genero &&
-          form.genero && { [colIds.genero]: { labels: [form.genero] } }),
-        ...(colIds.comunidad && { [colIds.comunidad]: form.comunidad }),
-        ...(colIds.telefono && { [colIds.telefono]: form.telefono }),
-        ...(colIds.email && { [colIds.email]: form.email }),
-        ...(colIds.foto && { [colIds.foto]: fotoUrl || "" }),
-        ...(colIds.status && {
-          [colIds.status]: { label: form.comunidad || "Activo" },
-        }),
-        pais: form.pais,
-      };
-      console.log("==== PAYLOAD QUE SE ENVÍA AL BACKEND ====");
-      console.log(JSON.stringify(mondayPayload, null, 2));
-      const mondayResponse = await fetch("/api/auth/create-monday-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mondayPayload),
-      });
-      let mondayResultText = await mondayResponse.text();
-      console.log("[FRONTEND] Respuesta RAW de Monday.com:", mondayResultText);
-      let mondayResult;
-      try {
-        mondayResult = JSON.parse(mondayResultText);
-      } catch (e) {
-        mondayResult = { error: "Respuesta no es JSON", raw: mondayResultText };
-      }
-      if (!mondayResponse.ok) {
-        console.error("Error Monday:", mondayResult);
-        setError(mondayResult.error || JSON.stringify(mondayResult));
-        throw new Error(
-          mondayResult.error || "Error al crear usuario en Monday.com"
-        );
-      }
-      toast.success("Usuario creado en Monday exitosamente");
-      console.log("Respuesta Monday:", mondayResult);
 
-      // 4. Crear usuario en MongoDB (ajustar el payload)
+      // 2. Crear payload para el registro (que incluye creación en Monday.com)
       const userPayload = {
         name: form.nombreCompleto,
         firstName: form.nombre,
@@ -272,11 +225,12 @@ function RegisterForm() {
         gender: form.genero,
         community: form.comunidad,
         fotoPerfil: fotoUrl,
-        personalMondayId: mondayResult.id || mondayResult.data?.create_item?.id,
+        pais: form.pais,
       };
 
       console.log("Datos a enviar:", JSON.stringify(userPayload, null, 2));
 
+      // 3. Llamar al endpoint de registro que maneja Monday.com y MongoDB
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -295,7 +249,18 @@ function RegisterForm() {
         return;
       }
 
-      toast.success(data.message || "Usuario registrado exitosamente");
+      if (data.success) {
+        toast.success(data.message || "Usuario registrado exitosamente");
+        if (data.personalMondayId) {
+          console.log("Usuario creado con Monday ID:", data.personalMondayId);
+        }
+        // Redirigir a la página de verificación
+        window.location.href = `/auth/verify-request?email=${encodeURIComponent(
+          form.email
+        )}`;
+        return;
+      }
+
       setShowFullForm(false);
     } catch (error) {
       console.error("Error en el registro:", error);
