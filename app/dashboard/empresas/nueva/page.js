@@ -103,7 +103,7 @@ export default function NuevaEmpresa() {
 
         setBoardId(boardIdToUse);
 
-        // Obtener columnas del board
+        // Obtener columnas del board.
         const query = `query { 
           boards(ids: [${boardIdToUse}]) { 
             id
