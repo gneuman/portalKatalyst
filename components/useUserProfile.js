@@ -130,7 +130,12 @@ export default function useUserProfile() {
               const comunidadCol = item.column_values.find(
                 (col) => col.column?.title === "Comunidad"
               );
-              comunidadMonday = comunidadCol?.text || user.comunidad;
+              // Para campos de tipo status, usar el valor en lugar del texto
+              if (comunidadCol?.column?.type === "status") {
+                comunidadMonday = comunidadCol?.value || user.comunidad;
+              } else {
+                comunidadMonday = comunidadCol?.text || user.comunidad;
+              }
               // Foto de perfil
               const fotoCol = item.column_values.find((col) =>
                 col.column?.title?.toLowerCase().includes("foto")

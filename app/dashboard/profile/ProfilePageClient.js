@@ -129,7 +129,7 @@ export default function ProfilePage() {
             </p>
             {userData && (
               <p className="text-sm text-gray-500 mt-2">
-                Monday ID: {userData.personalMondayId}
+                Katalyst ID: {userData.personalMondayId}
               </p>
             )}
           </div>

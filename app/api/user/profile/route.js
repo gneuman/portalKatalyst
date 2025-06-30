@@ -38,10 +38,18 @@ export async function GET(req) {
 
         if (mondayRes.ok) {
           const mondayData = await mondayRes.json();
+          console.log(
+            "[PROFILE] Respuesta de Monday.com:",
+            JSON.stringify(mondayData, null, 2)
+          );
           const item = mondayData?.data?.items?.[0];
           if (item && item.column_values) {
             columnValues = {};
             item.column_values.forEach((col) => {
+              console.log(
+                `[PROFILE] Procesando columna: ${col.column?.title} (tipo: ${col.column?.type})`
+              );
+
               // Para campos de teléfono, mantener el objeto completo
               if (col.column?.title === "Teléfono" && col.value) {
                 try {
@@ -49,7 +57,16 @@ export async function GET(req) {
                 } catch {
                   columnValues[col.id] = col.text || col.value || "";
                 }
-              } else {
+              }
+              // Para campos de tipo status, usar el valor del status
+              else if (col.column?.type === "status") {
+                columnValues[col.id] = col.value || "";
+                console.log(
+                  `[PROFILE] Campo status encontrado: ${col.column?.title} = ${col.value}`
+                );
+              }
+              // Para otros campos, usar texto o valor
+              else {
                 columnValues[col.id] = col.text || col.value || "";
               }
             });

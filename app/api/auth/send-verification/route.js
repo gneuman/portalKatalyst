@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/libs/mongodb";
 import User from "@/app/models/User";
 import { Resend } from "resend";
+import config from "@/config";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -30,24 +31,30 @@ export async function POST(request) {
 
     // Enviar correo de verificación
     try {
-      await resend.emails.send({
-        from: "Katalyst <noreply@katalyst.com>",
+      const verificationUrl = `${
+        process.env.NEXTAUTH_URL || "http://localhost:3000"
+      }/dashboard`;
+      const result = await resend.emails.send({
+        from: config.resend.fromNoReply,
         to: [email],
-        subject: "Verifica tu cuenta - Katalyst",
+        subject: "Tu acceso a Katalyst",
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #1C384A;">¡Bienvenido a Katalyst!</h2>
-            <p>Hola ${user.firstName || user.name || email.split("@")[0]},</p>
-            <p>Gracias por registrarte en Katalyst. Para completar tu registro, por favor verifica tu cuenta.</p>
-            <p>Tu Monday ID: <strong>${
-              user.personalMondayId || "No asignado"
-            }</strong></p>
-            <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
-            <p>Saludos,<br>El equipo de Katalyst</p>
+          <div style="background:#f9fafb;padding:40px 0;min-height:100vh;font-family:sans-serif;">
+            <div style="max-width:480px;margin:40px auto;background:#fff;border-radius:12px;padding:32px 24px;box-shadow:0 2px 8px #0001;">
+              <h2 style="text-align:center;color:#222;font-size:24px;margin-bottom:24px;">¡Bienvenido a <span style='color:#FFA726'>Katalyst</span>!</h2>
+              <p style="text-align:center;font-size:16px;color:#444;margin-bottom:32px;">Haz clic en el botón para acceder a tu cuenta:</p>
+              <div style="text-align:center;margin-bottom:32px;">
+                <a href="${verificationUrl}" style="display:inline-block;padding:16px 32px;background:#FFA726;color:#fff;font-size:18px;font-weight:bold;border-radius:8px;text-decoration:none;">Acceder a Katalyst</a>
+              </div>
+              <p style="text-align:center;font-size:14px;color:#888;">Si no solicitaste este acceso, puedes ignorar este correo.</p>
+              <hr style="margin:32px 0;border:none;border-top:1px solid #eee;" />
+              <p style="text-align:center;font-size:12px;color:#bbb;">&copy; ${new Date().getFullYear()} Katalyst</p>
+            </div>
           </div>
         `,
       });
 
+      console.log("[Resend] Resultado del envío:", result);
       console.log("[Resend] Correo de verificación enviado a:", email);
 
       return NextResponse.json({

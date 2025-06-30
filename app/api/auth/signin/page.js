@@ -52,9 +52,7 @@ export default function SignIn() {
         );
       } else {
         console.log("Redirigiendo a la página de verificación...");
-        router.push(
-          `/api/auth/verify-request?email=${encodeURIComponent(email)}`
-        );
+        router.push(`/auth/verify-request?email=${encodeURIComponent(email)}`);
       }
     } catch (error) {
       console.error("=== ERROR EN EL PROCESO DE AUTENTICACIÓN ===");

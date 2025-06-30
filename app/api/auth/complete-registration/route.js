@@ -37,7 +37,7 @@ export async function POST(request) {
     }
 
     console.log("Usuario encontrado en MongoDB:", existingUser._id);
-    console.log("Monday ID:", existingUser.personalMondayId);
+    console.log("Katalyst ID:", existingUser.personalMondayId);
 
     // 2. Actualizar el record en Monday.com con los datos completos
     const boardId = process.env.MONDAY_BOARD_ID;

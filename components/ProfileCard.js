@@ -1,19 +1,17 @@
-import useUserProfile from "./useUserProfile";
+import { useSession } from "next-auth/react";
 
 export default function ProfileCard() {
-  const { profile, loading, error } = useUserProfile();
+  const { data: session, status } = useSession();
 
-  // Mostrar en consola solo la información relevante de nombre completo
-  if (profile) {
-    console.log(`Nombre Completo Monday: ${profile.nombreCompletoMonday}`);
-    console.log(`Nombre (MongoDB): ${profile.name}`);
-    console.log(`Origen del nombre completo: ${profile.origenNombreCompleto}`);
+  // Mostrar en consola solo la información relevante
+  if (session?.user) {
+    console.log(`Nombre (NextAuth): ${session.user.name}`);
+    console.log(`Email (NextAuth): ${session.user.email}`);
+    console.log(`Katalyst ID: ${session.user.personalMondayId}`);
+    console.log(`Foto de perfil: ${session.user.fotoPerfil}`);
   }
 
-  // Mostrar siempre el nombre de Monday si existe
-  const nombreMostrar = profile?.nombreCompletoMonday || "";
-
-  if (loading) {
+  if (status === "loading") {
     return (
       <div className="w-full max-w-[340px] h-[220px] rounded-xl shadow-lg p-6 bg-[#1C384A] flex flex-col justify-center mx-auto">
         <svg
@@ -43,7 +41,7 @@ export default function ProfileCard() {
     );
   }
 
-  if (error || !profile) {
+  if (status === "unauthenticated" || !session?.user) {
     return (
       <div className="w-full max-w-[340px] h-[220px] rounded-xl shadow-lg p-6 bg-[#1C384A] flex flex-col items-center justify-center text-white text-center mx-auto">
         <div className="w-[72px] h-[72px] rounded-full bg-gray-300 flex items-center justify-center mb-2">
@@ -63,11 +61,21 @@ export default function ProfileCard() {
           Perfil no disponible
         </div>
         <div className="text-xs text-gray-300">
-          {error ? "Error al cargar el perfil" : "Completa tu registro"}
+          Inicia sesión para ver tu perfil
         </div>
       </div>
     );
   }
+
+  // Usar datos de NextAuth
+  const nombreMostrar = session.user.name || "";
+  const email = session.user.email || "";
+  const fotoPerfil =
+    session.user.fotoPerfil ||
+    session.user.image ||
+    "/images/default-avatar.png";
+  const katalystId = session.user.personalMondayId || "";
+  const comunidad = session.user.comunidad || "";
 
   return (
     <div
@@ -85,7 +93,7 @@ export default function ProfileCard() {
       }}
     >
       <img
-        src={profile.fotoPerfil || "/images/default-avatar.png"}
+        src={fotoPerfil}
         alt="Avatar"
         style={{
           width: 90,
@@ -116,7 +124,7 @@ export default function ProfileCard() {
           marginBottom: 2,
         }}
       >
-        {profile.email}
+        {email}
       </div>
       <div
         style={{
@@ -126,12 +134,9 @@ export default function ProfileCard() {
           marginBottom: 8,
         }}
       >
-        Katalyst ID:{" "}
-        <span style={{ fontWeight: 600 }}>
-          {profile.personalMondayId || profile._id || ""}
-        </span>
+        Katalyst ID: <span style={{ fontWeight: 600 }}>{katalystId}</span>
       </div>
-      {profile.comunidad && (
+      {comunidad && (
         <div
           style={{
             background: "#F7931A",
@@ -146,7 +151,7 @@ export default function ProfileCard() {
             letterSpacing: 0.5,
           }}
         >
-          {profile.comunidad}
+          {comunidad}
         </div>
       )}
     </div>
