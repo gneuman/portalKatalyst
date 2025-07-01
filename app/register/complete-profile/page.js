@@ -16,11 +16,6 @@ function CompleteProfileContent() {
     if (!email) return;
 
     try {
-      console.log(
-        "[CompleteProfilePage] Verificando contacto en Monday.com para:",
-        email
-      );
-
       // Primero verificar si el usuario tiene personalMondayId
       const userResponse = await fetch(
         `/api/user/profile?email=${encodeURIComponent(email)}`
@@ -28,18 +23,11 @@ function CompleteProfileContent() {
       const userData = await userResponse.json();
 
       if (userResponse.ok && userData.personalMondayId) {
-        console.log(
-          "[CompleteProfilePage] Usuario ya tiene personalMondayId:",
-          userData.personalMondayId
-        );
         setIsInitializing(false);
         return;
       }
 
       // Si no tiene personalMondayId, crear el contacto en Monday.com solo con el email
-      console.log(
-        "[CompleteProfilePage] Creando contacto en Monday.com solo con email..."
-      );
       const createResponse = await fetch("/api/auth/create-monday-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -49,10 +37,6 @@ function CompleteProfileContent() {
       const createData = await createResponse.json();
 
       if (createResponse.ok && createData.mondayId) {
-        console.log(
-          "[CompleteProfilePage] Contacto creado en Monday.com con ID:",
-          createData.mondayId
-        );
         toast.success("Contacto sincronizado con Monday.com");
       } else {
         console.error(
@@ -89,7 +73,6 @@ function CompleteProfileContent() {
       // Usar el mismo método que el signin normal para enviar el correo
       const { signIn } = await import("next-auth/react");
 
-      console.log("Enviando correo de verificación usando NextAuth...");
       const result = await signIn("email", {
         email,
         callbackUrl: "/dashboard",
@@ -103,9 +86,6 @@ function CompleteProfileContent() {
         );
         setShowForm(true); // Volver a mostrar el formulario si hay error
       } else {
-        console.log(
-          "Correo enviado exitosamente, redirigiendo a verificación..."
-        );
         toast.success(
           "Perfil completado. Revisa tu correo para verificar tu cuenta."
         );

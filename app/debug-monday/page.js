@@ -17,11 +17,7 @@ export default function DebugMondayPage() {
     setSigninResult(null);
 
     try {
-      console.log("=== INICIO DEBUG MONDAY ===");
-      console.log("Email a debuggear:", email);
-
       // PASO 1: Buscar en Monday.com
-      console.log("PASO 1: Buscando en Monday.com...");
       const mondayResponse = await fetch("/api/monday/contact/find", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -29,21 +25,15 @@ export default function DebugMondayPage() {
       });
 
       const mondayData = await mondayResponse.json();
-      console.log("Respuesta de Monday.com:", mondayData);
 
       // PASO 2: Buscar en MongoDB
-      console.log("PASO 2: Buscando en MongoDB...");
       const userResponse = await fetch(
         `/api/user/profile?email=${encodeURIComponent(email)}`
       );
-      console.log("Respuesta de MongoDB:", userResponse.status);
 
       let userData = null;
       if (userResponse.ok) {
         userData = await userResponse.json();
-        console.log("Datos del usuario en MongoDB:", userData);
-      } else {
-        console.log("Usuario NO encontrado en MongoDB");
       }
 
       // Compilar datos de debug
@@ -72,8 +62,6 @@ export default function DebugMondayPage() {
       };
 
       setDebugData(debugInfo);
-      console.log("=== FIN DEBUG MONDAY ===");
-      console.log("Datos de debug:", debugInfo);
     } catch (error) {
       console.error("Error en debug:", error);
       setError("Error al realizar el debug: " + error.message);
@@ -93,11 +81,7 @@ export default function DebugMondayPage() {
     setSigninResult(null);
 
     try {
-      console.log("=== INICIO TEST SIGNIN ===");
-      console.log("Email a probar:", email);
-
       // PASO 1: Buscar el correo en Monday.com
-      console.log("PASO 1: Buscando correo en Monday.com...");
       const mondayResponse = await fetch("/api/monday/contact/find", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -105,39 +89,29 @@ export default function DebugMondayPage() {
       });
 
       const mondayData = await mondayResponse.json();
-      console.log("Respuesta de Monday.com:", mondayData);
 
       let mondayId = null;
       let mondayExists = false;
 
       if (mondayResponse.ok && mondayData.mondayId) {
-        console.log(
-          "✅ Correo encontrado en Monday.com con ID:",
-          mondayData.mondayId
-        );
         mondayId = mondayData.mondayId;
         mondayExists = true;
       } else {
-        console.log("❌ Correo NO encontrado en Monday.com, se creará");
         mondayExists = false;
       }
 
       // PASO 2: Buscar en MongoDB
-      console.log("PASO 2: Buscando en MongoDB...");
       const userResponse = await fetch(
         `/api/user/profile?email=${encodeURIComponent(email)}`
       );
-      console.log("Respuesta de MongoDB:", userResponse.status);
 
       let userData = null;
       let mongoExists = false;
 
       if (userResponse.ok) {
         userData = await userResponse.json();
-        console.log("✅ Usuario encontrado en MongoDB:", userData);
         mongoExists = true;
       } else {
-        console.log("❌ Usuario NO encontrado en MongoDB");
         mongoExists = false;
       }
 
