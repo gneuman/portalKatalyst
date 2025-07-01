@@ -37,7 +37,7 @@ function CompleteProfileContent() {
       const createData = await createResponse.json();
 
       if (createResponse.ok && createData.mondayId) {
-        toast.success("Contacto sincronizado con Monday.com");
+        // Contacto sincronizado silenciosamente
       } else {
         console.error(
           "[CompleteProfilePage] Error al crear contacto:",
