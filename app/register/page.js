@@ -32,7 +32,7 @@ function RegisterForm() {
 
   useEffect(() => {
     if (!email) {
-      router.push("/auth/signin");
+      router.push("/register/initial");
       return;
     }
     startRegistrationProcess();

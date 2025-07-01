@@ -8,7 +8,7 @@ import { signIn } from "next-auth/react";
 
 export default function UserProfileForm({
   email, // Puede venir del slug (update) o de la sesión (personal)
-  mode = "update", // "update" o "personal"
+  mode = "update", // "update", "personal" o "registration"
   onSuccess = null, // Callback opcional para personal
 }) {
   const [loading, setLoading] = useState(false);
@@ -35,6 +35,59 @@ export default function UserProfileForm({
     const fetchUser = async () => {
       setLoading(true);
       try {
+        const res = await fetch(
+          `/api/user/profile?email=${encodeURIComponent(email)}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+        const data = await res.json();
+        console.log("[UserProfileForm] Respuesta de backend:", data);
+
+        if (data && data.personalMondayId) {
+          setPersonalMondayId(data.personalMondayId);
+          console.log(
+            "[UserProfileForm] MondayID seteado en estado:",
+            data.personalMondayId
+          );
+        } else {
+          // Si no hay MondayID, crearlo automáticamente con todos los datos del formulario
+          console.warn(
+            "[UserProfileForm] No se encontró personalMondayId, creando contacto en Monday con todos los datos del formulario..."
+          );
+          // Usar los datos actuales del formulario para crear el contacto
+          const payload = {
+            email,
+            nombre: form.nombre || data?.firstName || data?.name || email,
+            apellidoP: form.apellidoPaterno || data?.lastName || "",
+            apellidoM: form.apellidoMaterno || data?.secondLastName || "",
+            telefono: form.telefono || data?.phone || "",
+            fechaNacimiento: form.fechaNacimiento || data?.dateOfBirth || "",
+            genero: form.genero || data?.gender || "",
+            comunidad: form.comunidad || data?.community || "",
+            foto: form.fotoPerfil || data?.fotoPerfil || "",
+          };
+          const createRes = await fetch("/api/auth/create-monday-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const createData = await createRes.json();
+          if (createData.mondayId) {
+            setPersonalMondayId(createData.mondayId);
+            console.log(
+              "[UserProfileForm] MondayID creado y seteado:",
+              createData.mondayId
+            );
+          } else {
+            console.error(
+              "[UserProfileForm] Error al crear contacto en Monday:",
+              createData
+            );
+          }
+        }
+
         // 1. Obtener estructura del board de Monday.com
         const schemaRes = await fetch("/api/monday/board/structure", {
           method: "POST",
@@ -75,14 +128,6 @@ export default function UserProfileForm({
 
           console.log("[UserProfileForm] IDs mapeados:", ids);
         }
-
-        // 2. Obtener datos del usuario
-        const res = await fetch(`/api/user/profile?email=${email}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        const data = await res.json();
-        console.log("[UserProfileForm] Respuesta de backend:", data);
 
         if (data && data.columnValues) {
           // Si tenemos los valores de columna, mapearlos dinámicamente
@@ -140,19 +185,6 @@ export default function UserProfileForm({
             data.fotoPerfil
           );
         }
-
-        if (data && data.personalMondayId) {
-          setPersonalMondayId(data.personalMondayId);
-          console.log(
-            "[UserProfileForm] MondayID seteado en estado:",
-            data.personalMondayId
-          );
-        } else {
-          console.warn(
-            "[UserProfileForm] No se encontró personalMondayId en la respuesta:",
-            data
-          );
-        }
       } catch (err) {
         toast.error("Error al obtener datos del usuario o estructura");
       } finally {
@@ -185,6 +217,30 @@ export default function UserProfileForm({
     setError("");
 
     try {
+      // Asegurar que existe personalMondayId antes de continuar
+      if (!personalMondayId) {
+        console.log(
+          "[UserProfileForm] No hay personalMondayId, creando contacto en Monday.com..."
+        );
+        const createResponse = await fetch("/api/auth/create-monday-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: form.email }),
+        });
+
+        const createData = await createResponse.json();
+
+        if (createResponse.ok && createData.mondayId) {
+          setPersonalMondayId(createData.mondayId);
+          console.log(
+            "[UserProfileForm] Contacto creado con ID:",
+            createData.mondayId
+          );
+        } else {
+          throw new Error("No se pudo crear el contacto en Monday.com");
+        }
+      }
+
       let fotoUrl = form.fotoPerfil;
       if (form.foto) {
         const photoFormData = new FormData();
@@ -210,6 +266,7 @@ export default function UserProfileForm({
       );
       console.log("[UserProfileForm] Form data:", form);
       console.log("[UserProfileForm] Columns:", columns);
+      console.log("[UserProfileForm] Nombre completo a usar:", nombreCompleto);
 
       columns.forEach((col) => {
         // Saltar columnas que no se pueden actualizar (auto calculated)
@@ -390,6 +447,52 @@ export default function UserProfileForm({
               (mondayData.errors?.[0]?.message || "")
           );
         }
+
+        // Actualizar el nombre del item en Monday.com
+        const nombreCompleto =
+          `${form.nombre} ${form.apellidoPaterno} ${form.apellidoMaterno}`.trim();
+        if (nombreCompleto && nombreCompleto !== form.email) {
+          console.log(
+            "[UserProfileForm] Actualizando nombre del item a:",
+            nombreCompleto
+          );
+
+          const updateNameMutation = {
+            query: `mutation { 
+              change_simple_column_value (
+                board_id: ${board_id}, 
+                item_id: ${personalMondayId}, 
+                column_id: "name", 
+                value: "${nombreCompleto}"
+              ) { 
+                id 
+              } 
+            }`,
+          };
+
+          const nameRes = await fetch("/api/monday/item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updateNameMutation),
+          });
+
+          const nameData = await nameRes.json();
+          console.log(
+            "[UserProfileForm] Respuesta de actualización de nombre:",
+            nameData
+          );
+
+          if (!nameRes.ok || nameData.errors) {
+            console.warn(
+              "Error al actualizar nombre del item:",
+              nameData.errors
+            );
+          } else {
+            console.log(
+              "[UserProfileForm] Nombre del item actualizado exitosamente"
+            );
+          }
+        }
       }
 
       // Actualizar MongoDB
@@ -422,11 +525,17 @@ export default function UserProfileForm({
 
       // Manejar éxito según el modo
       if (mode === "personal") {
-        // Para personal, llamar callback si existe
+        // Para personal, recargar la página completa para actualizar toda la UI
+        toast.success("Perfil actualizado correctamente");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else if (mode === "registration") {
+        // Para registration, llamar callback para enviar correo de verificación
         if (onSuccess) {
           onSuccess();
         } else {
-          toast.success("Perfil actualizado correctamente");
+          toast.success("Perfil completado correctamente");
         }
       } else {
         // Para update, enviar correo mágico y redirigir
@@ -445,6 +554,11 @@ export default function UserProfileForm({
           `/api/auth/verify-request?email=${encodeURIComponent(form.email)}`
         );
       }
+
+      console.log(
+        "[UserProfileForm] Valor de personalMondayId al hacer submit:",
+        personalMondayId
+      );
     } catch (err) {
       setError(err.message);
       toast.error(err.message);
@@ -468,16 +582,22 @@ export default function UserProfileForm({
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               {mode === "personal"
                 ? "Mi Perfil Personal"
+                : mode === "registration"
+                ? "Completa tu perfil"
                 : "Actualiza tus datos"}
             </h2>
             {personalMondayId && (
               <div className="text-xs text-gray-400 mb-2">
-                <span className="font-mono">MondayID: {personalMondayId}</span>
+                <span className="font-mono">
+                  Katalyst ID: {personalMondayId}
+                </span>
               </div>
             )}
             <p className="text-sm text-gray-600">
               {mode === "personal"
                 ? "Gestiona tu información personal"
+                : mode === "registration"
+                ? "Completa tu información personal para continuar"
                 : "Por favor, revisa y actualiza tu información"}
             </p>
           </div>

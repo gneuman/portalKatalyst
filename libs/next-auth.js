@@ -9,7 +9,7 @@ import nodemailer from "nodemailer";
 // Función para sincronizar datos de Monday.com con MongoDB (solo UPDATE, nunca CREATE)
 async function syncWithMonday(email) {
   try {
-    const UserModel = require("@/models/User").default;
+    const UserModel = require("@/app/models/User").default;
     let dbUser = await UserModel.findOne({ email });
     if (!dbUser) {
       // Si no existe, no hacer nada (NextAuth lo creará automáticamente)
@@ -216,9 +216,11 @@ export const authOptions = {
   ],
   ...(connectMongo && { adapter: MongoDBAdapter(connectMongo) }),
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
+      console.log("[NextAuth] signIn callback ejecutado para:", user?.email);
+
       if (user?.email) {
-        const UserModel = require("@/models/User").default;
+        const UserModel = require("@/app/models/User").default;
         // Espera a que el usuario exista en MongoDB (máx 5 intentos)
         let dbUser = null;
         for (let i = 0; i < 5; i++) {
@@ -226,16 +228,94 @@ export const authOptions = {
           if (dbUser) break;
           await new Promise((res) => setTimeout(res, 300)); // espera 300ms
         }
+
         if (dbUser) {
           await syncWithMonday(user.email); // solo actualiza, no crees
+
+          // Verificar si el usuario necesita completar su perfil
+          if (
+            !dbUser.name ||
+            dbUser.name === user.email ||
+            dbUser.name === "Usuario NoCode" ||
+            !dbUser.firstName ||
+            !dbUser.lastName
+          ) {
+            console.log(
+              "[NextAuth] Usuario necesita completar perfil, redirigiendo..."
+            );
+            // Redirigir a completar perfil en lugar del dashboard
+            return `/register/complete-profile?email=${encodeURIComponent(
+              user.email
+            )}`;
+          }
+        } else {
+          console.log(
+            "[NextAuth] Usuario no encontrado en DB, será nuevo usuario"
+          );
+          // Para usuarios nuevos, redirigir a completar perfil
+          return `/register/complete-profile?email=${encodeURIComponent(
+            user.email
+          )}`;
         }
       }
       return true;
     },
+    async redirect({ url, baseUrl }) {
+      console.log("[NextAuth] redirect callback:", { url, baseUrl });
+
+      // Si la URL contiene callbackUrl, extraer el email y verificar el estado del perfil
+      if (url.includes("callbackUrl")) {
+        try {
+          const urlObj = new URL(url);
+          const email = urlObj.searchParams.get("email");
+
+          if (email) {
+            console.log("[NextAuth] Email detectado en redirect:", email);
+
+            // Verificar el estado del perfil del usuario
+            const UserModel = require("@/app/models/User").default;
+            const dbUser = await UserModel.findOne({ email });
+
+            if (dbUser) {
+              // Verificar si el usuario necesita completar su perfil
+              if (
+                !dbUser.name ||
+                dbUser.name === email ||
+                dbUser.name === "Usuario NoCode" ||
+                !dbUser.firstName ||
+                !dbUser.lastName
+              ) {
+                console.log(
+                  "[NextAuth] Usuario necesita completar perfil, redirigiendo..."
+                );
+                return `${baseUrl}/register/complete-profile?email=${encodeURIComponent(
+                  email
+                )}`;
+              }
+            }
+          }
+        } catch (error) {
+          console.error("[NextAuth] Error en redirect callback:", error);
+        }
+      }
+
+      // Si la URL es relativa, agregar la base URL
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+
+      // Si la URL es del mismo dominio, permitir
+      if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+
+      // Por defecto, ir al dashboard
+      return `${baseUrl}/dashboard`;
+    },
     async session({ session, token }) {
       if (session?.user) {
         session.user.id = token.sub;
-        const UserModel = require("@/models/User").default;
+        const UserModel = require("@/app/models/User").default;
         try {
           if (session?.user?.email) {
             const dbUser = await UserModel.findOne({
@@ -267,6 +347,12 @@ export const authOptions = {
       }
       return session;
     },
+  },
+  pages: {
+    signIn: "/api/auth/signin",
+    verifyRequest: "/auth/verify-request",
+    error: "/api/auth/signin",
+    newUser: "/register/complete-profile",
   },
   session: {
     strategy: "jwt",

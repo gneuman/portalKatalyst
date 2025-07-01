@@ -20,39 +20,150 @@ export default function SignIn() {
       console.log("=== INICIO DEL PROCESO DE AUTENTICACIÓN ===");
       console.log("Email ingresado:", email);
 
-      // Verificar si el usuario existe
-      console.log("Verificando existencia del usuario en la base de datos...");
-      const userResponse = await fetch(`/api/user/profile?email=${email}`);
-      console.log("Respuesta del servidor:", userResponse.status);
-
-      const userData = await userResponse.json();
-      console.log("Datos del usuario:", userData);
-
-      if (userResponse.status === 404) {
-        console.log("Usuario no encontrado, redirigiendo al registro...");
-        const registerUrl = `/register?email=${encodeURIComponent(email)}`;
-        console.log("URL de redirección:", registerUrl);
-        router.push(registerUrl);
-        return;
-      }
-
-      console.log("Usuario encontrado, procediendo con el inicio de sesión...");
-      const result = await signIn("email", {
-        email,
-        callbackUrl: "/dashboard",
-        redirect: false,
+      // PASO 1: Buscar el correo en Monday.com
+      console.log("PASO 1: Buscando correo en Monday.com...");
+      const mondayResponse = await fetch("/api/monday/contact/find", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
 
-      console.log("Resultado de signIn:", result);
+      const mondayData = await mondayResponse.json();
+      console.log("Respuesta de Monday.com:", mondayData);
 
-      if (result?.error) {
-        console.error("Error en signIn:", result.error);
-        setError(
-          "Hubo un error al enviar el correo. Por favor, intenta de nuevo."
+      let mondayId = null;
+      let mondayExists = false;
+
+      if (mondayResponse.ok && mondayData.mondayId) {
+        console.log(
+          "✅ Correo encontrado en Monday.com con ID:",
+          mondayData.mondayId
         );
+        mondayId = mondayData.mondayId;
+        mondayExists = true;
       } else {
-        console.log("Redirigiendo a la página de verificación...");
-        router.push(`/auth/verify-request?email=${encodeURIComponent(email)}`);
+        console.log("❌ Correo NO encontrado en Monday.com, se creará");
+        mondayExists = false;
+      }
+
+      // PASO 2: Buscar en MongoDB
+      console.log("PASO 2: Buscando en MongoDB...");
+      const userResponse = await fetch(
+        `/api/user/profile?email=${encodeURIComponent(email)}`
+      );
+      console.log("Respuesta de MongoDB:", userResponse.status);
+
+      let userData = null;
+      let mongoExists = false;
+
+      if (userResponse.ok) {
+        userData = await userResponse.json();
+        console.log("✅ Usuario encontrado en MongoDB:", userData);
+        mongoExists = true;
+      } else {
+        console.log("❌ Usuario NO encontrado en MongoDB");
+        mongoExists = false;
+      }
+
+      // LÓGICA DE DECISIÓN
+      console.log("=== LÓGICA DE DECISIÓN ===");
+      console.log(
+        "Monday existe:",
+        mondayExists,
+        "MongoDB existe:",
+        mongoExists
+      );
+
+      if (mondayExists && mongoExists) {
+        // CASO 1: Existe en ambos - Verificar perfil y enviar correo
+        console.log("CASO 1: Existe en Monday y MongoDB");
+
+        // Verificar si el usuario necesita completar su perfil
+        if (
+          userData.name === userData.email ||
+          !userData.name ||
+          userData.name === "Usuario NoCode" ||
+          !userData.firstName ||
+          !userData.lastName
+        ) {
+          console.log("Usuario necesita completar perfil, redirigiendo...");
+          router.push(
+            `/register/complete-profile?email=${encodeURIComponent(email)}`
+          );
+          return;
+        }
+
+        // Usuario completo, enviar correo de verificación
+        console.log("Usuario completo, enviando correo de verificación...");
+        const result = await signIn("email", {
+          email,
+          callbackUrl: "/dashboard",
+          redirect: false,
+        });
+
+        if (result?.error) {
+          console.error("Error en signIn:", result.error);
+          setError(
+            "Hubo un error al enviar el correo. Por favor, intenta de nuevo."
+          );
+        } else {
+          console.log("Redirigiendo a la página de verificación...");
+          router.push(
+            `/auth/verify-request?email=${encodeURIComponent(email)}`
+          );
+        }
+      } else if (mondayExists && !mongoExists) {
+        // CASO 2: Existe en Monday pero NO en MongoDB - Crear MongoDB y redirigir a completar perfil
+        console.log("CASO 2: Existe en Monday pero NO en MongoDB");
+
+        // Crear usuario en MongoDB con el Monday ID existente
+        const createResponse = await fetch("/api/auth/create-mongo-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            personalMondayId: mondayId,
+          }),
+        });
+
+        if (createResponse.ok) {
+          console.log("Usuario creado en MongoDB con Monday ID existente");
+          router.push(
+            `/register/complete-profile?email=${encodeURIComponent(email)}`
+          );
+        } else {
+          console.error(
+            "Error al crear usuario en MongoDB:",
+            await createResponse.text()
+          );
+          setError("Error al crear el usuario. Por favor, intenta de nuevo.");
+        }
+      } else if (!mondayExists && !mongoExists) {
+        // CASO 3: NO existe en ninguno - Crear ambos
+        console.log("CASO 3: NO existe en Monday ni MongoDB");
+
+        // Crear usuario completo (Monday + MongoDB)
+        const createResponse = await fetch("/api/auth/register-initial", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        if (createResponse.ok) {
+          console.log("Usuario creado exitosamente en ambos sistemas");
+          router.push(
+            `/register/complete-profile?email=${encodeURIComponent(email)}`
+          );
+        } else {
+          console.error("Error al crear usuario:", await createResponse.text());
+          setError("Error al crear el usuario. Por favor, intenta de nuevo.");
+        }
+      } else {
+        // CASO IMPOSIBLE: Existe en MongoDB pero NO en Monday (no debería pasar)
+        console.error("CASO IMPOSIBLE: Existe en MongoDB pero NO en Monday");
+        setError(
+          "Error en la sincronización de datos. Por favor, contacta soporte."
+        );
       }
     } catch (error) {
       console.error("=== ERROR EN EL PROCESO DE AUTENTICACIÓN ===");

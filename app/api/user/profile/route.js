@@ -1,5 +1,5 @@
 import connectMongo from "@/libs/mongoose";
-import User from "@/models/User";
+import User from "@/app/models/User";
 
 export async function GET(req) {
   await connectMongo();
