@@ -1,8 +1,18 @@
 const { MongoClient } = require("mongodb");
+require("dotenv").config({ path: ".env.local" });
 
 async function createMondayUserViaAPI() {
-  const uri =
-    "mongodb+srv://gneuman:PrFXwRrt1783GeFr@katalyst.dsegh0e.mongodb.net/?retryWrites=true&w=majority&appName=katalyst";
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    console.error("❌ Error: MONGODB_URI no está configurado");
+    console.log("📝 Por favor crea un archivo .env.local con:");
+    console.log(
+      "MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/portalKatalyst"
+    );
+    process.exit(1);
+  }
+
   const client = new MongoClient(uri);
 
   try {
