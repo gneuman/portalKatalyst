@@ -31,7 +31,7 @@ const defaultItems = [
     banner: "Sección donada por la familia Zonana",
     url: "#",
   },
-  // ...agrega más cards de ejemplo según el Figma
+  // ...agrega más cards de ejemplo según el Figma2
 ];
 
 export default function CardGrid({
