@@ -22,7 +22,6 @@ import {
   FaClock,
 } from "react-icons/fa";
 import Link from "next/link";
-import { toast } from "react-hot-toast";
 import InviteModalV2 from "@/components/InviteModalV2";
 
 // Mapeo de iconos por tipo de columna
