@@ -116,39 +116,11 @@ export default function EmpresasDashboard() {
   const [saving, setSaving] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedEmpresa, setSelectedEmpresa] = useState(null);
-  const [boardStructure, setBoardStructure] = useState(null);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [empresaDetalle, setEmpresaDetalle] = useState(null);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteLoading, setInviteLoading] = useState(false);
   const [invitadorNombre, setInvitadorNombre] = useState("");
 
   useEffect(() => {
-    const fetchBoardStructure = async (boardId) => {
-      try {
-        const query = `query { 
-          boards(ids: [${boardId}]) { 
-            columns { 
-              id 
-              title 
-              type 
-              settings_str 
-            } 
-          } 
-        }`;
-        const response = await fetch("/api/monday/item", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query }),
-        });
-        const data = await response.json();
-        if (data.errors) throw new Error(data.errors[0].message);
-        setBoardStructure(data?.data?.boards?.[0]?.columns || []);
-      } catch (e) {
-        console.error("Error fetching board structure:", e);
-      }
-    };
-
     const fetchEmpresas = async () => {
       if (!session?.user?.email) return;
       setLoading(true);
@@ -163,26 +135,6 @@ export default function EmpresasDashboard() {
           setEmpresas([]);
           setLoading(false);
           return;
-        }
-
-        // Primero obtener una empresa para saber el board_id
-        const firstQuery = `query { 
-          items (ids: [${ids[0]}]) { 
-            board { 
-              id 
-            } 
-          } 
-        }`;
-        const firstRes = await fetch("/api/monday/item", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: firstQuery }),
-        });
-        const firstData = await firstRes.json();
-        const boardId = firstData?.data?.items?.[0]?.board?.id;
-
-        if (boardId) {
-          await fetchBoardStructure(boardId);
         }
 
         // Luego obtener todas las empresas

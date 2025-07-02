@@ -568,7 +568,14 @@ export default function UserProfileForm({
   };
 
   if (!email) return <div>Falta el email</div>;
-  if (loading) return <div>Cargando...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-[300px] flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"></div>
+        <p className="text-gray-500">Cargando perfil...</p>
+      </div>
+    );
+  }
 
   // Encontrar columnas para comunidad y género
   const colComunidad = columns.find((c) => c.title === "Comunidad");
