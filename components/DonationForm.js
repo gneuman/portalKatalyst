@@ -1,15 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import {
-  FaHeart,
-  FaCreditCard,
-  FaCalendarAlt,
-  FaGift,
-  FaUsers,
-  FaGraduationCap,
-  FaLightbulb,
-} from "react-icons/fa";
+import { FaHeart, FaCreditCard, FaCalendarAlt, FaGift } from "react-icons/fa";
 
 const DONATION_AMOUNTS = [
   { value: 50, label: "$50 MXN" },

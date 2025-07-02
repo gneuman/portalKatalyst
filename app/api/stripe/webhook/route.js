@@ -105,9 +105,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
   // Para donaciones recurrentes
   if (invoice.subscription) {
     try {
-      const subscription = await stripe.subscriptions.retrieve(
-        invoice.subscription
-      );
+      await stripe.subscriptions.retrieve(invoice.subscription);
       const session = await stripe.checkout.sessions.list({
         subscription: invoice.subscription,
         limit: 1,
@@ -143,9 +141,7 @@ async function handleInvoicePaymentFailed(invoice) {
 
   if (invoice.subscription) {
     try {
-      const subscription = await stripe.subscriptions.retrieve(
-        invoice.subscription
-      );
+      await stripe.subscriptions.retrieve(invoice.subscription);
       const session = await stripe.checkout.sessions.list({
         subscription: invoice.subscription,
         limit: 1,
