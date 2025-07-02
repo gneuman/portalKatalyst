@@ -1,23 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [authMode, setAuthMode] = useState("magic"); // "magic" o "password"
+  const [hasPassword, setHasPassword] = useState(null);
   const router = useRouter();
 
-  const handleSubmit = async (e) => {
+  // Verificar si el usuario tiene contraseña cuando cambia el email
+  useEffect(() => {
+    const checkPassword = async () => {
+      if (email && email.includes("@")) {
+        try {
+          const response = await fetch(
+            `/api/auth/check-password?email=${encodeURIComponent(email)}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setHasPassword(data.hasPassword);
+          }
+        } catch (error) {
+          console.error("Error al verificar contraseña:", error);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(checkPassword, 500); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [email]);
+
+  const handleMagicLinkAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      console.log("=== INICIO DEL PROCESO DE AUTENTICACIÓN ===");
+      console.log("=== INICIO DEL PROCESO DE AUTENTICACIÓN CON MAGIC LINK ===");
       console.log("Email ingresado:", email);
 
       // PASO 1: Buscar el correo en Monday.com
@@ -177,6 +202,43 @@ export default function SignIn() {
     }
   };
 
+  const handlePasswordAuth = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      console.log("=== INICIO DEL PROCESO DE AUTENTICACIÓN CON CONTRASEÑA ===");
+
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        console.error("Error en autenticación:", result.error);
+        setError(result.error);
+      } else {
+        console.log("Autenticación exitosa, redirigiendo...");
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      console.error("Error en autenticación con contraseña:", error);
+      setError("Ocurrió un error inesperado. Por favor, intenta de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    if (authMode === "magic") {
+      handleMagicLinkAuth(e);
+    } else {
+      handlePasswordAuth(e);
+    }
+  };
+
   return (
     <div className="min-h-screen flex bg-black">
       {/* Columna izquierda - Formulario */}
@@ -200,6 +262,60 @@ export default function SignIn() {
             </p>
           </div>
 
+          {/* Selector de modo de autenticación */}
+          <div className="mt-6 w-full">
+            <div className="flex rounded-lg bg-gray-700 p-1">
+              <button
+                type="button"
+                onClick={() => setAuthMode("magic")}
+                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                  authMode === "magic"
+                    ? "bg-orange-500 text-white"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                Enlace Mágico
+              </button>
+              <button
+                type="button"
+                onClick={() => setAuthMode("password")}
+                disabled={hasPassword === false}
+                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                  authMode === "password"
+                    ? "bg-orange-500 text-white"
+                    : hasPassword === true
+                    ? "text-gray-300 hover:text-white"
+                    : hasPassword === false
+                    ? "text-gray-500 cursor-not-allowed"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                Email y Contraseña
+                {hasPassword === false && email && (
+                  <span className="block text-xs opacity-75">
+                    No configurada
+                  </span>
+                )}
+              </button>
+            </div>
+            {hasPassword === false && email && (
+              <p className="mt-2 text-xs text-gray-400 text-center">
+                ¿Quieres usar contraseña?{" "}
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      `/set-password?email=${encodeURIComponent(email)}`
+                    )
+                  }
+                  className="text-orange-400 hover:text-orange-300"
+                >
+                  Configúrala aquí
+                </button>
+              </p>
+            )}
+          </div>
+
           <div className="mt-8 w-full">
             <div className="mt-6">
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -219,11 +335,35 @@ export default function SignIn() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-400 focus:border-orange-400 sm:text-sm bg-white text-black"
+                      className="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-400 focus:border-orange-400 sm:text-sm bg-white text-black relative z-10"
                       placeholder="tu@correo.com"
                     />
                   </div>
                 </div>
+
+                {authMode === "password" && (
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-white"
+                    >
+                      Contraseña
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        autoComplete="current-password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-400 focus:border-orange-400 sm:text-sm bg-white text-black relative z-10"
+                        placeholder="Tu contraseña"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {error && (
                   <div className="text-orange-400 text-sm">{error}</div>
@@ -235,11 +375,46 @@ export default function SignIn() {
                     disabled={loading}
                     className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-400 disabled:opacity-50"
                   >
-                    {loading ? "Enviando..." : "Enviar enlace mágico"}
+                    {loading
+                      ? authMode === "magic"
+                        ? "Enviando..."
+                        : "Iniciando sesión..."
+                      : authMode === "magic"
+                      ? "Enviar enlace mágico"
+                      : "Iniciar sesión"}
                   </button>
                 </div>
+
+                {authMode === "password" && (
+                  <div className="text-center">
+                    <p className="text-sm text-gray-400">
+                      ¿No tienes contraseña?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode("magic")}
+                        className="text-orange-400 hover:text-orange-300"
+                      >
+                        Usa el enlace mágico
+                      </button>
+                    </p>
+                  </div>
+                )}
               </form>
             </div>
+          </div>
+
+          {/* Enlace para restablecer contraseña */}
+          <div className="w-full flex flex-col items-center mt-4">
+            <p className="text-sm text-gray-400">
+              ¿Olvidaste tu contraseña?{" "}
+              <button
+                type="button"
+                onClick={() => router.push("/reset-password")}
+                className="text-orange-400 hover:text-orange-300"
+              >
+                Restablécela aquí
+              </button>
+            </p>
           </div>
         </div>
       </div>

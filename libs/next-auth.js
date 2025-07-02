@@ -1,5 +1,6 @@
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider from "next-auth/providers/email";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import config from "@/config";
 import connectMongo from "./mongo";
@@ -160,6 +161,66 @@ export const authOptions = {
         };
       },
     }),
+    // Proveedor de credenciales para email/contraseña
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Contraseña", type: "password" },
+      },
+      async authorize(credentials) {
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error("Email y contraseña son requeridos");
+          }
+
+          const UserModel = require("@/app/models/User").default;
+
+          // Buscar usuario con contraseña incluida
+          const user = await UserModel.findByEmailWithPassword(
+            credentials.email
+          );
+
+          if (!user) {
+            throw new Error("Usuario no encontrado");
+          }
+
+          // Verificar si el usuario tiene contraseña configurada
+          if (!user.hasPasswordSet()) {
+            throw new Error(
+              "Este usuario no tiene contraseña configurada. Usa el enlace mágico."
+            );
+          }
+
+          // Comparar contraseñas
+          const isPasswordValid = await user.comparePassword(
+            credentials.password
+          );
+
+          if (!isPasswordValid) {
+            throw new Error("Contraseña incorrecta");
+          }
+
+          // Actualizar último login
+          user.lastLogin = new Date();
+          await user.save();
+
+          // Sincronizar con Monday.com
+          await syncWithMonday(user.email);
+
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+            image: user.fotoPerfil,
+          };
+        } catch (error) {
+          console.error("Error en autenticación con credenciales:", error);
+          throw error;
+        }
+      },
+    }),
+    // Email provider para magic links
     ...(connectMongo
       ? [
           EmailProvider({
@@ -187,16 +248,16 @@ export const authOptions = {
                   subject: `Tu acceso a Katalyst`,
                   text: `¡Bienvenido a Katalyst!\n\nHaz clic en el siguiente enlace para acceder a tu cuenta:\n${url}\n\nSi no solicitaste este acceso, puedes ignorar este correo.`,
                   html: `
-                    <div style=\"background:#f9fafb;padding:40px 0;min-height:100vh;font-family:sans-serif;\">
-                      <div style=\"max-width:480px;margin:40px auto;background:#fff;border-radius:12px;padding:32px 24px;box-shadow:0 2px 8px #0001;\">
-                        <h2 style=\"text-align:center;color:#222;font-size:24px;margin-bottom:24px;\">¡Bienvenido a <span style='color:#FFA726'>Katalyst</span>!</h2>
-                        <p style=\"text-align:center;font-size:16px;color:#444;margin-bottom:32px;\">Haz clic en el botón para acceder a tu cuenta:</p>
-                        <div style=\"text-align:center;margin-bottom:32px;\">
-                          <a href=\"${url}\" style=\"display:inline-block;padding:16px 32px;background:#FFA726;color:#fff;font-size:18px;font-weight:bold;border-radius:8px;text-decoration:none;\">Acceder a Katalyst</a>
+                    <div style="background:#f9fafb;padding:40px 0;min-height:100vh;font-family:sans-serif;">
+                      <div style="max-width:480px;margin:40px auto;background:#fff;border-radius:12px;padding:32px 24px;box-shadow:0 2px 8px #0001;">
+                        <h2 style="text-align:center;color:#222;font-size:24px;margin-bottom:24px;">¡Bienvenido a <span style='color:#FFA726'>Katalyst</span>!</h2>
+                        <p style="text-align:center;font-size:16px;color:#444;margin-bottom:32px;">Haz clic en el botón para acceder a tu cuenta:</p>
+                        <div style="text-align:center;margin-bottom:32px;">
+                          <a href="${url}" style="display:inline-block;padding:16px 32px;background:#FFA726;color:#fff;font-size:18px;font-weight:bold;border-radius:8px;text-decoration:none;">Acceder a Katalyst</a>
                         </div>
-                        <p style=\"text-align:center;font-size:14px;color:#888;\">Si no solicitaste este acceso, puedes ignorar este correo.</p>
-                        <hr style=\"margin:32px 0;border:none;border-top:1px solid #eee;\" />
-                        <p style=\"text-align:center;font-size:12px;color:#bbb;\">© ${new Date().getFullYear()} Katalyst</p>
+                        <p style="text-align:center;font-size:14px;color:#888;">Si no solicitaste este acceso, puedes ignorar este correo.</p>
+                        <hr style="margin:32px 0;border:none;border-top:1px solid #eee;" />
+                        <p style="text-align:center;font-size:12px;color:#bbb;">© ${new Date().getFullYear()} Katalyst</p>
                       </div>
                     </div>
                   `,
@@ -338,6 +399,7 @@ export const authOptions = {
                 phone: dbUser?.phone || null,
                 dateOfBirth: dbUser?.dateOfBirth || null,
                 gender: dbUser?.gender || null,
+                hasPassword: dbUser?.hasPassword || false,
               };
             }
           }
