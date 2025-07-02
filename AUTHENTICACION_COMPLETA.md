@@ -125,7 +125,7 @@ NEXTAUTH_SECRET=tu_secret_muy_seguro_aqui_minimo_32_caracteres
 NEXTAUTH_URL=http://localhost:3000
 
 # MongoDB
-MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/database
+MONGODB_URI=mongodb+srv
 
 # Resend (para magic links)
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/libs/mongodb";
 import User from "@/models/User";
 
+// Forzar renderizado dinámico para evitar errores de build
+export const dynamic = "force-dynamic";
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
