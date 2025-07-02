@@ -87,7 +87,7 @@ function getColumnValue(col, formValue) {
   }
 }
 
-// Función para obtener campos a mostrar de forma segura.
+// Función para obtener campos a mostrar de forma segura..
 const getCamposMostrar = (empresa) => {
   if (!Array.isArray(empresa?.column_values)) {
     return [];
