@@ -240,11 +240,22 @@ export const authOptions = {
                 identifier
               );
               console.log("[NextAuth] URL de verificación:", url);
+              console.log("[NextAuth] From address:", provider.from);
+              console.log(
+                "[NextAuth] RESEND_API_KEY presente:",
+                !!process.env.RESEND_API_KEY
+              );
+
               try {
-                const transport = nodemailer.createTransport(provider.server);
-                const result = await transport.sendMail({
-                  to: identifier,
+                // Usar la API de Resend directamente en lugar de SMTP
+                const { Resend } = await import("resend");
+                const resend = new Resend(process.env.RESEND_API_KEY);
+
+                console.log("[NextAuth] Resend client creado exitosamente");
+
+                const result = await resend.emails.send({
                   from: provider.from,
+                  to: identifier,
                   subject: `Tu acceso a Katalyst`,
                   text: `¡Bienvenido a Katalyst!\n\nHaz clic en el siguiente enlace para acceder a tu cuenta:\n${url}\n\nSi no solicitaste este acceso, puedes ignorar este correo.`,
                   html: `
@@ -263,11 +274,18 @@ export const authOptions = {
                   `,
                 });
                 console.log("[NextAuth] Resultado de sendMail:", result);
+                console.log("[NextAuth] Email enviado exitosamente");
               } catch (err) {
                 console.error(
                   "[NextAuth] Error enviando correo de verificación:",
                   err
                 );
+                console.error("[NextAuth] Detalles del error:", {
+                  message: err.message,
+                  code: err.code,
+                  statusCode: err.statusCode,
+                  response: err.response,
+                });
                 throw err;
               }
             },
