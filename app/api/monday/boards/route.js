@@ -2,9 +2,11 @@ import { postMonday } from "@/libs/monday";
 
 export async function POST(req) {
   try {
-    // Consulta para obtener todos los boards
+    const { page = 1, limit = 50 } = await req.json();
+
+    // Consulta para obtener todos los boards con paginación
     const query = `query { 
-      boards {
+      boards(limit: ${limit}, page: ${page}) {
         id 
         name 
         board_kind
@@ -14,6 +16,11 @@ export async function POST(req) {
         owner {
           id
           name
+        }
+        workspace {
+          id
+          name
+          kind
         }
         updated_at
         columns {
@@ -43,13 +50,16 @@ export async function POST(req) {
       state: board.state,
       permissions: board.permissions,
       owner: board.owner,
+      workspace: board.workspace,
       updated_at: board.updated_at,
       columns_count: board.columns?.length || 0,
     }));
 
     const result = {
       boards: boards,
-      total: boards.length,
+      page: page,
+      limit: limit,
+      hasMore: boards.length === limit,
     };
 
     return new Response(JSON.stringify(result), {

@@ -19,21 +19,28 @@ import {
   FaGlobe,
   FaLock,
   FaUnlock,
+  FaBuilding,
+  FaChartBar,
+  FaFilter,
 } from "react-icons/fa";
 
 export default function MondayBoardsPage() {
   const [loading, setLoading] = useState(false);
   const [boards, setBoards] = useState([]);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [statistics, setStatistics] = useState({});
   const [error, setError] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedWorkspace, setSelectedWorkspace] = useState("all");
+  const [showStatistics, setShowStatistics] = useState(false);
 
   const handleGetBoards = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/monday/boards", {
+      const response = await fetch("/api/monday/boards/all", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -47,6 +54,8 @@ export default function MondayBoardsPage() {
       }
 
       setBoards(data.boards || []);
+      setWorkspaces(data.workspaces || []);
+      setStatistics(data.statistics || {});
     } catch (err) {
       setError(err.message);
     } finally {
@@ -92,13 +101,18 @@ export default function MondayBoardsPage() {
     });
   };
 
-  const filteredBoards = boards.filter(
-    (board) =>
+  const filteredBoards = boards.filter((board) => {
+    const matchesSearch =
       board.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       board.id.toString().includes(searchTerm) ||
       (board.description &&
-        board.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+        board.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesWorkspace =
+      selectedWorkspace === "all" || board.workspace?.id === selectedWorkspace;
+
+    return matchesSearch && matchesWorkspace;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -135,8 +149,9 @@ export default function MondayBoardsPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <p className="text-sm text-gray-600 mb-4">
-                Obtén una lista completa de todas las tablas a las que tienes
-                acceso en Monday.com
+                Obtén una lista completa de TODAS las tablas a las que tienes
+                acceso en Monday.com, incluyendo información de workspaces y
+                estadísticas detalladas
               </p>
             </div>
             <div className="flex items-end">
@@ -148,12 +163,12 @@ export default function MondayBoardsPage() {
                 {loading ? (
                   <>
                     <FaSpinner className="w-4 h-4 animate-spin" />
-                    <span>Cargando...</span>
+                    <span>Obteniendo todos los boards...</span>
                   </>
                 ) : (
                   <>
                     <FaSearch className="w-4 h-4" />
-                    <span>Obtener Boards</span>
+                    <span>Obtener TODOS los Boards</span>
                   </>
                 )}
               </button>
@@ -203,10 +218,11 @@ export default function MondayBoardsPage() {
           </div>
         )}
 
-        {/* Filtro de búsqueda */}
+        {/* Filtros y estadísticas */}
         {boards.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Filtro de búsqueda */}
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Buscar Boards
@@ -219,8 +235,119 @@ export default function MondayBoardsPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              <div className="text-sm text-gray-600">
-                {filteredBoards.length} de {boards.length} boards
+
+              {/* Filtro por workspace */}
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Filtrar por Workspace
+                </label>
+                <select
+                  value={selectedWorkspace}
+                  onChange={(e) => setSelectedWorkspace(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">
+                    Todos los workspaces ({workspaces.length})
+                  </option>
+                  {workspaces.map((workspace) => (
+                    <option key={workspace.id} value={workspace.id}>
+                      {workspace.name} ({workspace.count} boards)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Contador */}
+              <div className="flex items-end">
+                <div className="text-sm text-gray-600">
+                  {filteredBoards.length} de {boards.length} boards
+                </div>
+              </div>
+            </div>
+
+            {/* Botón para mostrar estadísticas */}
+            <div className="mt-4">
+              <button
+                onClick={() => setShowStatistics(!showStatistics)}
+                className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
+              >
+                <FaChartBar className="w-4 h-4" />
+                <span>
+                  {showStatistics ? "Ocultar" : "Mostrar"} estadísticas
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Estadísticas */}
+        {showStatistics && boards.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Estadísticas Generales
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">
+                  {boards.length}
+                </div>
+                <div className="text-sm text-blue-800">Total Boards</div>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">
+                  {statistics.public || 0}
+                </div>
+                <div className="text-sm text-green-800">Públicos</div>
+              </div>
+              <div className="bg-red-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-red-600">
+                  {statistics.private || 0}
+                </div>
+                <div className="text-sm text-red-800">Privados</div>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">
+                  {statistics.share || 0}
+                </div>
+                <div className="text-sm text-purple-800">Compartidos</div>
+              </div>
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {statistics.active || 0}
+                </div>
+                <div className="text-sm text-yellow-800">Activos</div>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-gray-600">
+                  {workspaces.length}
+                </div>
+                <div className="text-sm text-gray-800">Workspaces</div>
+              </div>
+            </div>
+
+            {/* Workspaces */}
+            <div className="mt-6">
+              <h4 className="text-md font-semibold text-gray-900 mb-3">
+                Boards por Workspace
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {workspaces.map((workspace) => (
+                  <div key={workspace.id} className="bg-gray-50 p-3 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {workspace.name}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {workspace.kind}
+                        </div>
+                      </div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {workspace.count}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -235,6 +362,9 @@ export default function MondayBoardsPage() {
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-3 px-4 font-semibold text-gray-900">
                       Board
+                    </th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-900">
+                      Workspace
                     </th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-900">
                       Información
@@ -270,6 +400,24 @@ export default function MondayBoardsPage() {
                               {board.description}
                             </div>
                           )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center space-x-2">
+                          <FaBuilding className="text-gray-400" />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {board.workspace?.name || "Sin workspace"}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              ID: {board.workspace?.id || "N/A"}
+                            </div>
+                            {board.workspace?.kind && (
+                              <div className="text-xs text-gray-400">
+                                {board.workspace.kind}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -347,27 +495,22 @@ export default function MondayBoardsPage() {
 
             {/* Información adicional */}
             <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="grid md:grid-cols-3 gap-4 text-sm text-gray-600">
+              <div className="grid md:grid-cols-4 gap-4 text-sm text-gray-600">
                 <div className="flex items-center space-x-2">
                   <FaGlobe className="text-green-600" />
-                  <span>
-                    Público:{" "}
-                    {boards.filter((b) => b.board_kind === "public").length}
-                  </span>
+                  <span>Público: {statistics.public || 0}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <FaLock className="text-red-600" />
-                  <span>
-                    Privado:{" "}
-                    {boards.filter((b) => b.board_kind === "private").length}
-                  </span>
+                  <span>Privado: {statistics.private || 0}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <FaUnlock className="text-blue-600" />
-                  <span>
-                    Compartido:{" "}
-                    {boards.filter((b) => b.board_kind === "share").length}
-                  </span>
+                  <span>Compartido: {statistics.share || 0}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <FaBuilding className="text-purple-600" />
+                  <span>Workspaces: {workspaces.length}</span>
                 </div>
               </div>
             </div>
