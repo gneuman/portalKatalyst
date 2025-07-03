@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -13,7 +13,7 @@ import {
   FaInfoCircle,
 } from "react-icons/fa";
 
-export default function MondayStructurePage() {
+function MondayStructureContent() {
   const searchParams = useSearchParams();
   const [boardId, setBoardId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -68,37 +68,6 @@ export default function MondayStructurePage() {
       }, 100);
     }
   }, [searchParams]);
-    if (!boardId.trim()) {
-      setError("Por favor ingresa un ID de tabla válido");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setStructure(null);
-
-    try {
-      const response = await fetch("/api/monday/structure", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ boardId: boardId.trim() }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error al obtener la estructura");
-      }
-
-      setStructure(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const copyToClipboard = (text, fieldName) => {
     navigator.clipboard.writeText(text);
@@ -488,5 +457,22 @@ export default function MondayStructurePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function MondayStructurePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando estructura...</p>
+          </div>
+        </div>
+      }
+    >
+      <MondayStructureContent />
+    </Suspense>
   );
 }
