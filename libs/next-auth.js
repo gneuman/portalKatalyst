@@ -247,7 +247,7 @@ export const authOptions = {
               );
 
               try {
-                // Usar la API de Resend directamente en lugar de SMTP
+                // Usar la API de Resend directamente
                 const { Resend } = await import("resend");
                 const resend = new Resend(process.env.RESEND_API_KEY);
 
