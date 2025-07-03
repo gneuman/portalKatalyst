@@ -45,12 +45,12 @@ function MondayItemsContent() {
     if (urlBoardId) {
       setBoardId(urlBoardId);
       // Automáticamente cargar items si se proporciona boardId en la URL
-      setTimeout(() => handleGetItems(), 100);
+      handleGetItemsWithBoardId(urlBoardId);
     }
   }, [searchParams]);
 
-  const handleGetItems = async () => {
-    if (!boardId.trim()) {
+  const handleGetItemsWithBoardId = async (boardIdParam) => {
+    if (!boardIdParam || !boardIdParam.trim()) {
       setError("Por favor ingresa un ID de tabla válido");
       return;
     }
@@ -65,7 +65,7 @@ function MondayItemsContent() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          boardId: boardId.trim(),
+          boardId: boardIdParam.trim(),
           limit: 10,
         }),
       });
@@ -84,6 +84,15 @@ function MondayItemsContent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGetItems = async () => {
+    if (!boardId.trim()) {
+      setError("Por favor ingresa un ID de tabla válido");
+      return;
+    }
+
+    await handleGetItemsWithBoardId(boardId);
   };
 
   const handleEditItem = (item) => {
@@ -118,7 +127,7 @@ function MondayItemsContent() {
       setSaving(false);
 
       // Recargar items
-      handleGetItems(currentPage);
+      handleGetItems();
     } catch (error) {
       setError(error.message);
       setSaving(false);

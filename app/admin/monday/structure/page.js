@@ -22,8 +22,18 @@ function MondayStructureContent() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
 
-  const handleGetStructure = async () => {
-    if (!boardId.trim()) {
+  // Leer boardId de la URL si está presente
+  useEffect(() => {
+    const urlBoardId = searchParams.get("boardId");
+    if (urlBoardId) {
+      setBoardId(urlBoardId);
+      // Automáticamente cargar estructura si se proporciona boardId en la URL
+      handleGetStructureWithBoardId(urlBoardId);
+    }
+  }, [searchParams]);
+
+  const handleGetStructureWithBoardId = async (boardIdParam) => {
+    if (!boardIdParam || !boardIdParam.trim()) {
       setError("Por favor ingresa un ID de tabla válido");
       return;
     }
@@ -38,7 +48,7 @@ function MondayStructureContent() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ boardId: boardId.trim() }),
+        body: JSON.stringify({ boardId: boardIdParam.trim() }),
       });
 
       const data = await response.json();
@@ -55,19 +65,14 @@ function MondayStructureContent() {
     }
   };
 
-  // Leer boardId de la URL si está presente
-  useEffect(() => {
-    const urlBoardId = searchParams.get("boardId");
-    if (urlBoardId) {
-      setBoardId(urlBoardId);
-      // Automáticamente cargar estructura si se proporciona boardId en la URL
-      setTimeout(() => {
-        if (urlBoardId.trim()) {
-          handleGetStructure();
-        }
-      }, 100);
+  const handleGetStructure = async () => {
+    if (!boardId.trim()) {
+      setError("Por favor ingresa un ID de tabla válido");
+      return;
     }
-  }, [searchParams]);
+
+    await handleGetStructureWithBoardId(boardId);
+  };
 
   const copyToClipboard = (text, fieldName) => {
     navigator.clipboard.writeText(text);
