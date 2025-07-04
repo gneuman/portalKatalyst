@@ -18,6 +18,7 @@ export async function GET(request) {
     const sortBy = searchParams.get("sortBy") || "publishedAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
     const status = searchParams.get("status"); // processed, published, all
+    const videoId = searchParams.get("videoId");
 
     const skip = (page - 1) * limit;
 
@@ -27,6 +28,9 @@ export async function GET(request) {
       filter.isProcessed = true;
     } else if (status === "published") {
       filter.isPublished = true;
+    }
+    if (videoId) {
+      filter.videoId = videoId;
     }
 
     // Construir ordenamiento
