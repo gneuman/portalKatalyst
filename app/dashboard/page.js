@@ -1,5 +1,5 @@
 "use client";
-import { FaBuilding, FaUser, FaBook, FaClock } from "react-icons/fa";
+import { FaBuilding, FaUser, FaBook, FaClock, FaPlay } from "react-icons/fa";
 import CardGrid from "@/components/dashboard/CardGrid";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -47,6 +47,17 @@ export default function Dashboard() {
       {/* Cards principales */}
       <h2 className="text-2xl font-bold mt-8 mb-4">Para ti</h2>
       <CardGrid />
+
+      {/* Enlace a administración de podcast */}
+      <div className="mt-8">
+        <a
+          href="/admin/podcast"
+          className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+        >
+          <FaPlay className="w-5 h-5" />
+          <span>Administrar Podcast</span>
+        </a>
+      </div>
       {/* Banner visual */}
       <div className="w-full rounded-xl overflow-hidden shadow-lg mt-10 mb-8">
         <div className="relative w-full h-40 sm:h-56">

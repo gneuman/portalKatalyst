@@ -187,6 +187,60 @@ function MondayStructureContent() {
     return colors[type] || "bg-gray-100 text-gray-800";
   };
 
+  // Estado para prueba directa
+  const [views, setViews] = useState(0);
+  const [likes, setLikes] = useState(0);
+  const [result, setResult] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [current, setCurrent] = useState(null);
+  const itemId = "9523576243";
+
+  async function fetchCurrent() {
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/podcast/test-stats");
+      const data = await res.json();
+      setCurrent(data.item);
+      if (data.item) {
+        const v = data.item.column_values.find(
+          (c) => c.id === "numeric_mkshtg2f"
+        );
+        const l = data.item.column_values.find(
+          (c) => c.id === "numeric_mkshy1xp"
+        );
+        setViews(Number(v?.text || 0));
+        setLikes(Number(l?.text || 0));
+      }
+    } catch (e) {
+      setCurrent(null);
+    }
+    setLoading(false);
+  }
+
+  async function updateStats(e) {
+    e.preventDefault();
+    setStatsLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/podcast/test-stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId, views, likes }),
+      });
+      const data = await res.json();
+      setResult(data);
+      await fetchCurrent();
+    } catch (e) {
+      setResult({ error: e.message });
+    }
+    setStatsLoading(false);
+  }
+
+  useEffect(() => {
+    fetchCurrent();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
@@ -460,6 +514,70 @@ function MondayStructureContent() {
             </div>
           </div>
         )}
+        <div className="bg-white rounded-xl shadow-lg p-6 mt-8">
+          <h2 className="text-lg font-bold mb-2">
+            Prueba directa de Vistas y Likes (ID: {itemId})
+          </h2>
+          <form onSubmit={updateStats} className="flex flex-col gap-2 max-w-xs">
+            <label>
+              Vistas:
+              <input
+                type="number"
+                value={views}
+                onChange={(e) => setViews(Number(e.target.value))}
+                className="border px-2 py-1 w-full"
+              />
+            </label>
+            <label>
+              Likes:
+              <input
+                type="number"
+                value={likes}
+                onChange={(e) => setLikes(Number(e.target.value))}
+                className="border px-2 py-1 w-full"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={statsLoading}
+              className="bg-blue-600 text-white px-4 py-2 rounded mt-2"
+            >
+              Actualizar
+            </button>
+          </form>
+          <button
+            onClick={fetchCurrent}
+            className="mt-2 underline text-blue-700"
+          >
+            Refrescar estado actual
+          </button>
+          {statsLoading && <div className="mt-2">Cargando...</div>}
+          {current && (
+            <div className="mt-2 text-sm bg-gray-100 p-2 rounded">
+              <div>
+                <b>Actual:</b>
+              </div>
+              <div>
+                Vistas:{" "}
+                {current.column_values.find((c) => c.id === "numeric_mkshtg2f")
+                  ?.text || 0}
+              </div>
+              <div>
+                Likes:{" "}
+                {current.column_values.find((c) => c.id === "numeric_mkshy1xp")
+                  ?.text || 0}
+              </div>
+            </div>
+          )}
+          {result && (
+            <div className="mt-2 text-sm bg-green-100 p-2 rounded">
+              <b>Resultado:</b>{" "}
+              {result.success
+                ? "Actualizado correctamente"
+                : JSON.stringify(result)}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

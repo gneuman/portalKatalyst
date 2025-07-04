@@ -15,6 +15,7 @@ import {
   FaHome,
   FaCogs,
   FaThLarge,
+  FaEye,
 } from "react-icons/fa";
 
 const tools = [
@@ -43,6 +44,14 @@ const tools = [
     href: "/admin/monday/items",
     color: "bg-green-500 hover:bg-green-600",
     iconColor: "text-green-500",
+  },
+  {
+    title: "Administrar Podcast",
+    description: "Monitoreo y debug de estadísticas de videos en Monday.com.",
+    icon: FaEye,
+    href: "/admin/podcast",
+    color: "bg-purple-500 hover:bg-purple-600",
+    iconColor: "text-purple-500",
   },
 ];
 
