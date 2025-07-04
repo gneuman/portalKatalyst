@@ -1,6 +1,20 @@
 import Link from "next/link";
 import { FaPlay, FaClock, FaCalendar, FaMicrophone } from "react-icons/fa";
 
+// Función para convertir duración ISO 8601 a formato legible
+function parseISODuration(duration) {
+  if (!duration) return "";
+  const regex = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
+  const match = duration.match(regex);
+  if (!match) return duration;
+  const [, h, m, s] = match;
+  const parts = [];
+  if (h) parts.push(`${h}h`);
+  if (m) parts.push(`${m}m`);
+  if (s) parts.push(`${s}s`);
+  return parts.join(" ") || "0s";
+}
+
 async function getEpisodes() {
   try {
     const res = await fetch(
@@ -63,7 +77,7 @@ export default async function RecompenzaPage() {
         </div>
 
         {/* Lista de episodios */}
-        <div className="space-y-2">
+        <div className="space-y-2 overflow-x-hidden">
           {episodes.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -81,62 +95,48 @@ export default async function RecompenzaPage() {
               <Link
                 key={ep.videoId}
                 href={`/recompenza/${ep.videoId}`}
-                className="group flex items-center space-x-4 p-4 rounded-lg hover:bg-white/5 transition-all duration-200"
+                className="group w-full block"
+                style={{ maxWidth: "100vw" }}
               >
-                {/* Número del episodio */}
-                <div className="w-8 h-8 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors duration-200">
-                  {index + 1}
-                </div>
-
-                {/* Thumbnail */}
-                <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                  <img
-                    src={ep.thumbnail}
-                    alt={ep.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                    <FaPlay className="text-white text-lg" />
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 rounded-lg hover:bg-white/5 transition-all duration-200 text-center sm:text-left shadow-md">
+                  {/* Imagen de portada (thumbnail) */}
+                  <div className="w-full max-w-xs sm:max-w-[160px] aspect-video rounded-lg overflow-hidden shadow-lg mx-auto">
+                    <img
+                      src={ep.thumbnail}
+                      alt={ep.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                </div>
-
-                {/* Información del episodio */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-semibold text-lg truncate group-hover:text-[#f99d25] transition-colors duration-200">
-                    {ep.aiTitle || ep.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm line-clamp-2 mt-1">
-                    {ep.aiSummary || ep.description}
-                  </p>
-                </div>
-
-                {/* Metadatos */}
-                <div className="flex items-center space-x-6 text-gray-400 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <FaCalendar className="text-xs" />
-                    <span>
-                      {new Date(ep.publishedAt).toLocaleDateString("es-MX", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
+                  {/* Contenido textual */}
+                  <div className="flex-1 flex flex-col items-center sm:items-start w-full">
+                    {/* Título */}
+                    <h2 className="text-lg sm:text-xl font-bold text-white w-full mb-1 text-center sm:text-left">
+                      {ep.title}
+                    </h2>
+                    {/* Descripción debajo del título */}
+                    <p className="text-gray-300 text-sm mb-2 line-clamp-3 w-full">
+                      {ep.description}
+                    </p>
+                    {/* Metadatos */}
+                    <div className="flex flex-wrap gap-2 justify-center sm:justify-start w-full mb-2">
+                      <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">
+                        {ep.publishedAt
+                          ? new Date(ep.publishedAt).toLocaleDateString()
+                          : ""}
+                      </span>
+                      <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">
+                        {ep.duration ? parseISODuration(ep.duration) : ""}
+                      </span>
+                    </div>
+                    <a
+                      href={`https://youtube.com/watch?v=${ep.videoId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-2 bg-[#f99d25] hover:bg-[#ffb84d] text-black font-semibold px-4 py-2 rounded-full transition-colors duration-200 shadow"
+                    >
+                      Ver en YouTube
+                    </a>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <FaClock className="text-xs" />
-                    <span>45 min</span>
-                  </div>
-                </div>
-
-                {/* Botón de YouTube */}
-                <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-700">
-                  <svg
-                    className="w-4 h-4 text-white"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                  </svg>
                 </div>
               </Link>
             ))
