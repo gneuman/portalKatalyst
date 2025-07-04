@@ -47,15 +47,21 @@ export default async function EpisodioPage({ params }) {
               <span className="font-medium">Volver al podcast</span>
             </Link>
             <div className="flex items-center space-x-4">
-              <button className="text-white/70 hover:text-white transition-colors duration-200">
-                <FaShare className="text-lg" />
-              </button>
-              <button className="text-white/70 hover:text-white transition-colors duration-200">
-                <FaHeart className="text-lg" />
-              </button>
-              <button className="text-white/70 hover:text-white transition-colors duration-200">
-                <FaDownload className="text-lg" />
-              </button>
+              <a
+                href={`https://www.youtube.com/watch?v=${episode.videoId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full font-medium flex items-center space-x-2 transition-all duration-200"
+              >
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+                <span>Ver en YouTube</span>
+              </a>
             </div>
           </div>
         </div>
@@ -76,10 +82,21 @@ export default async function EpisodioPage({ params }) {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-4 left-4 right-4">
-                  <button className="bg-[#f99d25] hover:bg-[#f79533] text-white px-8 py-4 rounded-full font-semibold flex items-center space-x-3 transition-all duration-200 transform hover:scale-105 shadow-lg">
-                    <FaPlay className="text-lg" />
-                    <span>Reproducir episodio</span>
-                  </button>
+                  <a
+                    href={`https://www.youtube.com/watch?v=${episode.videoId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-full font-semibold flex items-center space-x-3 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                    <span>Ver en YouTube</span>
+                  </a>
                 </div>
               </div>
             </div>
@@ -148,7 +165,7 @@ export default async function EpisodioPage({ params }) {
               <div className="relative rounded-lg overflow-hidden">
                 <iframe
                   width="100%"
-                  height="200"
+                  height="315"
                   src={`https://www.youtube.com/embed/${episode.videoId}`}
                   title={episode.title}
                   frameBorder="0"
@@ -190,18 +207,26 @@ export default async function EpisodioPage({ params }) {
                 Acciones
               </h3>
               <div className="space-y-3">
-                <button className="w-full bg-white/10 hover:bg-white/20 text-white py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2">
-                  <FaHeart className="text-sm" />
-                  <span>Agregar a favoritos</span>
-                </button>
-                <button className="w-full bg-white/10 hover:bg-white/20 text-white py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2">
-                  <FaDownload className="text-sm" />
-                  <span>Descargar</span>
-                </button>
-                <button className="w-full bg-white/10 hover:bg-white/20 text-white py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2">
-                  <FaShare className="text-sm" />
-                  <span>Compartir</span>
-                </button>
+                <a 
+                  href={`https://www.youtube.com/watch?v=${episode.videoId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                  <span>Ver en YouTube</span>
+                </a>
+                <a 
+                  href={`https://www.youtube.com/channel/UCYOUR_CHANNEL_ID`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-white/10 hover:bg-white/20 text-white py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+                >
+                  <FaMicrophone className="text-sm" />
+                  <span>Suscribirse al canal</span>
+                </a>
               </div>
             </div>
           </div>
