@@ -18,4 +18,34 @@ progress::-webkit-progress-value {
   .btn {
     @apply !capitalize;
   }
+
+  /* Estilos para el podcast */
+  .podcast-card {
+    @apply bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl transition-all duration-300 hover:bg-white/10 hover:border-white/20;
+  }
+
+  .podcast-button {
+    @apply bg-[#f99d25] hover:bg-[#f79533] text-white transition-all duration-200 transform hover:scale-105 shadow-lg;
+  }
+
+  .podcast-text-gradient {
+    @apply bg-gradient-to-r from-[#f99d25] to-[#f79533] bg-clip-text text-transparent;
+  }
+
+  /* Scrollbar personalizada para el tema oscuro */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-[#1a2a35];
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-[#f99d25] rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-[#f79533];
+  }
 }
