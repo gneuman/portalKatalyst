@@ -1,13 +1,24 @@
 import Link from "next/link";
 
 async function getEpisodes() {
-  const res = await fetch(
-    `${
-      process.env.NEXTAUTH_URL || ""
-    }/api/podcast/videos?status=published&limit=100`
-  );
-  const data = await res.json();
-  return data.videos || [];
+  try {
+    const res = await fetch(
+      `${
+        process.env.NEXTAUTH_URL || ""
+      }/api/podcast/videos?status=published&limit=100`
+    );
+    
+    if (!res.ok) {
+      console.error(`Error fetching episodes: ${res.status}`);
+      return [];
+    }
+    
+    const data = await res.json();
+    return data.videos || [];
+  } catch (error) {
+    console.error("Error fetching episodes:", error);
+    return [];
+  }
 }
 
 export default async function RecompenzaPage() {

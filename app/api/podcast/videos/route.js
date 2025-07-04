@@ -11,7 +11,8 @@ export async function GET(request) {
   try {
     await connectDB();
 
-    const { searchParams } = new URL(request.url);
+    const url = new URL(request.url);
+    const searchParams = url.searchParams;
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 10;
     const sortBy = searchParams.get("sortBy") || "publishedAt";
