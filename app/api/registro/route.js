@@ -199,76 +199,83 @@ export async function POST(req) {
         col.title.toLowerCase().includes("contact") ||
         col.type === "board_relation"
     );
-
-    if (!contactColumn) {
-      console.error(
-        `[REGISTRO] No se encontró columna de contacto. Columnas disponibles:`,
-        board.columns?.map((c) => c.title)
-      );
-      return NextResponse.json(
-        {
-          error: "No se encontró columna de contacto en el board del programa",
-        },
-        { status: 400 }
-      );
-    }
-
-    console.log(
-      `[REGISTRO] Columna de contacto encontrada:`,
-      contactColumn.title
-    );
-
-    // Buscar columna de razón de forma programática
-    const razonColumn = board.columns?.find(
+    const mondayIdContactoCol = board.columns.find(
       (col) =>
-        col.title.toLowerCase().includes("razón") ||
-        col.title.toLowerCase().includes("razon") ||
-        col.title.toLowerCase().includes("reason") ||
-        col.title.toLowerCase().includes("motivo") ||
-        col.title.toLowerCase().includes("por qué") ||
-        col.title.toLowerCase().includes("por que")
+        col.title.toLowerCase().includes("mondayid contacto") ||
+        col.title.toLowerCase().includes("monday id contacto")
     );
 
-    console.log(
-      `[REGISTRO] Columna de razón encontrada:`,
-      razonColumn?.title || "No encontrada"
-    );
-
-    // PASO 4: Crear item en el board del programa
-    const columnValues = {
-      [contactColumn.id]: { item_ids: [parseInt(katalystId)] },
-    };
-
-    // Agregar MondayId Contacto si existe la columna
+    // Siempre crear el item con MondayId Contacto y actualizarlo si es necesario
+    const columnValues = [];
+    if (contactColumn) {
+      columnValues.push({
+        column_id: contactColumn.id,
+        value: JSON.stringify({ item_ids: [parseInt(katalystId)] }),
+      });
+    }
     if (mondayIdContactoCol) {
-      columnValues[mondayIdContactoCol.id] = katalystId;
+      columnValues.push({
+        column_id: mondayIdContactoCol.id,
+        value: JSON.stringify(katalystId),
+        text: katalystId,
+      });
+    }
+    // Agregar razón si aplica
+    if (razon) {
+      const razonCol = board.columns.find((col) =>
+        col.title.toLowerCase().includes("razon")
+      );
+      if (razonCol) {
+        columnValues.push({
+          column_id: razonCol.id,
+          value: JSON.stringify(razon),
+          text: razon,
+        });
+      }
     }
 
-    // Agregar razón si existe la columna y se proporcionó
-    if (razonColumn && razon) {
-      columnValues[razonColumn.id] = razon;
-    }
-
-    const createItemQuery = `mutation { 
+    // Crear el item en el board destino
+    const createItemMutation = `mutation {
       create_item (
-        board_id: ${boardId}, 
+        board_id: ${boardId},
         item_name: "${itemName}",
-        column_values: "${JSON.stringify(columnValues).replace(/"/g, '\\"')}"
-      ) { 
-        id 
-        name 
-      } 
+        column_values: "${
+          columnValues.length > 0
+            ? JSON.stringify(
+                Object.fromEntries(
+                  columnValues.map((cv) => [cv.column_id, cv.value])
+                )
+              )
+            : "{}"
+        }"
+      ) {
+        id
+        name
+      }
     }`;
-
-    const createItemRes = await postMonday(createItemQuery);
-    const newItem = createItemRes?.data?.create_item;
+    const createRes = await postMonday(createItemMutation);
+    const newItem = createRes?.data?.create_item;
 
     if (!newItem) {
-      console.error(`[REGISTRO] Error al crear item:`, createItemRes);
       return NextResponse.json(
-        { error: "No se pudo crear el item en el programa" },
+        { error: "No se pudo crear el registro en el programa" },
         { status: 500 }
       );
+    }
+
+    // Si MondayId Contacto existe, actualizarlo siempre
+    if (mondayIdContactoCol) {
+      const updateMutation = `mutation {
+        change_column_value (
+          board_id: ${boardId},
+          item_id: ${newItem.id},
+          column_id: "${mondayIdContactoCol.id}",
+          value: \"${katalystId}\"
+        ) {
+          id
+        }
+      }`;
+      await postMonday(updateMutation);
     }
 
     console.log(

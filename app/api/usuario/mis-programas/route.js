@@ -73,9 +73,14 @@ export async function GET(req) {
         ? item.column_values.find((col) => col.column?.id === nombreCol.id)
             ?.text
         : item.name;
+      const programaNombre =
+        nombre && nombre.trim() !== "" ? nombre : item.name || "Sin nombre";
       if (tipo !== "info" && boardDestino) {
         boardsDestino.push(boardDestino);
-        programasInfo[boardDestino] = { nombre, programaId: item.id };
+        programasInfo[boardDestino] = {
+          nombre: programaNombre,
+          programaId: item.id,
+        };
       }
     }
 

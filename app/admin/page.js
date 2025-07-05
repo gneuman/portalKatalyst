@@ -29,6 +29,15 @@ const tools = [
     iconColor: "text-indigo-500",
   },
   {
+    title: "Administrar Programas",
+    description:
+      "Revisar y configurar boards de programas para el sistema de aplicaciones.",
+    icon: FaCog,
+    href: "/admin/programas",
+    color: "bg-orange-500 hover:bg-orange-600",
+    iconColor: "text-orange-500",
+  },
+  {
     title: "Estructura de Tabla",
     description:
       "Visualiza todos los campos y columnas de una tabla de Monday.com.",
