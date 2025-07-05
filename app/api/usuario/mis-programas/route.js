@@ -141,7 +141,7 @@ export async function GET(req) {
         if (match) {
           misProgramas.push({
             programaId: programasInfo[boardId]?.programaId,
-            programaNombre: programasInfo[boardId]?.nombre,
+            programaNombre: programasInfo[boardId]?.nombre || "",
             boardId: boardId,
             boardName: progBoard.name,
             itemId: item.id,
