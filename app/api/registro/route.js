@@ -90,13 +90,7 @@ export async function POST(req) {
       board.columns.length
     );
 
-    // Buscar si ya existe el contacto por MondayId Contacto
-    const mondayIdContactoCol = board.columns.find(
-      (col) =>
-        col.title.toLowerCase().includes("mondayid contacto") ||
-        col.title.toLowerCase().includes("monday id contacto")
-    );
-
+    
     let contactoExistente = null;
 
     if (mondayIdContactoCol) {
@@ -198,11 +192,6 @@ export async function POST(req) {
         col.title.toLowerCase().includes("contacto") ||
         col.title.toLowerCase().includes("contact") ||
         col.type === "board_relation"
-    );
-    const mondayIdContactoCol = board.columns.find(
-      (col) =>
-        col.title.toLowerCase().includes("mondayid contacto") ||
-        col.title.toLowerCase().includes("monday id contacto")
     );
 
     // Siempre crear el item con MondayId Contacto y actualizarlo si es necesario

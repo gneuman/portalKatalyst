@@ -121,6 +121,10 @@ export async function GET(req) {
           col.type === "board_relation" ||
           col.title.toLowerCase().includes("contacto")
       );
+      // Buscar columna 'Estado'
+      const estadoCol = progBoard.columns.find((col) =>
+        col.title.toLowerCase().includes("estado")
+      );
       for (const item of progBoard.items_page?.items || []) {
         let match = false;
         // Buscar por MondayId Contacto (texto)
@@ -144,6 +148,14 @@ export async function GET(req) {
           }
         }
         if (match) {
+          // Obtener el valor de la columna 'Estado'
+          let status = "-";
+          if (estadoCol) {
+            const estadoVal = item.column_values.find(
+              (col) => col.column?.id === estadoCol.id
+            );
+            if (estadoVal && estadoVal.text) status = estadoVal.text;
+          }
           misProgramas.push({
             programaId: programasInfo[boardId]?.programaId,
             programaNombre: programasInfo[boardId]?.nombre || "",
@@ -151,7 +163,7 @@ export async function GET(req) {
             boardName: progBoard.name,
             itemId: item.id,
             itemName: item.name,
-            status: "-", // Puedes agregar lógica para status si lo necesitas
+            status,
             tieneOnboarding: item.subitems?.some((sub) =>
               sub.name.toLowerCase().includes("onboarding")
             ),
