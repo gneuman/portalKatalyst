@@ -4,11 +4,46 @@ import CardGrid from "@/components/dashboard/CardGrid";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import ProgramasGrid from "@/components/dashboard/ProgramasGrid";
+import ProgramasHistorial from "@/components/dashboard/ProgramasHistorial";
+import ProgramasBoardsInfo from "@/components/dashboard/ProgramasBoardsInfo";
+
+// Programas estáticos antiguos
+const programasEstaticos = [
+  {
+    nombre: "empresas",
+    "título visible": "Empresas",
+    descripcion: "Administra y consulta información de empresas.",
+    "ruta destino": "/dashboard/empresas",
+    alwaysEnabled: false,
+  },
+  {
+    nombre: "personal",
+    "título visible": "Personal",
+    descripcion: "Gestión de personal y colaboradores.",
+    "ruta destino": "/dashboard/personal",
+    alwaysEnabled: false,
+  },
+  {
+    nombre: "profile",
+    "título visible": "Mi Perfil",
+    descripcion: "Consulta y edita tu información personal.",
+    "ruta destino": "/dashboard/profile",
+    alwaysEnabled: true,
+  },
+];
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [programas, setProgramas] = useState([]);
+  const [columns, setColumns] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Obtener el Katalyst ID del perfil del usuario (siempre el mismo campo)
+  const katalystId = session?.user?.personalMondayId || null;
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -16,7 +51,31 @@ export default function Dashboard() {
     }
   }, [status, router]);
 
-  if (status === "loading") return <div>Cargando...</div>;
+  useEffect(() => {
+    async function fetchProgramas() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/programas");
+        const data = await res.json();
+        setProgramas(data.programas || []);
+        setColumns(data.columns || []);
+      } catch (err) {
+        setProgramas([]);
+        setColumns([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProgramas();
+  }, []);
+
+  // Ahora todos los programas se muestran habilitados
+  const allProgramas = programas.map((prog) => ({
+    ...prog,
+    alwaysEnabled: true,
+  }));
+
+  if (status === "loading" || loading) return <div>Cargando...</div>;
 
   // KPIs de ejemplo (puedes conectar estos valores a tu backend o lógica real)
   const kpis = [
@@ -43,21 +102,38 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4">
+    <div className="max-w-7xl mx-auto py-8 px-4 bg-white min-h-screen">
+      {/* Mensaje de bienvenida y Katalyst ID */}
+      {session?.user && (
+        <div className="mb-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-1">
+            Bienvenido a Katalyst, {session.user.name || session.user.email}
+          </h3>
+          {katalystId && (
+            <div className="text-gray-500 text-sm">
+              Tu ID de Katalyst: <span className="font-mono">{katalystId}</span>
+            </div>
+          )}
+        </div>
+      )}
       {/* Cards principales */}
       <h2 className="text-2xl font-bold mt-8 mb-4">Para ti</h2>
       <CardGrid />
 
-      {/* Enlace a administración de podcast */}
-      <div className="mt-8">
-        <a
-          href="/admin/podcast"
-          className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
-        >
-          <FaPlay className="w-5 h-5" />
-          <span>Administrar Podcast</span>
-        </a>
-      </div>
+      {/* Sección de Programas dinámicos */}
+      <h2 className="text-2xl font-bold mt-8 mb-4">Programas</h2>
+      <ProgramasGrid programas={allProgramas} columns={columns} />
+
+      {/* Sección de Historial de Programas */}
+      <h2 className="text-2xl font-bold mt-8 mb-4">Mis Programas</h2>
+      <ProgramasHistorial />
+
+      {/* Sección de Configuración de Programas */}
+      {/* <h2 className="text-2xl font-bold mt-8 mb-4">
+        Configuración de Programas
+      </h2>
+      <ProgramasBoardsInfo /> */}
+
       {/* Banner visual */}
       <div className="w-full rounded-xl overflow-hidden shadow-lg mt-10 mb-8">
         <div className="relative w-full h-40 sm:h-56">

@@ -7,7 +7,6 @@ export default function ProfileCard() {
   if (session?.user) {
     console.log(`Nombre (NextAuth): ${session.user.name}`);
     console.log(`Email (NextAuth): ${session.user.email}`);
-    console.log(`Katalyst ID: ${session.user.personalMondayId}`);
     console.log(`Foto de perfil: ${session.user.fotoPerfil}`);
   }
 
