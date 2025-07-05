@@ -43,7 +43,32 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   // Obtener el Katalyst ID del perfil del usuario (siempre el mismo campo)
-  const katalystId = session?.user?.personalMondayId || null;
+  const [katalystId, setKatalystId] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  // Obtener el personalMondayId desde MongoDB
+  useEffect(() => {
+    async function fetchUserData() {
+      if (!session?.user?.email) {
+        setUserLoading(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `/api/user/profile?email=${session.user.email}`
+        );
+        const userData = await res.json();
+        setKatalystId(userData.personalMondayId || null);
+      } catch (error) {
+        console.error("Error al obtener datos del usuario:", error);
+      } finally {
+        setUserLoading(false);
+      }
+    }
+
+    fetchUserData();
+  }, [session?.user?.email]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -75,7 +100,8 @@ export default function Dashboard() {
     alwaysEnabled: true,
   }));
 
-  if (status === "loading" || loading) return <div>Cargando...</div>;
+  if (status === "loading" || loading || userLoading)
+    return <div>Cargando...</div>;
 
   // KPIs de ejemplo (puedes conectar estos valores a tu backend o lógica real)
   const kpis = [
@@ -122,7 +148,12 @@ export default function Dashboard() {
 
       {/* Sección de Programas dinámicos */}
       <h2 className="text-2xl font-bold mt-8 mb-4">Programas</h2>
-      <ProgramasGrid programas={allProgramas} columns={columns} />
+      <ProgramasGrid
+        programas={allProgramas}
+        columns={columns}
+        katalystId={katalystId}
+        userName={session?.user?.name || session?.user?.email}
+      />
 
       {/* Sección de Historial de Programas */}
       <h2 className="text-2xl font-bold mt-8 mb-4">Mis Programas</h2>

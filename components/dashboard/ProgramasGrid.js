@@ -28,11 +28,14 @@ function Toast({ show, message, onClose, isError }) {
   );
 }
 
-export default function ProgramasGrid({ programas, columns }) {
+export default function ProgramasGrid({
+  programas,
+  columns,
+  katalystId,
+  userName,
+}) {
   const { data: session } = useSession();
   const router = useRouter();
-  const katalystId = session?.user?.personalMondayId;
-  const userName = session?.user?.name;
 
   // Estados para el formulario de aplicación
   const [showForm, setShowForm] = useState(false);
@@ -221,6 +224,48 @@ export default function ProgramasGrid({ programas, columns }) {
     }
   }
 
+  // Debug: mostrar información en desarrollo
+  if (process.env.NODE_ENV === "development") {
+    console.log(
+      `[DEBUG] ProgramasGrid recibió ${programas?.length || 0} programas`
+    );
+    console.log(`[DEBUG] KatalystId: ${katalystId}`);
+    console.log(`[DEBUG] UserName: ${userName}`);
+  }
+
+  // Buscar los IDs de las columnas relevantes
+  const portadaCol = columns.find((c) => c.title?.toLowerCase() === "portada");
+  const familiaCol = columns.find((c) =>
+    c.title?.toLowerCase().includes("familia donadora")
+  );
+
+  if (!katalystId) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-500">
+          <svg
+            className="w-12 h-12 mx-auto mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
+          </svg>
+          <p className="text-lg font-semibold">Error de configuración</p>
+          <p className="text-sm">
+            No se pudo obtener tu ID de Katalyst. Por favor, contacta al
+            administrador.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!programas || programas.length === 0) {
     return (
       <div className="text-center py-12">
@@ -249,183 +294,75 @@ export default function ProgramasGrid({ programas, columns }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {programas.map((prog, index) => {
-          // Obtener valores de columnas con valores por defecto
+          // Obtener valores de columnas
           const boardIdCol = columns.find((c) => c.title === "Board destino");
           const boardId = boardIdCol ? prog[boardIdCol.id] : null;
-
           const descripcionCol = columns.find((c) => c.title === "Descripción");
           const descripcion = descripcionCol
             ? prog[descripcionCol.id]
             : "Sin descripción";
-
           const tipoCol = columns.find((c) => c.title === "Tipo");
           const tipo = tipoCol ? prog[tipoCol.id] : "formulario";
-
           const rutaCol = columns.find((c) => c.title === "Ruta destino");
           const rutaDestino = rutaCol ? prog[rutaCol.id] : "";
 
-          // Debug: mostrar valores en desarrollo
-          if (process.env.NODE_ENV === "development") {
-            console.log(`[DEBUG] Programa ${prog.nombre}:`, {
-              boardId,
-              descripcion,
-              tipo,
-              rutaDestino,
-              tieneBoardId: !!boardId,
-            });
-          }
+          // Portada e info de familia donadora
+          const portada = portadaCol ? prog[portadaCol.id] : null;
+          const familiaDonadora = familiaCol ? prog[familiaCol.id] : null;
 
-          let btnText = "APLICAR AL PROGRAMA";
-          let btnHref = "";
-          let btnDisabled = false;
-          let onClick = null;
+          // Botón
+          let btnText = "Ver más";
+          let btnHref = rutaDestino || "#";
 
-          // Verificar si ya aplicó a este programa específico
-          const aplicadoAEstePrograma =
-            yaAplico && aplicacionInfo && aplicacionInfo.boardId === boardId;
-
-          // Si el tipo es 'info', llevar a la ruta destino
-          if (tipo === "info") {
-            btnText = "VER MÁS";
-            btnHref = rutaDestino;
-          } else if (tipo === "formulario") {
-            // Verificar si ya aplicó
-            if (aplicadoAEstePrograma) {
-              if (
-                aplicacionInfo.status === "Activo" ||
-                aplicacionInfo.status === "Aceptado" ||
-                aplicacionInfo.status === "Aprobado"
-              ) {
-                btnText = "VER ACTIVIDADES";
-                btnHref = `/dashboard/${aplicacionInfo.boardId}/${aplicacionInfo.itemId}`;
-              } else if (
-                aplicacionInfo.status === "Onboarding" &&
-                !aplicacionInfo.tieneRazon
-              ) {
-                btnText = "COMPLETAR ONBOARDING";
-                onClick = () => handleOpenOnboardingForm(prog);
-              } else if (aplicacionInfo.status === "Rechazado") {
-                btnText = "RECHAZADO";
-                btnDisabled = true;
-              } else {
-                btnText = aplicacionInfo.status.toUpperCase();
-                btnDisabled = true;
-              }
-            } else {
-              onClick = () => handleOpenApplicationForm(prog);
-              btnText = "APLICAR AL PROGRAMA";
-            }
-          }
-
-          // Si no tiene boardId, mostrar Próximamente y deshabilitar el botón
-          if (!boardId) {
-            return (
-              <div
-                key={index}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
-              >
-                <div className="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-lg">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-white text-center">
-                      <div className="text-4xl mb-2">🚀</div>
-                      <div className="text-lg font-semibold">{prog.nombre}</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {prog.nombre}
-                    </h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
-                      Próximamente
-                    </span>
-                  </div>
-                  <p className="text-gray-600 text-sm mb-2">{descripcion}</p>
-                </div>
-                <div className="p-6 pt-0">
-                  <button
-                    disabled
-                    className="w-full px-4 py-2 rounded-md font-medium bg-gray-300 text-gray-500 cursor-not-allowed"
-                  >
-                    PRÓXIMAMENTE
-                  </button>
-                </div>
-              </div>
-            );
-          }
-
+          // Render de la tarjeta
           return (
             <div
               key={index}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl shadow-lg border overflow-hidden flex flex-col h-full"
             >
+              {/* Banner superior */}
+              <div className="bg-purple-500 text-white text-center py-2 px-4 font-semibold text-sm rounded-t-2xl">
+                {familiaDonadora
+                  ? `Sección donada por la familia ${familiaDonadora}`
+                  : "Sección donada por una familia"}
+              </div>
               {/* Imagen */}
-              <div className="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-lg">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-white text-center">
-                    <div className="text-4xl mb-2">🚀</div>
-                    <div className="text-lg font-semibold">{prog.nombre}</div>
-                  </div>
+              {portada ? (
+                <img
+                  src={portada}
+                  alt={prog.nombre}
+                  className="object-cover w-full h-40"
+                  style={{
+                    borderTopLeftRadius: "1rem",
+                    borderTopRightRadius: "1rem",
+                  }}
+                />
+              ) : (
+                <div
+                  className="w-full h-40 bg-gray-200 flex items-center justify-center text-gray-400 text-4xl"
+                  style={{
+                    borderTopLeftRadius: "1rem",
+                    borderTopRightRadius: "1rem",
+                  }}
+                >
+                  <span>🚀</span>
                 </div>
-              </div>
-
+              )}
               {/* Contenido */}
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {prog.nombre}
-                  </h3>
-                  {/* Status indicator */}
-                  {aplicadoAEstePrograma && (
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        aplicacionInfo.status === "Activo" ||
-                        aplicacionInfo.status === "Aceptado" ||
-                        aplicacionInfo.status === "Aprobado"
-                          ? "bg-green-100 text-green-800"
-                          : aplicacionInfo.status === "Onboarding"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : aplicacionInfo.status === "Rechazado"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {aplicacionInfo.status}
-                    </span>
-                  )}
-                </div>
-                <p className="text-gray-600 text-sm mb-2">{descripcion}</p>
-              </div>
-
-              {/* Botón */}
-              <div className="p-6 pt-0">
-                {btnHref ? (
+              <div className="flex-1 flex flex-col p-6">
+                <h3 className="text-xl font-bold mb-2">{prog.nombre}</h3>
+                <p className="text-gray-600 mb-4">{descripcion}</p>
+                <div className="mt-auto">
                   <a
                     href={btnHref}
-                    className={`w-full block text-center px-4 py-2 rounded-md font-medium transition-colors ${
-                      btnDisabled
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-blue-600 text-white hover:bg-blue-700"
-                    }`}
+                    className="w-full block text-center bg-gray-900 hover:bg-gray-800 text-white font-bold uppercase py-3 rounded-b-2xl tracking-wide transition-colors duration-200 shadow-sm"
+                    style={{ letterSpacing: "0.05em", fontSize: "1rem" }}
                   >
                     {btnText}
                   </a>
-                ) : (
-                  <button
-                    onClick={onClick}
-                    disabled={btnDisabled}
-                    className={`w-full px-4 py-2 rounded-md font-medium transition-colors ${
-                      btnDisabled
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-blue-600 text-white hover:bg-blue-700"
-                    }`}
-                  >
-                    {btnText}
-                  </button>
-                )}
+                </div>
               </div>
             </div>
           );

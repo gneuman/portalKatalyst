@@ -94,7 +94,7 @@ export default async function RecompenzaPage() {
             episodes.map((ep, index) => (
               <Link
                 key={ep.videoId}
-                href={`/recompenza/${ep.videoId}`}
+                href={`/recompensa/${ep.videoId}`}
                 className="group w-full block"
                 style={{ maxWidth: "100vw" }}
               >

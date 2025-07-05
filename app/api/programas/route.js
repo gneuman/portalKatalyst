@@ -51,6 +51,17 @@ export async function GET() {
     const board = mondayRes.data.boards[0];
     const itemsPage = board.items_page;
     const columns = board.columns || [];
+
+    console.log(
+      `[DEBUG] API Programas: Encontrados ${
+        itemsPage.items?.length || 0
+      } programas`
+    );
+    console.log(
+      `[DEBUG] API Programas: Columnas:`,
+      columns.map((c) => c.title)
+    );
+
     // Mapear usando el id de la columna como clave
     const programas = (itemsPage.items || []).map((item) => {
       const obj = { nombre: item.name };
@@ -68,6 +79,12 @@ export async function GET() {
       }
       return obj;
     });
+
+    console.log(
+      `[DEBUG] API Programas: Programas mapeados:`,
+      programas.map((p) => p.nombre)
+    );
+
     return NextResponse.json({ programas, columns });
   } catch (err) {
     console.error("Error en la consulta a Monday:", err);
