@@ -44,7 +44,7 @@ export async function GET(req) {
     }
 
     // PASO 2: Consultar status en todos los boards de programas
-    const boardIds = programas.map((p) => p.boardId).filter(Boolean);
+    // const boardIds = programas.map((p) => p.boardId).filter(Boolean);
 
     if (boardIds.length === 0) {
       return NextResponse.json({
