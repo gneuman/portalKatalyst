@@ -26,14 +26,13 @@ export default function DashboardLayout({ children }) {
       />
       <aside
         className={`
-          w-60 max-w-full bg-white flex flex-col py-4 px-2 gap-2 h-screen
+          w-80 bg-white flex flex-col py-4 px-8 gap-2 h-screen
           fixed left-0 top-0 bottom-0 z-50 transition-transform duration-200 ease-in-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0 lg:static lg:block
           shadow-lg lg:shadow-none
           overflow-y-auto scrollbar-hide
         `}
-        style={{ minHeight: "100vh" }}
       >
         <button
           className="lg:hidden self-end mb-2 p-2 rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#233746]"
@@ -111,7 +110,7 @@ export default function DashboardLayout({ children }) {
       </aside>
 
       {/* Contenedor principal */}
-      <div className="flex-1 flex flex-col min-h-screen bg-white lg:ml-60">
+      <div className="flex-1 flex flex-col min-h-screen bg-white">
         {/* Header sticky dentro de la columna derecha */}
         <div className="sticky top-0 z-30 bg-white shadow-sm flex items-center h-14 px-4 sm:px-6">
           {/* Botón hamburguesa solo en móvil */}
