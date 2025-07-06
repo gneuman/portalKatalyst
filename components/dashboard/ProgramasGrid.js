@@ -1,3 +1,11 @@
+/**
+ * Componente ProgramasGrid actualizado para:
+ * - Usar columna 'Portada' como imagen y 'Familia Donadora' como banner
+ * - Lógica de aplicación y ver más
+ * - Botón ancho, alineado, visualmente atractivo
+ * - Popup para aplicar y onboarding
+ * - Grid 3xN
+ */
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -61,13 +69,7 @@ export default function ProgramasGrid({
     // Asegurar que el programa tenga el boardId
     const boardIdCol = columns.find((c) => c.title === "Board destino");
     const boardId = boardIdCol ? prog[boardIdCol.id] : null;
-
-    // Agregar el boardId al programa para que esté disponible en el formulario
-    const programaConBoardId = {
-      ...prog,
-      boardId: boardId,
-    };
-
+    const programaConBoardId = { ...prog, boardId };
     setFormPrograma(programaConBoardId);
     setShowForm(true);
     setFormEnviado(false);
@@ -88,7 +90,6 @@ export default function ProgramasGrid({
   const handleOnboardingSuccess = () => {
     setShowOnboardingForm(false);
     setSelectedPrograma(null);
-    // Recargar el status
     window.location.reload();
   };
 
@@ -96,22 +97,17 @@ export default function ProgramasGrid({
   useEffect(() => {
     async function checkAplicaciones() {
       if (!katalystId) return;
-
       try {
-        // Verificar solo programas de tipo "formulario"
         for (const prog of programas) {
           const boardIdCol = columns.find((c) => c.title === "Board destino");
           const boardId = boardIdCol ? prog[boardIdCol.id] : null;
           const tipoCol = columns.find((c) => c.title === "Tipo");
           const tipo = tipoCol ? prog[tipoCol.id] : "formulario";
-
-          // Solo verificar programas de tipo "formulario" que tengan boardId
           if (tipo === "formulario" && boardId) {
             const res = await fetch(
               `/api/registro/person-status?katalystId=${katalystId}&boardId=${boardId}`
             );
             const data = await res.json();
-
             if (data.success && data.encontrado) {
               setYaAplico(true);
               setAplicadoBoardId(boardId);
@@ -136,109 +132,7 @@ export default function ProgramasGrid({
     checkAplicaciones();
   }, [katalystId, programas, columns]);
 
-  // Función para enviar el formulario
-  async function handleSubmitForm(e) {
-    e.preventDefault();
-    if (!formPrograma) return;
-
-    // Usar el boardId que ya está en formPrograma
-    const boardId = formPrograma.boardId;
-
-    if (!boardId) {
-      setToastMessage(
-        "Error: Este programa no está configurado para aplicaciones."
-      );
-      setShowToast(true);
-      setIsErrorToast(true);
-      return;
-    }
-
-    if (!katalystId) {
-      setToastMessage(
-        "Error: No se encontró tu ID de usuario. Por favor, inicia sesión nuevamente."
-      );
-      setShowToast(true);
-      setIsErrorToast(true);
-      return;
-    }
-
-    console.log(`[DEBUG] Enviando aplicación:`, {
-      boardId,
-      katalystId,
-      programa: formPrograma.nombre,
-    });
-
-    setLoading(true);
-    try {
-      const formData = new FormData(e.target);
-      const data = {
-        katalystId: katalystId,
-        userName: userName,
-        programa: formPrograma.nombre,
-        boardId: boardId,
-        ...Object.fromEntries(formData),
-      };
-
-      const res = await fetch("/api/registro", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      const result = await res.json();
-
-      if (result.success) {
-        setFormEnviado(true);
-        setShowConfetti(true);
-        setToastMessage("¡Aplicación enviada exitosamente!");
-        setShowToast(true);
-        setIsErrorToast(false);
-
-        setTimeout(() => {
-          setShowConfetti(false);
-          handleCloseForm();
-          window.location.reload();
-        }, 3000);
-      } else {
-        if (result.error && result.error.includes("ya registrado")) {
-          setToastMessage(
-            "Ya has aplicado a este programa anteriormente. No puedes aplicar dos veces."
-          );
-        } else {
-          setToastMessage(`Error: ${result.error}`);
-        }
-        setShowToast(true);
-        setIsErrorToast(true);
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 2000);
-      }
-    } catch (error) {
-      console.error("Error al enviar formulario:", error);
-      setToastMessage("Error de servidor. Intenta de nuevo más tarde.");
-      setShowToast(true);
-      setIsErrorToast(true);
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 2000);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Debug: mostrar información en desarrollo
-  if (process.env.NODE_ENV === "development") {
-    console.log(
-      `[DEBUG] ProgramasGrid recibió ${programas?.length || 0} programas`
-    );
-    console.log(`[DEBUG] KatalystId: ${katalystId}`);
-    console.log(`[DEBUG] UserName: ${userName}`);
-  }
-
-  // Buscar los IDs de las columnas relevantes
-  const portadaCol = columns.find((c) => c.title?.toLowerCase() === "portada");
-  const familiaCol = columns.find((c) =>
-    c.title?.toLowerCase().includes("familia donadora")
-  );
-
+  // Si no hay katalystId, mostrar mensaje de error
   if (!katalystId) {
     return (
       <div className="text-center py-12">
@@ -292,6 +186,12 @@ export default function ProgramasGrid({
     );
   }
 
+  // Buscar los IDs de las columnas relevantes
+  const portadaCol = columns.find((c) => c.title?.toLowerCase() === "portada");
+  const familiaCol = columns.find((c) =>
+    c.title?.toLowerCase().includes("familia donadora")
+  );
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -312,11 +212,50 @@ export default function ProgramasGrid({
           const portada = portadaCol ? prog[portadaCol.id] : null;
           const familiaDonadora = familiaCol ? prog[familiaCol.id] : null;
 
-          // Botón
-          let btnText = "Ver más";
-          let btnHref = rutaDestino || "#";
+          // Lógica para saber si ya aplicó a este programa
+          const aplicadoAEstePrograma =
+            yaAplico && aplicacionInfo && aplicacionInfo.boardId === boardId;
 
-          // Render de la tarjeta
+          let btnText = "VER MÁS";
+          let btnHref = rutaDestino || "#";
+          let btnDisabled = false;
+          let onClick = null;
+
+          if (tipo === "info") {
+            btnText = "VER MÁS";
+            btnHref = rutaDestino;
+          } else if (tipo === "formulario") {
+            if (aplicadoAEstePrograma) {
+              if (
+                aplicacionInfo.status === "Activo" ||
+                aplicacionInfo.status === "Aceptado" ||
+                aplicacionInfo.status === "Aprobado"
+              ) {
+                btnText = "VER ACTIVIDADES";
+                btnHref = `/dashboard/${aplicacionInfo.boardId}/${aplicacionInfo.itemId}`;
+              } else if (
+                aplicacionInfo.status === "Onboarding" &&
+                !aplicacionInfo.tieneRazon
+              ) {
+                btnText = "COMPLETAR ONBOARDING";
+                onClick = () => handleOpenOnboardingForm(prog);
+                btnHref = null;
+              } else if (aplicacionInfo.status === "Rechazado") {
+                btnText = "RECHAZADO";
+                btnDisabled = true;
+                btnHref = null;
+              } else {
+                btnText = aplicacionInfo.status.toUpperCase();
+                btnDisabled = true;
+                btnHref = null;
+              }
+            } else {
+              btnText = "APLICAR AL PROGRAMA";
+              onClick = () => handleOpenApplicationForm(prog);
+              btnHref = null;
+            }
+          }
+
           return (
             <div
               key={index}
@@ -355,13 +294,28 @@ export default function ProgramasGrid({
                 <h3 className="text-xl font-bold mb-2">{prog.nombre}</h3>
                 <p className="text-gray-600 mb-4">{descripcion}</p>
                 <div className="mt-auto">
-                  <a
-                    href={btnHref}
-                    className="w-full block text-center bg-gray-900 hover:bg-gray-800 text-white font-bold uppercase py-3 rounded-b-2xl tracking-wide transition-colors duration-200 shadow-sm"
-                    style={{ letterSpacing: "0.05em", fontSize: "1rem" }}
-                  >
-                    {btnText}
-                  </a>
+                  {btnHref && !btnDisabled ? (
+                    <a
+                      href={btnHref}
+                      className="w-full block text-center bg-gray-900 hover:bg-gray-800 text-white font-bold uppercase py-3 rounded-b-2xl tracking-wide transition-colors duration-200 shadow-sm"
+                      style={{ letterSpacing: "0.05em", fontSize: "1rem" }}
+                    >
+                      {btnText}
+                    </a>
+                  ) : (
+                    <button
+                      onClick={onClick}
+                      disabled={btnDisabled}
+                      className={`w-full block text-center font-bold uppercase py-3 rounded-b-2xl tracking-wide transition-colors duration-200 shadow-sm ${
+                        btnDisabled
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-gray-900 hover:bg-gray-800 text-white"
+                      }`}
+                      style={{ letterSpacing: "0.05em", fontSize: "1rem" }}
+                    >
+                      {btnText}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -409,7 +363,85 @@ export default function ProgramasGrid({
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmitForm} className="space-y-4">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!formPrograma) return;
+                  const boardId = formPrograma.boardId;
+                  if (!boardId) {
+                    setToastMessage(
+                      "Error: Este programa no está configurado para aplicaciones."
+                    );
+                    setShowToast(true);
+                    setIsErrorToast(true);
+                    return;
+                  }
+                  if (!katalystId) {
+                    setToastMessage(
+                      "Error: No se encontró tu ID de usuario. Por favor, inicia sesión nuevamente."
+                    );
+                    setShowToast(true);
+                    setIsErrorToast(true);
+                    return;
+                  }
+                  setLoading(true);
+                  try {
+                    const formData = new FormData(e.target);
+                    const data = {
+                      katalystId: katalystId,
+                      userName: userName,
+                      programa: formPrograma.nombre,
+                      boardId: boardId,
+                      ...Object.fromEntries(formData),
+                    };
+                    const res = await fetch("/api/registro", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(data),
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                      setFormEnviado(true);
+                      setShowConfetti(true);
+                      setToastMessage("¡Aplicación enviada exitosamente!");
+                      setShowToast(true);
+                      setIsErrorToast(false);
+                      setTimeout(() => {
+                        setShowConfetti(false);
+                        handleCloseForm();
+                        window.location.reload();
+                      }, 3000);
+                    } else {
+                      if (
+                        result.error &&
+                        result.error.includes("ya registrado")
+                      ) {
+                        setToastMessage(
+                          "Ya has aplicado a este programa anteriormente. No puedes aplicar dos veces."
+                        );
+                      } else {
+                        setToastMessage(`Error: ${result.error}`);
+                      }
+                      setShowToast(true);
+                      setIsErrorToast(true);
+                      setShowConfetti(true);
+                      setTimeout(() => setShowConfetti(false), 2000);
+                    }
+                  } catch (error) {
+                    console.error("Error al enviar formulario:", error);
+                    setToastMessage(
+                      "Error de servidor. Intenta de nuevo más tarde."
+                    );
+                    setShowToast(true);
+                    setIsErrorToast(true);
+                    setShowConfetti(true);
+                    setTimeout(() => setShowConfetti(false), 2000);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="space-y-4"
+              >
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     ¿Por qué quieres participar en este programa? *
@@ -426,7 +458,6 @@ export default function ProgramasGrid({
                     aplicación.
                   </p>
                 </div>
-
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                   <div className="flex items-start">
                     <svg
@@ -450,7 +481,6 @@ export default function ProgramasGrid({
                     </div>
                   </div>
                 </div>
-
                 <div className="flex space-x-3">
                   <button
                     type="button"
@@ -462,7 +492,7 @@ export default function ProgramasGrid({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium flex items-center justify-center"
+                    className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors font-medium flex items-center justify-center"
                   >
                     {loading && (
                       <svg
@@ -489,14 +519,6 @@ export default function ProgramasGrid({
                   </button>
                 </div>
               </form>
-            )}
-
-            {process.env.NODE_ENV === "development" && (
-              <div className="mt-4 text-xs text-gray-500">
-                <strong>Debug:</strong> Katalyst ID: {katalystId}
-                <br />
-                <strong>Board ID:</strong> {formPrograma.boardId}
-              </div>
             )}
           </div>
         </div>
@@ -531,23 +553,6 @@ export default function ProgramasGrid({
           numberOfPieces={200}
         />
       )}
-
-      {/* Debug Info (solo en desarrollo) */}
-      {/*
-      {process.env.NODE_ENV === "development" && (
-        <div className="bg-gray-100 rounded-lg p-4 text-xs text-gray-600">
-          <strong>Debug Info:</strong>
-          <br />
-          Katalyst ID: {katalystId}
-          <br />
-          Ya aplicó: {yaAplico ? "Sí" : "No"}
-          <br />
-          Board aplicado: {aplicadoBoardId}
-          <br />
-          Status: {aplicacionInfo?.status || "N/A"}
-        </div>
-      )}
-      */}
     </div>
   );
 }
