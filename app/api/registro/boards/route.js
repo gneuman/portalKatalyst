@@ -3,9 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(req) {
   try {
-    console.log(`[BOARDS] Obteniendo información de boards de programas`);
-
-    // PASO 1: Obtener la lista de boards de programas desde la configuración
+    // Obtener información de boards de programas
     const programasRes = await fetch(
       `${process.env.NEXTAUTH_URL}/api/programas`
     );
@@ -32,8 +30,6 @@ export async function GET(req) {
         }
       });
     }
-
-    console.log(`[BOARDS] Boards encontrados:`, boardIds);
 
     if (boardIds.length === 0) {
       return NextResponse.json({

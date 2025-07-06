@@ -599,7 +599,7 @@ export default function NuevaEmpresa() {
   );
 
   return (
-    <div className="w-full">
+    <div className="w-full p-4 sm:p-6">
       <h1 className="text-2xl font-bold mb-3 text-center">Agregar Empresa</h1>
       <div>
         {loading && <p className="text-center">Cargando...</p>}

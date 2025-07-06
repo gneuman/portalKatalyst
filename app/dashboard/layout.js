@@ -17,7 +17,7 @@ export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
     <div className="min-h-screen bg-white flex flex-row">
-      {/* Sidebar drawer en móvil, fijo en desktop */}
+      {/* Sidebar drawer en móvil, fijo en desktop - LADO IZQUIERDO */}
       <div
         className={`fixed inset-0 z-40 bg-black bg-opacity-40 transition-opacity lg:hidden ${
           sidebarOpen ? "block" : "hidden"
@@ -31,6 +31,7 @@ export default function DashboardLayout({ children }) {
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0 lg:static lg:block
           shadow-lg lg:shadow-none
+          overflow-y-auto scrollbar-hide
         `}
         style={{ minHeight: "100vh" }}
       >
@@ -97,8 +98,10 @@ export default function DashboardLayout({ children }) {
             <FaBuilding className="text-[#FC9B42] text-sm" />
             <span className="text-sm">Empresas</span>
           </Link>
-          <div className="flex justify-center mt-2">
-            <ButtonAccount />
+          <div className="flex justify-center mt-2 w-full">
+            <div className="w-full">
+              <ButtonAccount />
+            </div>
           </div>
         </nav>
         <div className="flex-1" />
@@ -106,8 +109,9 @@ export default function DashboardLayout({ children }) {
           Portal Katalyst
         </div>
       </aside>
-      {/* Contenedor derecho: header sticky + children */}
-      <div className="flex-1 flex flex-col lg:ml-60 min-h-screen bg-white">
+
+      {/* Contenedor principal */}
+      <div className="flex-1 flex flex-col min-h-screen bg-white lg:ml-60">
         {/* Header sticky dentro de la columna derecha */}
         <div className="sticky top-0 z-30 bg-white shadow-sm flex items-center h-14 px-4 sm:px-6">
           {/* Botón hamburguesa solo en móvil */}
@@ -129,9 +133,9 @@ export default function DashboardLayout({ children }) {
             <Header />
           </div>
         </div>
-        {/* Contenido principal plano y alineado */}
+        {/* Contenido principal completo */}
         <main className="flex-1 w-full bg-white">
-          <div className="p-4 sm:p-6">{children}</div>
+          <div className="w-full h-full">{children}</div>
         </main>
       </div>
     </div>

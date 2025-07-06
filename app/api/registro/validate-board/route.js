@@ -8,14 +8,12 @@ export async function GET(req) {
 
     if (!boardId) {
       return NextResponse.json(
-        { error: "boardId es requerido" },
+        { error: "BoardId es requerido" },
         { status: 400 }
       );
     }
 
-    console.log(`[VALIDATE-BOARD] Validando board:`, boardId);
-
-    // PASO 1: Verificar si el board está en la lista de programas
+    // Validar que el board sea un programa válido
     const programasRes = await fetch(
       `${process.env.NEXTAUTH_URL}/api/programas`
     );

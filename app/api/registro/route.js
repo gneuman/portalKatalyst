@@ -12,13 +12,6 @@ export async function POST(req) {
       );
     }
 
-    console.log(`[REGISTRO] Iniciando aplicación a programa:`, {
-      boardId,
-      katalystId,
-      userName,
-      tieneRazon: !!razon,
-    });
-
     // PASO 0: Validar que el board sea un programa válido
     const validateRes = await fetch(
       `${process.env.NEXTAUTH_URL}/api/registro/validate-board?boardId=${boardId}`
@@ -31,8 +24,6 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-
-    console.log(`[REGISTRO] Board validado:`, validateData.boardName);
 
     // PASO 1: Verificar si ya existe el contacto en este board
     const checkExistingQuery = `query {
@@ -76,21 +67,19 @@ export async function POST(req) {
 
     // Validar que board.columns existe
     if (!board.columns || !Array.isArray(board.columns)) {
-      console.error(`[REGISTRO] Board sin columnas válidas:`, board);
       return NextResponse.json(
         { error: "El board del programa no tiene columnas válidas" },
         { status: 500 }
       );
     }
 
-    console.log(
-      `[REGISTRO] Board encontrado:`,
-      board.name,
-      `Columnas:`,
-      board.columns.length
+    // Buscar si ya existe el contacto por MondayId Contacto
+    const mondayIdContactoCol = board.columns.find(
+      (col) =>
+        col.title.toLowerCase().includes("mondayid contacto") ||
+        col.title.toLowerCase().includes("monday id contacto")
     );
 
-    
     let contactoExistente = null;
 
     if (mondayIdContactoCol) {
@@ -131,7 +120,7 @@ export async function POST(req) {
                 break;
               }
             } catch (e) {
-              console.log(`[REGISTRO] Error parsing contact column:`, e);
+              // Error parsing contact column
             }
           }
         }
@@ -148,10 +137,6 @@ export async function POST(req) {
         { status: 409 }
       );
     }
-
-    console.log(
-      `[REGISTRO] Contacto no existe, procediendo a crear nuevo registro`
-    );
 
     // PASO 2: Obtener información del usuario desde el board de contactos
     const contactQuery = `query { 
@@ -181,8 +166,6 @@ export async function POST(req) {
       );
     }
 
-    console.log(`[REGISTRO] Contacto encontrado:`, contactItem.name);
-
     // PASO 3: Preparar datos para crear el item en el board del programa
     const itemName = userName || contactItem.name || "Nuevo Participante";
 
@@ -194,84 +177,61 @@ export async function POST(req) {
         col.type === "board_relation"
     );
 
-    // Siempre crear el item con MondayId Contacto y actualizarlo si es necesario
-    const columnValues = [];
-    if (contactColumn) {
-      columnValues.push({
-        column_id: contactColumn.id,
-        value: JSON.stringify({ item_ids: [parseInt(katalystId)] }),
-      });
-    }
-    if (mondayIdContactoCol) {
-      columnValues.push({
-        column_id: mondayIdContactoCol.id,
-        value: JSON.stringify(katalystId),
-        text: katalystId,
-      });
-    }
-    // Agregar razón si aplica
-    if (razon) {
-      const razonCol = board.columns.find((col) =>
-        col.title.toLowerCase().includes("razon")
+    if (!contactColumn) {
+      return NextResponse.json(
+        {
+          error: "No se encontró columna de contacto en el board del programa",
+        },
+        { status: 400 }
       );
-      if (razonCol) {
-        columnValues.push({
-          column_id: razonCol.id,
-          value: JSON.stringify(razon),
-          text: razon,
-        });
-      }
     }
 
-    // Crear el item en el board destino
-    const createItemMutation = `mutation {
+    // Buscar columna de razón de forma programática
+    const razonColumn = board.columns?.find(
+      (col) =>
+        col.title.toLowerCase().includes("razón") ||
+        col.title.toLowerCase().includes("razon") ||
+        col.title.toLowerCase().includes("reason") ||
+        col.title.toLowerCase().includes("motivo") ||
+        col.title.toLowerCase().includes("por qué") ||
+        col.title.toLowerCase().includes("por que")
+    );
+
+    // PASO 4: Crear item en el board del programa
+    const columnValues = {
+      [contactColumn.id]: { item_ids: [parseInt(katalystId)] },
+    };
+
+    // Agregar MondayId Contacto si existe la columna
+    if (mondayIdContactoCol) {
+      columnValues[mondayIdContactoCol.id] = katalystId;
+    }
+
+    // Agregar razón si existe la columna y se proporcionó
+    if (razonColumn && razon) {
+      columnValues[razonColumn.id] = razon;
+    }
+
+    const createItemQuery = `mutation { 
       create_item (
-        board_id: ${boardId},
+        board_id: ${boardId}, 
         item_name: "${itemName}",
-        column_values: "${
-          columnValues.length > 0
-            ? JSON.stringify(
-                Object.fromEntries(
-                  columnValues.map((cv) => [cv.column_id, cv.value])
-                )
-              )
-            : "{}"
-        }"
-      ) {
-        id
-        name
-      }
+        column_values: "${JSON.stringify(columnValues).replace(/"/g, '\\"')}"
+      ) { 
+        id 
+        name 
+      } 
     }`;
-    const createRes = await postMonday(createItemMutation);
-    const newItem = createRes?.data?.create_item;
+
+    const createItemRes = await postMonday(createItemQuery);
+    const newItem = createItemRes?.data?.create_item;
 
     if (!newItem) {
       return NextResponse.json(
-        { error: "No se pudo crear el registro en el programa" },
+        { error: "No se pudo crear el item en el programa" },
         { status: 500 }
       );
     }
-
-    // Si MondayId Contacto existe, actualizarlo siempre
-    if (mondayIdContactoCol) {
-      const updateMutation = `mutation {
-        change_column_value (
-          board_id: ${boardId},
-          item_id: ${newItem.id},
-          column_id: "${mondayIdContactoCol.id}",
-          value: \"${katalystId}\"
-        ) {
-          id
-        }
-      }`;
-      await postMonday(updateMutation);
-    }
-
-    console.log(
-      `[REGISTRO] Item creado en programa:`,
-      newItem.name,
-      `(ID: ${newItem.id})`
-    );
 
     return NextResponse.json({
       success: true,
@@ -282,7 +242,6 @@ export async function POST(req) {
       status: "En revisión",
     });
   } catch (error) {
-    console.error(`[REGISTRO] Error:`, error);
     return NextResponse.json(
       { error: "Error interno del servidor", details: error.message },
       { status: 500 }

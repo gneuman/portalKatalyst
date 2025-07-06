@@ -194,7 +194,7 @@ export default function ProgramasGrid({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {programas.map((prog, index) => {
           // Obtener valores de columnas
           const boardIdCol = columns.find((c) => c.title === "Board destino");
@@ -221,7 +221,13 @@ export default function ProgramasGrid({
           let btnDisabled = false;
           let onClick = null;
 
-          if (tipo === "info") {
+          // Verificar si el programa tiene board definido
+          if (!boardId) {
+            btnText = "PRÓXIMAMENTE";
+            btnHref = null;
+            btnDisabled = true;
+            onClick = null;
+          } else if (tipo === "info") {
             btnText = "VER MÁS";
             btnHref = rutaDestino;
           } else if (tipo === "formulario") {
@@ -259,64 +265,60 @@ export default function ProgramasGrid({
           return (
             <div
               key={index}
-              className="bg-white rounded-2xl shadow-lg border overflow-hidden flex flex-col h-full"
+              className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col border border-gray-200"
             >
-              {/* Banner superior */}
-              <div className="bg-purple-500 text-white text-center py-2 px-4 font-semibold text-sm rounded-t-2xl">
+              {/* Banner superior morado */}
+              <div className="bg-[#7C5FD3] text-white text-xs font-semibold text-center py-2 px-2">
                 {familiaDonadora
                   ? `Sección donada por la familia ${familiaDonadora}`
                   : "Sección donada por una familia"}
               </div>
               {/* Imagen */}
-              {portada ? (
-                <img
-                  src={portada}
-                  alt={prog.nombre}
-                  className="object-cover w-full h-40"
-                  style={{
-                    borderTopLeftRadius: "1rem",
-                    borderTopRightRadius: "1rem",
-                  }}
-                />
-              ) : (
-                <div
-                  className="w-full h-40 bg-gray-200 flex items-center justify-center text-gray-400 text-4xl"
-                  style={{
-                    borderTopLeftRadius: "1rem",
-                    borderTopRightRadius: "1rem",
-                  }}
-                >
-                  <span>🚀</span>
-                </div>
-              )}
+              <div className="relative w-full h-36">
+                {portada ? (
+                  <Image
+                    src={portada}
+                    alt={prog.nombre}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-4xl">
+                    <span>🚀</span>
+                  </div>
+                )}
+              </div>
               {/* Contenido */}
-              <div className="flex-1 flex flex-col p-6">
-                <h3 className="text-xl font-bold mb-2">{prog.nombre}</h3>
-                <p className="text-gray-600 mb-4">{descripcion}</p>
-                <div className="mt-auto">
-                  {btnHref && !btnDisabled ? (
-                    <a
-                      href={btnHref}
-                      className="w-full block text-center bg-gray-900 hover:bg-gray-800 text-white font-bold uppercase py-3 rounded-b-2xl tracking-wide transition-colors duration-200 shadow-sm"
-                      style={{ letterSpacing: "0.05em", fontSize: "1rem" }}
-                    >
-                      {btnText}
-                    </a>
-                  ) : (
-                    <button
-                      onClick={onClick}
-                      disabled={btnDisabled}
-                      className={`w-full block text-center font-bold uppercase py-3 rounded-b-2xl tracking-wide transition-colors duration-200 shadow-sm ${
-                        btnDisabled
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-gray-900 hover:bg-gray-800 text-white"
-                      }`}
-                      style={{ letterSpacing: "0.05em", fontSize: "1rem" }}
-                    >
-                      {btnText}
-                    </button>
-                  )}
+              <div className="p-4 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-bold text-lg text-gray-800 mb-1">
+                    {prog.nombre}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-2">{descripcion}</p>
                 </div>
+              </div>
+              {/* Botón */}
+              <div className="bg-[#223444] px-4 py-3 text-center">
+                {btnHref && !btnDisabled ? (
+                  <a
+                    href={btnHref}
+                    className="w-full inline-block bg-transparent text-white font-semibold text-sm tracking-widest"
+                  >
+                    {btnText}
+                  </a>
+                ) : (
+                  <button
+                    onClick={onClick}
+                    disabled={btnDisabled}
+                    className={`w-full inline-block font-semibold text-sm tracking-widest ${
+                      btnDisabled
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "bg-transparent text-white"
+                    }`}
+                  >
+                    {btnText}
+                  </button>
+                )}
               </div>
             </div>
           );

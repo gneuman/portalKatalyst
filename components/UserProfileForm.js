@@ -582,7 +582,7 @@ export default function UserProfileForm({
   const colGenero = columns.find((c) => c.title === "Género");
 
   return (
-    <div className="w-full">
+    <div className="w-full p-4 sm:p-6">
       <div className="bg-white rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <div>

@@ -15,11 +15,6 @@ export async function GET(req) {
       );
     }
 
-    console.log(
-      `[MY-PROGRAMS] Buscando programas para katalystId:`,
-      katalystId
-    );
-
     // PASO 1: Obtener todos los programas del board de programas
     const programasQuery = `query {
       boards(ids: [${PROGRAMAS_BOARD}]) {
@@ -80,13 +75,6 @@ export async function GET(req) {
         col.title.toLowerCase().includes("título") ||
         col.title.toLowerCase().includes("titulo")
     );
-
-    console.log(`[MY-PROGRAMS] Columnas encontradas:`, {
-      mondayIdContacto: mondayIdContactoCol?.title,
-      tipo: tipoCol?.title,
-      boardDestino: boardDestinoCol?.title,
-      nombre: nombreCol?.title,
-    });
 
     // PASO 3: Buscar programas donde el usuario esté presente
     const misProgramas = [];
@@ -154,8 +142,6 @@ export async function GET(req) {
         }
       }
     }
-
-    console.log(`[MY-PROGRAMS] Programas encontrados:`, misProgramas.length);
 
     return NextResponse.json({
       success: true,

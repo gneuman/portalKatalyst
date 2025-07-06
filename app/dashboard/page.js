@@ -128,7 +128,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4 bg-white min-h-screen">
+    <div className="w-full bg-white min-h-screen">
       {/* Mensaje de bienvenida y Katalyst ID */}
       {session?.user && (
         <div className="mb-6">

@@ -14,10 +14,6 @@ export async function GET(req) {
       );
     }
 
-    console.log(
-      `[PERSON-STATUS] Consultando status de ${katalystId} en board ${boardId}`
-    );
-
     // PASO 1: Buscar el item de la persona en el board
     const query = `query {
       boards(ids: [${boardId}]) {
@@ -106,7 +102,7 @@ export async function GET(req) {
             break;
           }
         } catch (e) {
-          console.log(`[PERSON-STATUS] Error parsing contact column:`, e);
+          // Error parsing contact column
         }
       }
     }
@@ -142,14 +138,6 @@ export async function GET(req) {
       tieneRazon =
         razonColumn && razonColumn.text && razonColumn.text.trim() !== "";
     }
-
-    console.log(`[PERSON-STATUS] Status encontrado:`, {
-      encontrado: !!personItem,
-      status,
-      tieneOnboarding,
-      tieneRazon,
-      subitemsCount: subitems.length,
-    });
 
     return NextResponse.json({
       success: true,

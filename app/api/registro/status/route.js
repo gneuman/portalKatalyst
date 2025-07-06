@@ -15,11 +15,6 @@ export async function GET(req) {
       );
     }
 
-    console.log(
-      `[STATUS] Consultando aplicaciones para katalystId:`,
-      katalystId
-    );
-
     // PASO 1: Obtener la lista de boards de programas desde la configuración
     const programasRes = await fetch(
       `${process.env.NEXTAUTH_URL}/api/programas`
@@ -48,17 +43,18 @@ export async function GET(req) {
       });
     }
 
-    console.log(`[STATUS] Boards de programas a consultar:`, boardIds);
+    // PASO 2: Consultar status en todos los boards de programas
+    const boardIds = programas.map((p) => p.boardId).filter(Boolean);
 
     if (boardIds.length === 0) {
       return NextResponse.json({
         success: true,
-        aplicaciones: [],
-        total: 0,
+        programas: [],
+        message: "No hay programas configurados",
       });
     }
 
-    // PASO 2: Consultar todos los boards de programas
+    // Consultar status en cada board
     const boardsQuery = `query {
       boards(ids: [${boardIds.join(",")}]) {
         id

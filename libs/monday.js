@@ -16,15 +16,18 @@ export async function mondayQuery(query, apiKey) {
     const data = await res.json();
 
     if (!res.ok) {
+      console.error("[MONDAY-QUERY] Error HTTP:", res.status, data);
       throw new Error(`HTTP error! status: ${res.status}`);
     }
 
     if (data.errors) {
+      console.error("[MONDAY-QUERY] Errores de Monday:", data.errors);
       throw new Error(`Monday.com errors: ${JSON.stringify(data.errors)}`);
     }
 
     return data;
   } catch (error) {
+    console.error("[MONDAY-QUERY] Excepción:", error);
     throw error;
   }
 }

@@ -455,7 +455,7 @@ export default function EmpresasDashboard() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
         <h1 className="text-2xl font-bold text-gray-900 mb-2 sm:mb-0">
           Empresas
