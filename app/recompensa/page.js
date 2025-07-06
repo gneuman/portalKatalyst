@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { FaPlay, FaClock, FaCalendar, FaMicrophone } from "react-icons/fa";
+import { FaMicrophone } from "react-icons/fa";
+import Image from "next/image";
 
 // Función para convertir duración ISO 8601 a formato legible
 function parseISODuration(duration) {
@@ -91,7 +92,7 @@ export default async function RecompenzaPage() {
               </p>
             </div>
           ) : (
-            episodes.map((ep, index) => (
+            episodes.map((ep) => (
               <Link
                 key={ep.videoId}
                 href={`/recompensa/${ep.videoId}`}
@@ -101,7 +102,7 @@ export default async function RecompenzaPage() {
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 rounded-lg hover:bg-white/5 transition-all duration-200 text-center sm:text-left shadow-md">
                   {/* Imagen de portada (thumbnail) */}
                   <div className="w-full max-w-xs sm:max-w-[160px] aspect-video rounded-lg overflow-hidden shadow-lg mx-auto">
-                    <img
+                    <Image
                       src={ep.thumbnail}
                       alt={ep.title}
                       className="w-full h-full object-cover"

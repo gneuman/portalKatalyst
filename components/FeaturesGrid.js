@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
+import Image from "next/image";
 
 const features = [
   {
@@ -220,7 +221,12 @@ const features = [
               <div className="flex items-center gap-2">
                 <div className="avatar">
                   <div className="w-7 rounded-full">
-                    <img src={reply.userImg} alt={reply.userName} />
+                    <Image
+                      src={reply.userImg}
+                      alt={reply.userName}
+                      width={40}
+                      height={40}
+                    />
                   </div>
                 </div>
                 <div className=""> {reply.userName} </div>
