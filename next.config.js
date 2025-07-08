@@ -18,6 +18,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "logos-world.net",
       },
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+      },
     ],
   },
   experimental: {

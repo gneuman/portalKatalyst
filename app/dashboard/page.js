@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import ProgramasGrid from "@/components/dashboard/ProgramasGrid";
 import ProgramasHistorial from "@/components/dashboard/ProgramasHistorial";
 
-
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -54,11 +53,22 @@ export default function Dashboard() {
     async function fetchProgramas() {
       setLoading(true);
       try {
-        const res = await fetch("/api/programas");
+        // Agregar timestamp para evitar caché del navegador
+        const timestamp = new Date().getTime();
+        const randomId = Math.random().toString(36).substring(7);
+        const res = await fetch(`/api/programas?t=${timestamp}&r=${randomId}`, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        });
         const data = await res.json();
+
         setProgramas(data.programas || []);
         setColumns(data.columns || []);
       } catch (err) {
+        console.error(`Error al obtener programas:`, err);
         setProgramas([]);
         setColumns([]);
       } finally {
@@ -76,8 +86,6 @@ export default function Dashboard() {
 
   if (status === "loading" || loading || userLoading)
     return <div>Cargando...</div>;
-
-
 
   return (
     <div className="w-full bg-white min-h-screen">
@@ -99,7 +107,9 @@ export default function Dashboard() {
       <CardGrid />
 
       {/* Sección de Programas dinámicos */}
-      <h2 className="text-2xl font-bold mt-8 mb-4">Programas</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Programas</h2>
+      </div>
       <ProgramasGrid
         programas={allProgramas}
         columns={columns}

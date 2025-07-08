@@ -4,6 +4,10 @@ import { postMonday } from "@/libs/monday";
 const MONDAY_API_KEY = process.env.MONDAY_API_KEY;
 const PROGRAMAS_BOARD = process.env.PROGRAMAS_BOARD;
 
+// Forzar que no se use caché
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   if (!MONDAY_API_KEY || !PROGRAMAS_BOARD) {
     return NextResponse.json(
@@ -42,6 +46,7 @@ export async function GET() {
 
   try {
     const mondayRes = await postMonday(query, MONDAY_API_KEY);
+
     if (!mondayRes?.data?.boards?.length) {
       return NextResponse.json(
         { error: "No se encontró la tabla" },
@@ -52,19 +57,10 @@ export async function GET() {
     const itemsPage = board.items_page;
     const columns = board.columns || [];
 
-    console.log(
-      `[DEBUG] API Programas: Encontrados ${
-        itemsPage.items?.length || 0
-      } programas`
-    );
-    console.log(
-      `[DEBUG] API Programas: Columnas:`,
-      columns.map((c) => c.title)
-    );
-
     // Mapear usando el id de la columna como clave
     const programas = (itemsPage.items || []).map((item) => {
       const obj = { nombre: item.name };
+
       for (const col of item.column_values) {
         let valor = col.text;
         if (!valor || valor === "") {
@@ -80,12 +76,21 @@ export async function GET() {
       return obj;
     });
 
-    console.log(
-      `[DEBUG] API Programas: Programas mapeados:`,
-      programas.map((p) => p.nombre)
-    );
+    // Agregar timestamp para evitar caché
+    const responseData = {
+      programas,
+      columns,
+      timestamp: new Date().toISOString(),
+      totalItems: programas.length,
+    };
 
-    return NextResponse.json({ programas, columns });
+    return NextResponse.json(responseData, {
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
   } catch (err) {
     console.error("Error en la consulta a Monday:", err);
     return NextResponse.json(
